@@ -26,15 +26,15 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 - **Fecha última actualización:** 2026-05-27
 - **Rama activa:** `claude/quirky-ride-pD2AK`
-- **Hito actual:** **M0 — Prerrequisitos** (a la espera de inputs del usuario)
-- **Siguiente acción:** recibir del usuario VPS IP, dominio, clave SSH pública, email para Let's Encrypt → comenzar M1 (provisioning).
-- **Bloqueadores:** ninguno técnico. Esperando approval de las 6 decisiones abiertas (ver §4) — no bloquean M0/M1 pero **sí** bloquean M2.
+- **Hito actual:** **M1 — Provisioning VPS** (M0 cerrado: prerrequisitos confirmados)
+- **Siguiente acción:** generar clave SSH local en la máquina del usuario y subirla al VPS para sustituir el login por contraseña.
+- **Bloqueadores:** ninguno.
 
 ### Progreso por hito
 | Hito | Estado |
 |---|---|
-| M0 — Prerrequisitos VPS/dominio | En curso |
-| M1 — Provisioning VPS + TLS | Pendiente |
+| M0 — Prerrequisitos VPS/dominio | ✅ Cerrado (sin dominio aún → estrategia Cloudflare Tunnel) |
+| M1 — Provisioning VPS + TLS | En curso |
 | M2 — Esqueleto backend (Fastify+Prisma) | Pendiente |
 | M3 — Auth + Servicios + Barberos | Pendiente |
 | M4 — Disponibilidad + Reservas | Pendiente |
@@ -47,42 +47,47 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 3. Decisiones tomadas (cerradas)
 
-- **Stack VPS:** Ubuntu 22.04, Docker + Compose, PostgreSQL 16, Node 20 + Fastify + Prisma + Zod, Nginx en host + Certbot, UFW + Fail2ban.
-- **Frontend:** Next.js 15 (App Router) + TypeScript + Tailwind v4 con CSS variables + `theme.config.ts` como única fuente de design tokens.
+- **Stack VPS:** Ubuntu 22.04, Docker + Compose, PostgreSQL 16, Node 20 + Fastify + Prisma + Zod, Nginx en host, UFW + Fail2ban.
+- **TLS / exposición de la API (sin dominio):** **Cloudflare Tunnel** (`cloudflared`) genera URL HTTPS pública sin abrir puertos del VPS, sin dominio propio. Cuando el usuario compre dominio (Cloudflare DNS), se sustituye el hostname del tunnel — el resto de infra no cambia. Certbot/Let's Encrypt se incorpora **sólo cuando haya dominio**.
+- **Frontend:** Next.js 15 (App Router) + TypeScript + Tailwind v4 con CSS variables + `theme.config.ts` como única fuente de design tokens. Hosting en Vercel desde el inicio.
 - **Auth:** JWT (access + refresh) + bcrypt. Sin proveedores externos en v1.
 - **Repo:** monorepo con **pnpm workspaces** (`apps/api`, `apps/web`, `packages/shared`, `infra/`).
 - **Dinero:** se guarda en `Int` como céntimos (`priceCents`).
+- **Zona horaria:** storage en UTC. Display en **UTC-4** (IANA tentativa `America/Caracas`, a confirmar). Configurable vía env `DEFAULT_TIMEZONE`.
+- **Granularidad de slots:** 30 minutos.
+- **Modelo de barberos:** multi-barbero desde el inicio.
+- **Reserva sin registro:** permitida. El cliente sólo da email + teléfono + nombre; se crea un `User` con `passwordHash = null` y rol `CLIENT`. Si después se registra, se reclama la cuenta por email.
+- **Notificaciones:** email vía Resend en M6. SMS/WhatsApp fuera de v1.
+- **Pagos:** fuera de v1; `priceCents` queda preparado.
 - **Convención de commits:** `tipo: descripción` (`feat:`, `fix:`, `docs:`, `chore:`, `infra:`). En español cuando aporte claridad.
 - **Branch policy:** desarrollo en `claude/quirky-ride-pD2AK` mientras dure el setup. Tras M2 abriremos `main` como protegida y trabajaremos por feature branches.
 - **Disciplina de contexto:** este archivo (`CLAUDE.md`) se actualiza con cada cambio significativo, en el mismo commit.
 
 ---
 
-## 4. Decisiones abiertas (pendientes de respuesta del usuario)
+## 4. Decisiones abiertas
 
-Bloquean M2 en adelante. Detalle en `docs/PLAN.md §7`.
+Ninguna que bloquee. El usuario delegó las 6 anteriores a defaults; quedan registradas como cerradas en §3.
 
-1. **Zona horaria** — propuesta: guardar todo en UTC, convertir en cliente.
-2. **Granularidad de slots** — 15 o 30 min.
-3. **Modelo:** un barbero o múltiples barberos.
-4. **Reserva sin registro** — permitir reservar dando sólo email/teléfono (crea `User` shadow).
-5. **Notificaciones** — email (Resend) v1; SMS/WhatsApp más adelante.
-6. **Pagos** — fuera de alcance v1, pero `priceCents` ya preparado.
+Pendientes menores para resolver en su hito correspondiente:
+- Confirmar IANA timezone exacta (M3) — actualmente tentativa `America/Caracas`.
+- Decidir nombre del subdominio API cuando haya dominio (M8 o cuando se compre).
 
 ---
 
 ## 5. Datos del entorno del usuario
 
-Se rellena en M0. **No se guardan secretos aquí**, sólo referencias.
+Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
-- **VPS IP:** _pendiente_
-- **Dominio raíz:** _pendiente_
-- **Subdominio API:** `api.<dominio>` — _pendiente_
-- **Usuario SSH inicial:** _pendiente_ (típicamente `root`, lo migraremos a un usuario non-root en M1)
-- **Email Let's Encrypt:** _pendiente_
-- **Repo GitHub:** `juninho2604/barberia`
-- **Cuenta Vercel:** _pendiente confirmar_
-- **Proveedor email (M6+):** _pendiente decidir_
+- **VPS:** Ubuntu 22.04 LTS, accesible por SSH (con contraseña en este momento; se migra a clave en M1). _IP a registrar cuando el usuario la comparta_.
+- **Dominio raíz:** _aún no comprado_. Estrategia provisional: Cloudflare Tunnel para exponer la API. Migración a dominio propio + Cloudflare DNS prevista cuando el usuario lo compre.
+- **URL API provisional:** se generará en M1 (Cloudflare Tunnel, tipo `<random>.trycloudflare.com` o subdominio `*.cfargotunnel.com` con cuenta Cloudflare).
+- **Usuario SSH:** actualmente `root` con contraseña. En M1 se crea usuario non-root con sudo + login por clave; se deshabilita login root y password auth.
+- **Email para certificados:** N/A todavía (no hay dominio). Se rellena al comprarlo.
+- **Repo GitHub:** `juninho2604/barberia`.
+- **Email del usuario (contacto):** `omarmoya2604@gmail.com`.
+- **Cuenta Vercel:** _pendiente confirmar_ en M5.
+- **Proveedor email (M6+):** Resend (default).
 
 ---
 
@@ -119,6 +124,7 @@ Se rellena en M0. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-27** — Añadido `CLAUDE.md` como fuente de contexto vivo. Definida disciplina de actualización por commit. — _este commit_
-- **2026-05-27** — Plan inicial aprobado por el usuario ("lo veo bien"). Pendiente input de prerrequisitos para arrancar M0/M1.
+- **2026-05-27** — Cerrado M0. Cerradas 6 decisiones abiertas con defaults + UTC-4 del usuario. Cambio de estrategia: **sin dominio aún → Cloudflare Tunnel** para exponer la API; Let's Encrypt se difiere hasta que haya dominio. M1 arranca con generación de clave SSH del usuario. — _este commit_
+- **2026-05-27** — Añadido `CLAUDE.md` como fuente de contexto vivo. Definida disciplina de actualización por commit. — `6fa0050`
+- **2026-05-27** — Plan inicial aprobado por el usuario ("lo veo bien").
 - **2026-05-27** — Commit inicial: `docs/PLAN.md` con arquitectura, roadmap M0–M8, schema Prisma, estructura API, prerrequisitos VPS. — `a3bbf7e`

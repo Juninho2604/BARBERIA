@@ -44,8 +44,9 @@
 
 Decisiones clave:
 - **PostgreSQL y API en Docker** sobre tu VPS, gestionados con `docker compose`.
-- **Nginx en el host** (no en contenedor) como reverse proxy y terminación TLS — más simple para Certbot y para añadir otros sitios después.
-- **Next.js en Vercel**, llamando a `https://api.tudominio.com`.
+- **Exposición HTTPS sin dominio (provisional):** **Cloudflare Tunnel** (`cloudflared`) publica la API en una URL `https://<...>.trycloudflare.com` o `<...>.cfargotunnel.com`. Ventajas: HTTPS automático, no abrimos puertos en el VPS, oculta la IP. Cuando compres el dominio (Cloudflare DNS), el mismo tunnel se reconfigura al hostname propio en 2 minutos.
+- **Nginx en el host** como reverse proxy interno (`127.0.0.1:80` → API). Certbot/Let's Encrypt se incorpora **sólo cuando exista dominio**; mientras tanto, TLS lo aporta el tunnel.
+- **Next.js en Vercel**, llamando a la URL pública del tunnel (variable de entorno `NEXT_PUBLIC_API_URL`).
 - **CORS** restringido a tus dominios de Vercel (producción + previews).
 - **Variables de entorno** vía `.env` en VPS (nunca al repo) y dashboard de Vercel.
 
@@ -58,7 +59,9 @@ Decisiones clave:
 |---|---|---|
 | OS | Ubuntu 22.04 LTS | LTS, soporte largo, docs masivas |
 | Runtime contenedores | Docker + Docker Compose v2 | Portabilidad, rollback fácil |
-| Reverse proxy | **Nginx** + Certbot | Estándar, fácil de auditar |
+| Reverse proxy | **Nginx** (host) | Estándar, fácil de auditar |
+| Exposición pública (sin dominio) | **Cloudflare Tunnel** | HTTPS gratis sin abrir puertos ni dominio |
+| TLS (con dominio, futuro) | Certbot + Let's Encrypt | Renovación automática |
 | Base de datos | **PostgreSQL 16** (oficial) | Relacional robusto, JSONB cuando haga falta |
 | Backend | **Node.js 20 LTS + Fastify** | Más liviano que Express, mejor DX que NestJS para este alcance |
 | ORM | **Prisma** | Migraciones declarativas, tipado end-to-end con Next.js |
@@ -92,19 +95,22 @@ Decisiones clave:
 
 Cada hito es un PR revisable. Estimaciones asumen ~1–2 sesiones por semana.
 
-### M0 — Prerrequisitos (Día 0)
-- [ ] Dominio comprado y DNS apuntando al VPS (`api.tudominio.com` → A record).
-- [ ] Cuenta Vercel + repo en GitHub.
-- [ ] Acceso SSH al VPS confirmado.
+### M0 — Prerrequisitos (Día 0) ✅
+- [x] VPS Ubuntu 22.04 accesible por SSH.
+- [x] Repo GitHub creado (`juninho2604/barberia`).
+- [ ] Cuenta Vercel (se confirma en M5, no bloquea ahora).
+- [ ] ~~Dominio~~ — pospuesto. Mientras tanto: Cloudflare Tunnel.
 
 ### M1 — Provisioning del VPS (Semana 1)
-- [ ] Usuario non-root con sudo, SSH sólo por clave.
-- [ ] UFW (22/80/443), Fail2ban, actualizaciones automáticas.
-- [ ] Docker + Compose instalados.
-- [ ] Nginx + Certbot, certificado emitido para `api.tudominio.com`.
+- [ ] Generar clave SSH local (usuario) y subirla al VPS (`ssh-copy-id`).
+- [ ] Crear usuario non-root con sudo. SSH sólo por clave; deshabilitar password auth y login root.
+- [ ] UFW (22/80/443), Fail2ban, `unattended-upgrades`.
+- [ ] Docker + Compose v2 instalados.
+- [ ] Nginx en host (sólo escucha en `127.0.0.1`, sin TLS aún — TLS lo aporta el tunnel).
+- [ ] Cloudflare Tunnel (`cloudflared`) instalado y conectado a una cuenta Cloudflare gratuita; URL pública HTTPS funcionando.
 - [ ] `docker compose up` con Postgres vacío + healthcheck.
 
-**Entregable:** servidor accesible, TLS válido, `pg_isready` en verde.
+**Entregable:** servidor hardened, API alcanzable por HTTPS desde internet vía tunnel, `pg_isready` en verde.
 
 ### M2 — Esqueleto backend (Semana 1–2)
 - [ ] Repo monorepo: `apps/api`, `apps/web`, `packages/shared`.
