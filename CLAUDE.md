@@ -27,8 +27,9 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 - **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **M2 alcanzado** — API Fastify corriendo en el VPS dentro de Docker, Postgres saludable, migraciones automáticas. Healthcheck `/health` accesible en `127.0.0.1:4000` del VPS. Aún no expuesta a internet.
-- **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS. Pendiente: hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban, **Cloudflare Tunnel para exponer la API**).
-- **Siguiente acción:** (a) añadir 4 secrets en GitHub (`VPS_HOST/USER/PORT/SSH_KEY`) para activar el deploy automático; (b) instalar Cloudflare Tunnel para que el frontend de Vercel pueda hablar con la API.
+- **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS. Pendiente: hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban).
+- **Exposición de la API:** el usuario decidió **esperar a tener dominio** para montar el tunnel (Named Tunnel directo). Hasta entonces, la API sólo es accesible desde el propio VPS (`127.0.0.1:4000`). Esto bloquea integraciones front↔back en producción, pero no bloquea desarrollo del backend.
+- **Siguiente acción:** GitHub Actions ya activado (secrets añadidos). Arrancamos **M3 backend**: primera migración Prisma + auth (register/login) + CRUD de servicios. En paralelo se puede pulir landing en Vercel.
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Bloqueadores:** ninguno.
 
