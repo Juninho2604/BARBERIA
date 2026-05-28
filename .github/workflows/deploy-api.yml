@@ -42,8 +42,14 @@ jobs:
             echo "→ Reconstruyendo y reiniciando contenedores…"
             docker compose --env-file .env -f infra/docker-compose.yml up -d --build --remove-orphans
 
-            echo "→ Limpiando imágenes huérfanas…"
+            echo "→ Limpiando residuos de build…"
+            # Imágenes dangling (capas viejas del API tras rebuild)
             docker image prune -f
+            # Containers parados que hayan quedado por reorganización
+            docker container prune -f
+            # Cache del builder — sin esto las capas intermedias crecen sin techo.
+            # --filter "until=24h" deja sólo cache reciente (acelera el siguiente build).
+            docker builder prune -f --filter "until=24h" || true
 
             echo "→ Healthcheck API…"
             for i in 1 2 3 4 5 6 7 8 9 10; do
