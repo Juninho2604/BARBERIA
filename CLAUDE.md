@@ -47,7 +47,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 3. Decisiones tomadas (cerradas)
 
-- **Stack VPS:** Ubuntu 22.04, Docker + Compose, PostgreSQL 16, Node 20 + Fastify + Prisma + Zod, Nginx en host, UFW + Fail2ban.
+- **Stack VPS:** Ubuntu 24.04, Docker + Compose, PostgreSQL 16, Node 20 + Fastify + Prisma + Zod, Nginx en host, UFW + Fail2ban.
 - **TLS / exposición de la API (sin dominio):** **Cloudflare Tunnel** (`cloudflared`) genera URL HTTPS pública sin abrir puertos del VPS, sin dominio propio. Cuando el usuario compre dominio (Cloudflare DNS), se sustituye el hostname del tunnel — el resto de infra no cambia. Certbot/Let's Encrypt se incorpora **sólo cuando haya dominio**.
 - **Frontend:** Next.js 15 (App Router) + TypeScript + Tailwind v4 con CSS variables + `theme.config.ts` como única fuente de design tokens. Hosting en Vercel desde el inicio.
 - **Auth:** JWT (access + refresh) + bcrypt. Sin proveedores externos en v1.
@@ -79,7 +79,7 @@ Pendientes menores para resolver en su hito correspondiente:
 
 Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
-- **VPS:** Ubuntu 22.04 LTS en `147.93.6.70` (proveedor probable: Hostinger). SSH puerto 22, usuario actual `root` con contraseña — migrando a clave ed25519 en M1.
+- **VPS:** Ubuntu **24.04** LTS (hostname `vmi3133626`) en `147.93.6.70` — Hostinger. SSH puerto 22, usuario `root`. Clave ed25519 instalada en `authorized_keys`. Soporte LTS hasta 2029.
 - **Dominio raíz:** _aún no comprado_. Estrategia provisional: Cloudflare Tunnel para exponer la API. Migración a dominio propio + Cloudflare DNS prevista cuando el usuario lo compre.
 - **URL API provisional:** se generará en M1 (Cloudflare Tunnel, tipo `<random>.trycloudflare.com` o subdominio `*.cfargotunnel.com` con cuenta Cloudflare).
 - **Usuario SSH:** actualmente `root` con contraseña. En M1 se crea usuario non-root con sudo + login por clave; se deshabilita login root y password auth.

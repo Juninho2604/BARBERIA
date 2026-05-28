@@ -24,7 +24,7 @@
                   └──────────────┬───────────────┘
                                  │ HTTPS (api.tudominio.com)
                     ┌────────────▼────────────┐
-                    │   VPS (Ubuntu 22.04)    │
+                    │   VPS (Ubuntu 24.04)    │
                     │  ┌───────────────────┐  │
                     │  │ Nginx (TLS 443)   │  │  ← Let's Encrypt
                     │  └─────────┬─────────┘  │
@@ -57,7 +57,7 @@ Decisiones clave:
 ### VPS (Backend + DB)
 | Capa | Elección | Por qué |
 |---|---|---|
-| OS | Ubuntu 22.04 LTS | LTS, soporte largo, docs masivas |
+| OS | Ubuntu 24.04 LTS | LTS, soporte largo, docs masivas |
 | Runtime contenedores | Docker + Docker Compose v2 | Portabilidad, rollback fácil |
 | Reverse proxy | **Nginx** (host) | Estándar, fácil de auditar |
 | Exposición pública (sin dominio) | **Cloudflare Tunnel** | HTTPS gratis sin abrir puertos ni dominio |
@@ -96,7 +96,7 @@ Decisiones clave:
 Cada hito es un PR revisable. Estimaciones asumen ~1–2 sesiones por semana.
 
 ### M0 — Prerrequisitos (Día 0) ✅
-- [x] VPS Ubuntu 22.04 accesible por SSH.
+- [x] VPS Ubuntu 24.04 accesible por SSH.
 - [x] Repo GitHub creado (`juninho2604/barberia`).
 - [ ] Cuenta Vercel (se confirma en M5, no bloquea ahora).
 - [ ] ~~Dominio~~ — pospuesto. Mientras tanto: Cloudflare Tunnel.
@@ -304,7 +304,7 @@ Antes de nuestra primera sesión técnica, necesito que tengas listo:
 - IP pública estática.
 
 ### Sistema operativo
-- **Ubuntu 22.04 LTS** o Debian 12 recién instalado.
+- **Ubuntu 24.04 LTS** o Debian 12 recién instalado.
 - Acceso SSH como `root` (la primera sesión lo desactivaremos).
 
 ### DNS
