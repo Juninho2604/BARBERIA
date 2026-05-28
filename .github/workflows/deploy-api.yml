@@ -1,0 +1,59 @@
+name: Deploy API to VPS
+
+on:
+  push:
+    branches:
+      - claude/quirky-ride-pD2AK
+      - main
+    paths:
+      - "apps/api/**"
+      - "packages/shared/**"
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH al VPS y desplegar
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          command_timeout: "10m"
+          script: |
+            set -euo pipefail
+            cd /opt/barberia
+
+            echo "→ Sincronizando código desde GitHub…"
+            git fetch origin
+            git reset --hard "origin/${GITHUB_REF_NAME:-${{ github.ref_name }}}"
+
+            echo "→ Reconstruyendo y reiniciando contenedores…"
+            docker compose --env-file .env -f infra/docker-compose.yml up -d --build --remove-orphans
+
+            echo "→ Limpiando imágenes huérfanas…"
+            docker image prune -f
+
+            echo "→ Healthcheck API…"
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS http://127.0.0.1:4000/health > /dev/null; then
+                echo "✓ API responde en /health"
+                exit 0
+              fi
+              echo "  intento $i/10…"
+              sleep 3
+            done
+            echo "✗ API no respondió a tiempo"
+            docker compose -f infra/docker-compose.yml logs --tail=100 api
+            exit 1

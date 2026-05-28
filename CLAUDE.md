@@ -28,7 +28,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **M2 + M5 en paralelo** — esqueleto backend (Fastify + Prisma) y frontend (Next.js + Tailwind + design tokens). El usuario priorizó construir producto sobre ops.
 - **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS (`ssh-copy-id` funcionó). Hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban, Cloudflare Tunnel) se retoma cuando haya algo que desplegar.
-- **Siguiente acción:** el usuario conecta el repo de GitHub a Vercel para deploy automático de la landing (`apps/web`).
+- **Siguiente acción:** el usuario corre `vps-bootstrap.sh` en el VPS (instala Docker, clona repo, genera `.env` con secretos aleatorios, crea SSH key dedicada para GitHub Actions, hace primer build). Luego añade 4 secrets en GitHub (VPS_HOST, VPS_USER, VPS_PORT, VPS_SSH_KEY) y todos los siguientes pushes despliegan solos.
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Bloqueadores:** ninguno.
 
@@ -96,8 +96,10 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 6. Convenciones técnicas
 
 ### Comandos / flujos
-- **Deploy backend en VPS:** `git pull && docker compose -f infra/docker-compose.yml up -d --build api` (provisional hasta CI).
-- **Migraciones:** `pnpm --filter api prisma migrate deploy` dentro del contenedor.
+- **Deploy backend en VPS:** automático vía GitHub Actions (`.github/workflows/deploy-api.yml`) en cada push a `claude/quirky-ride-pD2AK` o `main` que toque `apps/api/**`, `packages/shared/**`, `infra/**`, `pnpm-lock.yaml` o el propio workflow. SSH al VPS → `git reset --hard origin/<branch>` → `docker compose up -d --build` → healthcheck `/health`.
+- **Bootstrap inicial del VPS:** `bash infra/scripts/vps-bootstrap.sh` (idempotente). Instala Docker, clona repo en `/opt/barberia`, genera `.env` con secretos aleatorios (`openssl rand`), crea clave SSH dedicada `~/.ssh/barberia_deploy` y la añade a `authorized_keys`. Al final imprime los valores que hay que pegar en GitHub Secrets.
+- **Migraciones:** automáticas. Se aplican al arrancar el contenedor API vía `docker-entrypoint.sh` (`npx prisma migrate deploy` → `node dist/index.js`).
+- **Deploy manual (emergencia):** desde el VPS, `cd /opt/barberia && git pull && docker compose --env-file .env -f infra/docker-compose.yml up -d --build`.
 - **Backup manual:** `infra/scripts/backup.sh` (se crea en M8).
 
 ### Seguridad
@@ -126,7 +128,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-28** — Commiteado `pnpm-lock.yaml` y cambiado vercel install a `--frozen-lockfile`. El lockfile evita la fase de fetch de metadata del registry, que era donde el bug `ERR_INVALID_THIS` de pnpm/undici (versión vieja de Node en Vercel) hacía fallar el deploy. — _este commit_
+- **2026-05-28** — Pipeline GitHub → VPS para el backend. Añadido `.github/workflows/deploy-api.yml` (SSH al VPS con `appleboy/ssh-action`, `git reset --hard` + `docker compose up -d --build`, healthcheck `/health`). `infra/scripts/vps-bootstrap.sh` automatiza instalación de Docker, clone, generación de `.env` con secretos aleatorios y creación de SSH key dedicada. `infra/docker-compose.yml` actualizado con servicio `api` + interpolación desde `.env` (postgres ya no expone puerto al host, solo red interna). `apps/api/Dockerfile` corre `prisma migrate deploy` antes de arrancar (vía `docker-entrypoint.sh`). — _este commit_
+- **2026-05-28** — Commiteado `pnpm-lock.yaml` y cambiado vercel install a `--frozen-lockfile`. El lockfile evita la fase de fetch de metadata del registry, que era donde el bug `ERR_INVALID_THIS` de pnpm/undici (versión vieja de Node en Vercel) hacía fallar el deploy. Vercel deploy ✅. — `8bd2b92`
 - **2026-05-28** — `apps/web/package.json`: añadido `packageManager: pnpm@9.12.0` y `engines.node: >=20`. Subidas deps a estables: React 19, Tailwind 4, @types/react 19. — `858347c`
 - **2026-05-28** — `vercel.json` reubicado a `apps/web/vercel.json` (compatible con el setup donde Vercel tiene Root Directory = `apps/web`). Mantiene install/build filtrados a `@barberia/web...` para no traer deps del backend. — `5c3b812`
 - **2026-05-28** — Scaffold del monorepo completo. Estructura pnpm con `apps/api` (Fastify + Prisma + Zod, schema con User/Barber/Service/WorkingHour/TimeOff/Appointment, Dockerfile multi-stage, healthcheck `/health`), `apps/web` (Next.js 15 + Tailwind v4 con design tokens centralizados en `globals.css @theme` + `theme/tokens.ts` como puente JS, landing con hero/services/footer), `packages/shared` (Zod schemas), `infra/docker-compose.yml` (Postgres 16). — `4b85371`

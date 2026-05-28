@@ -1,20 +1,60 @@
 name: barberia
 
+# Despliegue en el VPS:
+#   cd /opt/barberia
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d --build
+#
+# Lee /opt/barberia/.env (no commiteado) para todas las variables sensibles.
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: barberia-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: barberia
-      POSTGRES_PASSWORD: barberia_dev
-      POSTGRES_DB: barberia
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env}
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U barberia -d barberia"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: barberia-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/Caracas}
+      SLOT_GRANULARITY_MINUTES: ${SLOT_GRANULARITY_MINUTES:-30}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # Solo en localhost del VPS — el túnel (cloudflared) o nginx la expone al mundo.
+      - "127.0.0.1:4000:4000"
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres-data:
