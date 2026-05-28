@@ -3,7 +3,23 @@ import Image from "next/image";
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-6xl px-6 pt-16 pb-32 sm:pt-24 sm:pb-40">
+      {/* Textura atmosférica de fondo — retrato espejo muy desaturado
+          + gradiente grafito para que el wordmark y el copy se lean
+          impecables sin perder atmósfera. */}
+      <div className="pointer-events-none absolute inset-0">
+        <Image
+          src="/photos/portrait.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          priority
+          className="object-cover opacity-[0.18]"
+        />
+        <div className="absolute inset-0 bg-[color:var(--color-bg)]/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-bg)] via-transparent to-[color:var(--color-bg)]" />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-32 sm:pt-24 sm:pb-40">
         {/* Logo horizontal blanco sobre grafito (versión inverso de la guía).
             Llena el ancho del hero para que respire como wordmark editorial. */}
         <Image
