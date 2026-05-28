@@ -24,10 +24,10 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-05-27
+- **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **M1 — Provisioning VPS** (M0 cerrado: prerrequisitos confirmados)
-- **Siguiente acción:** generar clave SSH local en la máquina del usuario y subirla al VPS para sustituir el login por contraseña.
+- **Siguiente acción:** ejecutar `ssh-copy-id root@147.93.6.70` para subir la clave pública al VPS y validar login sin contraseña.
 - **Bloqueadores:** ninguno.
 
 ### Progreso por hito
@@ -79,7 +79,7 @@ Pendientes menores para resolver en su hito correspondiente:
 
 Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
-- **VPS:** Ubuntu 22.04 LTS, accesible por SSH (con contraseña en este momento; se migra a clave en M1). _IP a registrar cuando el usuario la comparta_.
+- **VPS:** Ubuntu 22.04 LTS en `147.93.6.70` (proveedor probable: Hostinger). SSH puerto 22, usuario actual `root` con contraseña — migrando a clave ed25519 en M1.
 - **Dominio raíz:** _aún no comprado_. Estrategia provisional: Cloudflare Tunnel para exponer la API. Migración a dominio propio + Cloudflare DNS prevista cuando el usuario lo compre.
 - **URL API provisional:** se generará en M1 (Cloudflare Tunnel, tipo `<random>.trycloudflare.com` o subdominio `*.cfargotunnel.com` con cuenta Cloudflare).
 - **Usuario SSH:** actualmente `root` con contraseña. En M1 se crea usuario non-root con sudo + login por clave; se deshabilita login root y password auth.
@@ -124,7 +124,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-27** — Cerrado M0. Cerradas 6 decisiones abiertas con defaults + UTC-4 del usuario. Cambio de estrategia: **sin dominio aún → Cloudflare Tunnel** para exponer la API; Let's Encrypt se difiere hasta que haya dominio. M1 arranca con generación de clave SSH del usuario. — _este commit_
+- **2026-05-28** — M1 iniciado. Clave SSH ed25519 generada en la máquina del usuario (`~/.ssh/id_ed25519`). Datos del VPS registrados: `147.93.6.70`, user `root`, puerto 22. Siguiente: `ssh-copy-id` para autenticación sin contraseña. — _este commit_
+- **2026-05-27** — Cerrado M0. Cerradas 6 decisiones abiertas con defaults + UTC-4 del usuario. Cambio de estrategia: **sin dominio aún → Cloudflare Tunnel** para exponer la API; Let's Encrypt se difiere hasta que haya dominio. M1 arranca con generación de clave SSH del usuario. — `2bb9448`
 - **2026-05-27** — Añadido `CLAUDE.md` como fuente de contexto vivo. Definida disciplina de actualización por commit. — `6fa0050`
 - **2026-05-27** — Plan inicial aprobado por el usuario ("lo veo bien").
 - **2026-05-27** — Commit inicial: `docs/PLAN.md` con arquitectura, roadmap M0–M8, schema Prisma, estructura API, prerrequisitos VPS. — `a3bbf7e`
