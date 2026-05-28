@@ -126,7 +126,7 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-28** — Añadido `vercel.json` en la raíz que limita install/build a `@barberia/web` y sus dependencias workspace (evita instalar prisma/fastify para el deploy del frontend). Configura `outputDirectory: apps/web/.next` para que Vercel encuentre el build. Requiere que en Vercel el **Root Directory** del proyecto sea `./` (raíz del repo), no `apps/web`. — _este commit_
+- **2026-05-28** — `vercel.json` reubicado a `apps/web/vercel.json` (compatible con el setup donde Vercel tiene Root Directory = `apps/web`). Mantiene install/build filtrados a `@barberia/web...` para no traer deps del backend. — _este commit_
 - **2026-05-28** — Scaffold del monorepo completo. Estructura pnpm con `apps/api` (Fastify + Prisma + Zod, schema con User/Barber/Service/WorkingHour/TimeOff/Appointment, Dockerfile multi-stage, healthcheck `/health`), `apps/web` (Next.js 15 + Tailwind v4 con design tokens centralizados en `globals.css @theme` + `theme/tokens.ts` como puente JS, landing con hero/services/footer), `packages/shared` (Zod schemas), `infra/docker-compose.yml` (Postgres 16). — `4b85371`
 - **2026-05-28** — Pivote: el usuario prioriza construcción del producto y aclara que NO desarrolla en local; todo el código vive en GitHub, frontend en Vercel, backend en VPS. Saltamos a M2+M5 en paralelo. M1 pausado con clave SSH ya en `authorized_keys` del VPS.
 - **2026-05-28** — M1 iniciado. Clave SSH ed25519 generada en la máquina del usuario (`~/.ssh/id_ed25519`) y copiada al VPS vía ssh-copy-id. Datos del VPS registrados: `147.93.6.70`, user `root`, puerto 22. — `152ab04`
