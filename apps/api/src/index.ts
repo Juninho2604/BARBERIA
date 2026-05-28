@@ -1,3 +1,4 @@
+import { prisma } from "./db.js";
 import { loadEnv } from "./env.js";
 import { buildServer } from "./server.js";
 
@@ -9,6 +10,7 @@ try {
   await app.listen({ host: env.HOST, port: env.PORT });
 } catch (err) {
   app.log.error(err);
+  await prisma.$disconnect();
   process.exit(1);
 }
 
@@ -16,6 +18,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, async () => {
     app.log.info(`Recibido ${signal}, cerrando servidor…`);
     await app.close();
+    await prisma.$disconnect();
     process.exit(0);
   });
 }

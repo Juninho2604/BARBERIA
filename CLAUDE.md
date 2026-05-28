@@ -15,7 +15,7 @@
 Plataforma integral para una barbería:
 - **Landing pública** + **panel de administración**.
 - **Reservas online** con agenda por barbero, CRUD de servicios y usuarios.
-- **Infra:** VPS del usuario (Docker: Postgres + API Fastify, Nginx + Let's Encrypt en host). Next.js en Vercel.
+- **Infra:** VPS del usuario (Docker: Postgres + API Fastify, Nginx + Let's Encrypt en host). Next.js en Vercel **provisionalmente** — cuando llegue el dominio, el frontend se migra al VPS y Vercel sale de la ecuación (todo mismo origen, sin CORS cross-domain, sin tunnel separado).
 - **Metodología:** pair programming. Yo guío, el usuario ejecuta en su VPS. Nunca empujamos cambios destructivos sin confirmar.
 
 Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
@@ -26,10 +26,11 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 - **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
-- **Hito actual:** **M2 alcanzado** — API Fastify corriendo en el VPS dentro de Docker, Postgres saludable, migraciones automáticas. Healthcheck `/health` accesible en `127.0.0.1:4000` del VPS. Aún no expuesta a internet.
+- **Hito actual:** **M3 en curso** — primera migración Prisma creada (`20260528120000_init`), `PrismaClient` singleton wired en la API, `/health/ready` chequea la DB. Pendiente: auth (register/login/me) y CRUD de servicios/barberos.
+- **M2 cerrado:** API Fastify corriendo en el VPS dentro de Docker, Postgres saludable, migraciones automáticas vía `prisma migrate deploy` en el entrypoint.
 - **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS. Pendiente: hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban).
-- **Exposición de la API:** el usuario decidió **esperar a tener dominio** para montar el tunnel (Named Tunnel directo). Hasta entonces, la API sólo es accesible desde el propio VPS (`127.0.0.1:4000`). Esto bloquea integraciones front↔back en producción, pero no bloquea desarrollo del backend.
-- **Siguiente acción:** GitHub Actions ya activado (secrets añadidos). Arrancamos **M3 backend**: primera migración Prisma + auth (register/login) + CRUD de servicios. En paralelo se puede pulir landing en Vercel.
+- **Exposición de la API:** el usuario decidió **esperar a tener dominio (un par de días)**. Cuando llegue, **Vercel sale**: frontend se migra al VPS, Nginx hace reverse proxy a la API en el mismo origen, Let's Encrypt para HTTPS. Hasta entonces, la API sólo es accesible desde el propio VPS (`127.0.0.1:4000`); desarrollamos backend y se prueba con curl vía SSH.
+- **Siguiente acción:** **M3.2** — auth (register/login/me) con JWT + bcrypt, después CRUD de servicios y barberos. En paralelo se puede pulir landing en Vercel (efímero pero útil para visualizar tokens).
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Bloqueadores:** ninguno.
 
@@ -39,7 +40,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 | M0 — Prerrequisitos VPS/dominio | ✅ Cerrado (sin dominio aún → estrategia Cloudflare Tunnel) |
 | M1 — Provisioning VPS + TLS | ⏸️ Pausado (clave SSH ya instalada en VPS) |
 | M2 — Esqueleto backend (Fastify+Prisma) | ✅ Cerrado (corriendo en el VPS) |
-| M3 — Auth + Servicios + Barberos | Pendiente |
+| M3 — Auth + Servicios + Barberos | En curso (M3.1 ✅ migración inicial + Prisma client) |
 | M4 — Disponibilidad + Reservas | Pendiente |
 | M5 — Next.js + Vercel + design tokens | En curso (en paralelo con M2) |
 | M6 — Flujo público de reserva | Pendiente |
@@ -129,6 +130,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
+- **2026-05-28** — **M3.1 hecho.** Primera migración Prisma generada offline con `prisma migrate diff --from-empty` (no necesitamos una DB local, el SQL se escribe a mano y `migrate deploy` lo aplicará en el VPS al siguiente despliegue). Archivos: `apps/api/prisma/migrations/20260528120000_init/migration.sql` + `migration_lock.toml`. `PrismaClient` singleton en `apps/api/src/db.ts`, instanciado en `index.ts` con shutdown limpio (`$disconnect`). Nuevo endpoint `/health/ready` que hace `SELECT 1` contra Postgres (devuelve 503 si falla) — útil para healthcheck del contenedor y para diagnóstico desde el VPS. Build + typecheck verificados ✅.
+- **2026-05-28** — Decisión: cuando llegue el dominio (~días), **Vercel sale de la ecuación**. Frontend se moverá al VPS, Nginx hará reverse proxy de `/api/*` → API en el mismo origen. Esto elimina CORS cross-domain, evita el tunnel y simplifica secretos (todo en el VPS).
 - **2026-05-28** — **M2 cerrado.** API corriendo en el VPS dentro de Docker. Postgres saludable, migraciones aplicadas (cero hasta ahora — schema sin cambios desde la primera versión), API escuchando en `127.0.0.1:4000` del VPS. Healthcheck `/health` operativo. El fix de Debian funcionó pero requería rebuild sin cache para descartar layers stale.
 - **2026-05-28** — Cambio de imagen base de Alpine a Debian: incluso con `apk add openssl`, Prisma seguía sin detectar libssl en `node:20-alpine`. Migrado a `node:20-bookworm-slim` (Debian) que tiene libssl3 nativa y no requiere debug. `binaryTargets` ajustado a `debian-openssl-3.0.x`. — `148f9ae`
 - **2026-05-28** — Intento fallido de fix Alpine: añadido `apk add --no-cache openssl` y `binaryTargets = linux-musl-openssl-3.0.x` en `schema.prisma`. Prisma seguía con error "failed to detect libssl/openssl version". — `7d1e2e6`
