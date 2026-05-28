@@ -16,7 +16,7 @@ export function Hero() {
         </p>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <a
-            href="#reservar"
+            href="/reservar"
             className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-6 py-3 font-medium text-[color:var(--color-accent-fg)] transition hover:brightness-110"
           >
             Reservar cita
