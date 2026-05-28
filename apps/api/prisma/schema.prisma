@@ -1,0 +1,107 @@
+// Schema inicial — refleja docs/PLAN.md §3.
+// Iteraremos aquí en M3/M4 cuando añadamos lógica de disponibilidad y reservas.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  BARBER
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  // null = cuenta creada por reserva sin registro; se reclama al registrarse
+  passwordHash String?
+  name         String
+  phone        String?
+  role         Role     @default(CLIENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  barberProfile        Barber?
+  appointmentsAsClient Appointment[] @relation("ClientAppointments")
+}
+
+model Barber {
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio      String?
+  photoUrl String?
+  isActive Boolean  @default(true)
+
+  workingHours WorkingHour[]
+  timeOff      TimeOff[]
+  appointments Appointment[]
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationMinutes Int
+  priceCents      Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments Appointment[]
+}
+
+model WorkingHour {
+  id       String @id @default(cuid())
+  barberId String
+  barber   Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  weekday  Int    // 0=domingo … 6=sábado
+  startMin Int    // minutos desde 00:00 (9:00 -> 540)
+  endMin   Int
+
+  @@index([barberId, weekday])
+}
+
+model TimeOff {
+  id       String   @id @default(cuid())
+  barberId String
+  barber   Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  startsAt DateTime
+  endsAt   DateTime
+  reason   String?
+
+  @@index([barberId, startsAt])
+}
+
+model Appointment {
+  id        String            @id @default(cuid())
+  clientId  String
+  client    User              @relation("ClientAppointments", fields: [clientId], references: [id])
+  barberId  String
+  barber    Barber            @relation(fields: [barberId], references: [id])
+  serviceId String
+  service   Service           @relation(fields: [serviceId], references: [id])
+  startsAt  DateTime
+  endsAt    DateTime
+  status    AppointmentStatus @default(PENDING)
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([barberId, startsAt])
+  @@index([clientId])
+}

@@ -26,19 +26,21 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 - **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
-- **Hito actual:** **M1 — Provisioning VPS** (M0 cerrado: prerrequisitos confirmados)
-- **Siguiente acción:** ejecutar `ssh-copy-id root@147.93.6.70` para subir la clave pública al VPS y validar login sin contraseña.
+- **Hito actual:** **M2 + M5 en paralelo** — esqueleto backend (Fastify + Prisma) y frontend (Next.js + Tailwind + design tokens). El usuario priorizó construir producto sobre ops.
+- **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS (`ssh-copy-id` funcionó). Hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban, Cloudflare Tunnel) se retoma cuando haya algo que desplegar.
+- **Siguiente acción:** el usuario conecta el repo de GitHub a Vercel para deploy automático de la landing (`apps/web`).
+- **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Bloqueadores:** ninguno.
 
 ### Progreso por hito
 | Hito | Estado |
 |---|---|
 | M0 — Prerrequisitos VPS/dominio | ✅ Cerrado (sin dominio aún → estrategia Cloudflare Tunnel) |
-| M1 — Provisioning VPS + TLS | En curso |
-| M2 — Esqueleto backend (Fastify+Prisma) | Pendiente |
+| M1 — Provisioning VPS + TLS | ⏸️ Pausado (clave SSH ya instalada en VPS) |
+| M2 — Esqueleto backend (Fastify+Prisma) | En curso |
 | M3 — Auth + Servicios + Barberos | Pendiente |
 | M4 — Disponibilidad + Reservas | Pendiente |
-| M5 — Next.js + Vercel + design tokens | Pendiente |
+| M5 — Next.js + Vercel + design tokens | En curso (en paralelo con M2) |
 | M6 — Flujo público de reserva | Pendiente |
 | M7 — Panel admin | Pendiente |
 | M8 — Backups + monitoring | Pendiente |
@@ -124,7 +126,9 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-28** — M1 iniciado. Clave SSH ed25519 generada en la máquina del usuario (`~/.ssh/id_ed25519`). Datos del VPS registrados: `147.93.6.70`, user `root`, puerto 22. Siguiente: `ssh-copy-id` para autenticación sin contraseña. — _este commit_
+- **2026-05-28** — Scaffold del monorepo completo. Estructura pnpm con `apps/api` (Fastify + Prisma + Zod, schema con User/Barber/Service/WorkingHour/TimeOff/Appointment, Dockerfile multi-stage, healthcheck `/health`), `apps/web` (Next.js 15 + Tailwind v4 con design tokens centralizados en `globals.css @theme` + `theme/tokens.ts` como puente JS, landing con hero/services/footer), `packages/shared` (Zod schemas), `infra/docker-compose.yml` (Postgres 16). Frontend listo para conectar a Vercel. — _este commit_
+- **2026-05-28** — Pivote: el usuario prioriza construcción del producto y aclara que NO desarrolla en local; todo el código vive en GitHub, frontend en Vercel, backend en VPS. Saltamos a M2+M5 en paralelo. M1 pausado con clave SSH ya en `authorized_keys` del VPS. — _este commit_
+- **2026-05-28** — M1 iniciado. Clave SSH ed25519 generada en la máquina del usuario (`~/.ssh/id_ed25519`) y copiada al VPS vía ssh-copy-id. Datos del VPS registrados: `147.93.6.70`, user `root`, puerto 22. — `152ab04`
 - **2026-05-27** — Cerrado M0. Cerradas 6 decisiones abiertas con defaults + UTC-4 del usuario. Cambio de estrategia: **sin dominio aún → Cloudflare Tunnel** para exponer la API; Let's Encrypt se difiere hasta que haya dominio. M1 arranca con generación de clave SSH del usuario. — `2bb9448`
 - **2026-05-27** — Añadido `CLAUDE.md` como fuente de contexto vivo. Definida disciplina de actualización por commit. — `6fa0050`
 - **2026-05-27** — Plan inicial aprobado por el usuario ("lo veo bien").
