@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import sensible from "@fastify/sensible";
@@ -25,7 +25,7 @@ export async function buildServer(env: Env) {
 
   await app.register(healthRoutes, { prefix: "/health" });
 
-  app.setErrorHandler((err, _req, reply) => {
+  app.setErrorHandler((err: FastifyError, _req, reply) => {
     app.log.error(err);
     const statusCode = err.statusCode ?? 500;
     reply.status(statusCode).send({
