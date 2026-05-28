@@ -56,7 +56,7 @@ export function IntroGate({ children }: { children: React.ReactNode }) {
             position: 'fixed',
             inset: 0,
             zIndex: 9998,
-            background: 'radial-gradient(120% 80% at 50% 64%, #1c140f 0%, #0c0908 42%, #050403 100%)',
+            background: '#0F0F0F',
             pointerEvents: 'none',
           }}
         />

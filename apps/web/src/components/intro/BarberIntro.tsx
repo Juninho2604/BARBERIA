@@ -40,7 +40,7 @@ export default function BarberIntro({
     const canvas = canvasRef.current!;
     const root = rootRef.current!;
 
-    const STAR_COLOR = 0xe9e2d2;
+    const STAR_COLOR = 0xececec; // blanco roto (brand)
     const TARGET_HEIGHT = 3.0; // altura del modelo en unidades de escena
     const FLOAT_Y = 1.4; // centro vertical del modelo flotando
 
@@ -109,9 +109,9 @@ export default function BarberIntro({
     const stars = new THREE.Points(starGeo, starMat);
     scene.add(stars);
 
-    // ---------- LUCES ----------
-    scene.add(new THREE.HemisphereLight(0x6f86c9, 0x0a0806, 0.35));
-    const key = new THREE.DirectionalLight(0xfff0db, 2.0);
+    // ---------- LUCES (paleta neutra, brand monocromática) ----------
+    scene.add(new THREE.HemisphereLight(0xcfcfcf, 0x0a0a0a, 0.35));
+    const key = new THREE.DirectionalLight(0xffffff, 2.0);
     key.position.set(5, 8, 6);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -121,13 +121,10 @@ export default function BarberIntro({
     key.shadow.camera.top = 4;
     key.shadow.camera.bottom = -4;
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0x5c79ff, 1.4);
+    const rim = new THREE.DirectionalLight(0xececec, 1.2);
     rim.position.set(-6, 3, -7);
     scene.add(rim);
-    const warm = new THREE.PointLight(0xff7a3c, 0.7, 30);
-    warm.position.set(2, 2, 4);
-    scene.add(warm);
-    scene.add(new THREE.AmbientLight(0x1a1814, 0.45));
+    scene.add(new THREE.AmbientLight(0x1a1a1a, 0.5));
 
     // ---------- INTERACCIÓN ----------
     const TARGET = Math.PI * 2 * unlockTurns;
@@ -315,7 +312,7 @@ export default function BarberIntro({
       ref={rootRef}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'radial-gradient(120% 80% at 50% 64%, #1c140f 0%, #0c0908 42%, #050403 100%)',
+        background: '#0F0F0F',
         transition: 'opacity .7s ease',
         // @ts-expect-error CSS var
         '--ui-op': 1,
@@ -341,7 +338,7 @@ export default function BarberIntro({
             <circle cx="59" cy="59" r="54" fill="none" stroke="rgba(233,226,210,.18)" strokeWidth="2" />
             <circle
               ref={ringRef}
-              cx="59" cy="59" r="54" fill="none" stroke="#ff5a1f" strokeWidth="4"
+              cx="59" cy="59" r="54" fill="none" stroke="#ECECEC" strokeWidth="4"
               strokeLinecap="round" strokeDasharray="339.3" strokeDashoffset="339.3"
               style={{ transition: 'stroke-dashoffset .12s linear' }}
             />

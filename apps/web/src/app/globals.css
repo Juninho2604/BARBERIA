@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Design tokens — fuente única de verdad para la identidad visual.
-   Cambia colores, tipografías o radios aquí y se propaga a toda la app.
+   Brothers Club — design tokens.
+   Paleta monocromática editorial según GUIA_DE_MARCA v4 final.
+   Tema oscuro: grafito de fondo + blanco roto como texto principal.
    ============================================================ */
 @theme {
-  /* Paleta — barbería moderna, fondo oscuro cálido con acento dorado */
-  --color-bg:             hsl(24 12% 6%);
-  --color-surface:        hsl(24 10% 10%);
-  --color-surface-muted:  hsl(24 8% 14%);
-  --color-fg:             hsl(40 30% 96%);
-  --color-fg-muted:       hsl(40 10% 65%);
-  --color-accent:         hsl(36 70% 55%);
-  --color-accent-fg:      hsl(24 25% 8%);
-  --color-border:         hsl(24 8% 20%);
+  /* Paleta */
+  --color-bg:             #0F0F0F;  /* grafito — fondo principal */
+  --color-surface:        #171717;  /* surface ligeramente más clara */
+  --color-surface-muted:  #1F1F1F;  /* cards / inputs */
+  --color-fg:             #ECECEC;  /* blanco roto — texto principal */
+  --color-fg-muted:       #9A9A9A;  /* gris claro — texto secundario */
+  --color-border:         #2A2A2A;  /* divisores tenues */
+  /* No hay color de acento en la guía — CTAs son inversión (blanco→grafito). */
+  --color-accent:         #ECECEC;
+  --color-accent-fg:      #0F0F0F;
 
-  /* Tipografía */
-  --font-sans:    var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+  /* Tipografía — Jost (oficial de marca) */
+  --font-sans:    var(--font-jost), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-jost), system-ui, sans-serif;
 
   /* Radios */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 1rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
 }
 
 /* Base */
@@ -35,6 +37,6 @@ html, body {
 }
 
 ::selection {
-  background-color: var(--color-accent);
-  color: var(--color-accent-fg);
+  background-color: var(--color-fg);
+  color: var(--color-bg);
 }
