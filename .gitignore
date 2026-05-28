@@ -33,3 +33,6 @@ apps/api/prisma/migrations/dev.db*
 
 # docker
 infra/postgres-data/
+
+# backups (se generan en el VPS dentro del propio repo clonado)
+backups/

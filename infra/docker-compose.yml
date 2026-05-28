@@ -49,6 +49,13 @@ services:
     ports:
       # Solo en localhost del VPS — el túnel (cloudflared) o nginx la expone al mundo.
       - "127.0.0.1:4000:4000"
+    healthcheck:
+      # Node 20+ trae fetch nativo, así evitamos depender de curl/wget en la imagen.
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - internal
 
