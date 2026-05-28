@@ -153,6 +153,27 @@ export const api = {
     if (useMock()) return mockApi.deleteBarber(id, token);
     return http<void>(`/barbers/${id}`, { method: "DELETE", token });
   },
+  async getBarber(id: string): Promise<BarberDto | null> {
+    if (useMock()) return mockApi.getBarber(id);
+    try {
+      return await http<BarberDto>(`/barbers/${id}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  },
+  async setBarberWorkingHours(
+    id: string,
+    workingHours: { weekday: number; startMin: number; endMin: number }[],
+    token: string,
+  ): Promise<BarberDto> {
+    if (useMock()) return mockApi.setBarberWorkingHours(id, workingHours, token);
+    return http<BarberDto>(`/barbers/${id}/working-hours`, {
+      method: "PUT",
+      body: JSON.stringify({ workingHours }),
+      token,
+    });
+  },
 
   async adminListAppointments(token: string): Promise<AppointmentDto[]> {
     if (useMock()) return mockApi.adminListAppointments(token);

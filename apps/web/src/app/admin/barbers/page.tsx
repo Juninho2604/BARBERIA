@@ -106,15 +106,23 @@ export default function AdminBarbers() {
                   <p className="text-sm text-[color:var(--color-fg-muted)]">{b.email}</p>
                   {b.bio && <p className="mt-2 text-sm">{b.bio}</p>}
                 </div>
-                {b.isActive && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(b.id)}
-                    className="text-xs text-[color:var(--color-fg-muted)] hover:text-red-500"
+                <div className="flex flex-col items-end gap-2 text-xs">
+                  <a
+                    href={`/admin/barbers/${b.id}`}
+                    className="text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
                   >
-                    Desactivar
-                  </button>
-                )}
+                    Editar
+                  </a>
+                  {b.isActive && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(b.id)}
+                      className="text-[color:var(--color-fg-muted)] hover:text-red-500"
+                    >
+                      Desactivar
+                    </button>
+                  )}
+                </div>
               </div>
               {b.workingHours && b.workingHours.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">

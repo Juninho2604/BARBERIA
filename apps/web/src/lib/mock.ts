@@ -307,6 +307,26 @@ export const mockApi = {
     if (!b) throw new ApiError(404, "Barbero no encontrado");
     b.isActive = false;
   },
+  async getBarber(id: string): Promise<BarberDto | null> {
+    return barbers.find((b) => b.id === id) ?? null;
+  },
+  async setBarberWorkingHours(
+    id: string,
+    workingHours: { weekday: number; startMin: number; endMin: number }[],
+    token: string,
+  ): Promise<BarberDto> {
+    assertAdminToken(token);
+    const b = barbers.find((x) => x.id === id);
+    if (!b) throw new ApiError(404, "Barbero no encontrado");
+    b.workingHours = workingHours.map((w, i) => ({
+      id: `wh-${id}-${i}-${Date.now()}`,
+      barberId: id,
+      weekday: w.weekday,
+      startMin: w.startMin,
+      endMin: w.endMin,
+    }));
+    return b;
+  },
 
   // --- admin: appointments ---
   async adminListAppointments(token: string): Promise<AppointmentDto[]> {

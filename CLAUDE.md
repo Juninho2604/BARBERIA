@@ -44,7 +44,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 | M4 — Disponibilidad + Reservas | ✅ Cerrado |
 | M5 — Next.js + Vercel + design tokens | ✅ Cerrado |
 | M6 — Flujo público de reserva | En curso (M6.1 ✅ flujo de 4 pasos con mocks; pendiente conectar API real cuando llegue el dominio) |
-| M7 — Panel admin | En curso (M7.1 ✅ login + layout + CRUD servicios/barberos + listado citas; pendiente edición fina de horarios y time-off) |
+| M7 — Panel admin | En curso (M7.1 ✅ login + CRUD básico, M7.2 ✅ editor de horario semanal + TimeOff; pendiente: edición de servicio existente) |
 | M8 — Backups + monitoring | Pendiente |
 
 ---
@@ -130,6 +130,7 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
+- **2026-05-28** — **M7.2 / editor por barbero.** Nueva ruta `/admin/barbers/[id]` con dos secciones: (1) editor de horario semanal — checkbox por día + inputs `time` start/end; valida `endMin > startMin` por día; guarda con `PUT /barbers/:id/working-hours`. (2) TimeOff list+create+delete: lista permisos futuros (filtro `endsAt > now`); form con `datetime-local` para inicio/fin + motivo opcional; valida `endsAt > startsAt`. API client extendido con `getBarber` y `setBarberWorkingHours`; mocks análogos. Link "Editar" añadido en la lista de `/admin/barbers`. Build ✅.
 - **2026-05-28** — **M7.1 / panel admin (scaffold).** Login en `/login`, panel en `/admin` (resumen, servicios, barberos, citas). Auth en cliente con `localStorage` (token + user en JSON, helpers en `lib/auth-client.ts`); `AdminLayout` verifica role=ADMIN llamando `/auth/me` y redirige a `/login` si falla. CRUD servicios: tabla + alta inline + soft-delete. Barberos: tarjetas con bio y horarios; alta crea User+Barber con horario L–V 9–17 por defecto. Citas: tabla ordenada por fecha con cancelar inline. Cliente API extendido con todos los endpoints admin (`adminListServices`, `createService`, `updateService`, `deleteService`, `adminListBarbers`, `createBarber`, `deleteBarber`, `adminListAppointments`, `cancelAppointment`, time-off). Mocks reflejan el mismo shape — en demo, login acepta cualquier credencial y devuelve role ADMIN; los cambios persisten en memoria del navegador. Fix lateral: `useSearchParams` en `/login` requería Suspense boundary en Next 15 (lo envolví). Build verificado ✅.
 - **2026-05-28** — **M6.1 / flujo de reserva en frontend.** Nueva ruta `/reservar` con componente cliente `BookingFlow` (4 pasos: servicio → barbero → fecha+slot → datos contacto → confirmación). API client tipado (`apps/web/src/lib/api.ts`) consume `@barberia/shared` para tipos; si `NEXT_PUBLIC_API_URL` está vacío usa `lib/mock.ts` (cataálogo + barberos + slots generados al vuelo). Esto deja la UI visible en Vercel ahora y se vuelve real cuando llegue el dominio + variable de entorno. La landing (`/`) también consume el catálogo vía API (con fallback). Build verificado ✅.
 - **2026-05-28** — **M4.2.** TimeOff admin: `GET /barbers/:id/time-off` (público para verificación), `POST /barbers/:id/time-off` y `DELETE /time-off/:id` (ADMIN). Schema `CreateTimeOff` con refine `endsAt > startsAt`. Schemas en `packages/shared`.
