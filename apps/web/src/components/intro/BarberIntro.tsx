@@ -331,26 +331,26 @@ export default function BarberIntro({
       <div
         style={{
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 18,
+          alignItems: 'center', justifyContent: 'flex-end', gap: 10, paddingBottom: 54,
           pointerEvents: 'none', opacity: 'var(--ui-op)' as unknown as number, transition: 'opacity .5s ease',
           fontFamily: "'JetBrains Mono', ui-monospace, monospace",
         }}
       >
-        <div style={{ position: 'relative', width: 118, height: 118, display: 'grid', placeItems: 'center' }}>
-          <svg width="118" height="118" viewBox="0 0 118 118" style={{ transform: 'rotate(-90deg)' }}>
+        <div style={{ position: 'relative', width: 64, height: 64, display: 'grid', placeItems: 'center' }}>
+          <svg width="64" height="64" viewBox="0 0 118 118" style={{ transform: 'rotate(-90deg)' }}>
             <circle cx="59" cy="59" r="54" fill="none" stroke="rgba(233,226,210,.18)" strokeWidth="2" />
             <circle
               ref={ringRef}
-              cx="59" cy="59" r="54" fill="none" stroke="#ff5a1f" strokeWidth="3"
+              cx="59" cy="59" r="54" fill="none" stroke="#ff5a1f" strokeWidth="4"
               strokeLinecap="round" strokeDasharray="339.3" strokeDashoffset="339.3"
               style={{ transition: 'stroke-dashoffset .12s linear' }}
             />
           </svg>
-          <span style={{ position: 'absolute', fontSize: 22, color: '#e9e2d2', animation: 'barber-spin 3.4s linear infinite' }}>↻</span>
+          <span style={{ position: 'absolute', fontSize: 14, color: '#e9e2d2', animation: 'barber-spin 3.4s linear infinite' }}>↻</span>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div ref={labelRef} style={{ fontSize: 11, letterSpacing: '.26em', textTransform: 'uppercase', color: '#e9e2d2' }}>Cargando</div>
-          <div ref={subRef} style={{ marginTop: 8, fontSize: 9.5, letterSpacing: '.22em', textTransform: 'uppercase', color: '#9c968a' }}>0%</div>
+          <div ref={labelRef} style={{ fontSize: 10, letterSpacing: '.26em', textTransform: 'uppercase', color: '#e9e2d2' }}>Cargando</div>
+          <div ref={subRef} style={{ marginTop: 6, fontSize: 9, letterSpacing: '.22em', textTransform: 'uppercase', color: '#9c968a' }}>0%</div>
         </div>
       </div>
 
