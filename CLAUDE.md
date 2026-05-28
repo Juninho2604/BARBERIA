@@ -26,9 +26,9 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 - **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
-- **Hito actual:** **M2 + M5 en paralelo** — esqueleto backend (Fastify + Prisma) y frontend (Next.js + Tailwind + design tokens). El usuario priorizó construir producto sobre ops.
-- **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS (`ssh-copy-id` funcionó). Hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban, Cloudflare Tunnel) se retoma cuando haya algo que desplegar.
-- **Siguiente acción:** el usuario corre `vps-bootstrap.sh` en el VPS (instala Docker, clona repo, genera `.env` con secretos aleatorios, crea SSH key dedicada para GitHub Actions, hace primer build). Luego añade 4 secrets en GitHub (VPS_HOST, VPS_USER, VPS_PORT, VPS_SSH_KEY) y todos los siguientes pushes despliegan solos.
+- **Hito actual:** **M2 alcanzado** — API Fastify corriendo en el VPS dentro de Docker, Postgres saludable, migraciones automáticas. Healthcheck `/health` accesible en `127.0.0.1:4000` del VPS. Aún no expuesta a internet.
+- **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS. Pendiente: hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban, **Cloudflare Tunnel para exponer la API**).
+- **Siguiente acción:** (a) añadir 4 secrets en GitHub (`VPS_HOST/USER/PORT/SSH_KEY`) para activar el deploy automático; (b) instalar Cloudflare Tunnel para que el frontend de Vercel pueda hablar con la API.
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Bloqueadores:** ninguno.
 
@@ -37,7 +37,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 |---|---|
 | M0 — Prerrequisitos VPS/dominio | ✅ Cerrado (sin dominio aún → estrategia Cloudflare Tunnel) |
 | M1 — Provisioning VPS + TLS | ⏸️ Pausado (clave SSH ya instalada en VPS) |
-| M2 — Esqueleto backend (Fastify+Prisma) | En curso |
+| M2 — Esqueleto backend (Fastify+Prisma) | ✅ Cerrado (corriendo en el VPS) |
 | M3 — Auth + Servicios + Barberos | Pendiente |
 | M4 — Disponibilidad + Reservas | Pendiente |
 | M5 — Next.js + Vercel + design tokens | En curso (en paralelo con M2) |
@@ -128,7 +128,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-28** — Cambio de imagen base de Alpine a Debian: incluso con `apk add openssl`, Prisma seguía sin detectar libssl en `node:20-alpine`. Migrado a `node:20-bookworm-slim` (Debian) que tiene libssl3 nativa y no requiere debug. `binaryTargets` ajustado a `debian-openssl-3.0.x`. Imagen final ~30 MB más grande pero Prisma deja de pelearse con el sistema. — _este commit_
+- **2026-05-28** — **M2 cerrado.** API corriendo en el VPS dentro de Docker. Postgres saludable, migraciones aplicadas (cero hasta ahora — schema sin cambios desde la primera versión), API escuchando en `127.0.0.1:4000` del VPS. Healthcheck `/health` operativo. El fix de Debian funcionó pero requería rebuild sin cache para descartar layers stale.
+- **2026-05-28** — Cambio de imagen base de Alpine a Debian: incluso con `apk add openssl`, Prisma seguía sin detectar libssl en `node:20-alpine`. Migrado a `node:20-bookworm-slim` (Debian) que tiene libssl3 nativa y no requiere debug. `binaryTargets` ajustado a `debian-openssl-3.0.x`. — `148f9ae`
 - **2026-05-28** — Intento fallido de fix Alpine: añadido `apk add --no-cache openssl` y `binaryTargets = linux-musl-openssl-3.0.x` en `schema.prisma`. Prisma seguía con error "failed to detect libssl/openssl version". — `7d1e2e6`
 - **2026-05-28** — Fix build de la API: `server.ts` tipa `err` como `FastifyError` en el error handler (TS strict lo veía como `unknown`). Dockerfile cambia `pnpm --filter @barberia/api prisma generate` por `pnpm --filter @barberia/api exec prisma generate` (no había script "prisma" en package.json). Build verificado ✅. — `0f5573b`
 - **2026-05-28** — Pipeline GitHub → VPS para el backend. Añadido `.github/workflows/deploy-api.yml` (SSH al VPS con `appleboy/ssh-action`, `git reset --hard` + `docker compose up -d --build`, healthcheck `/health`). `infra/scripts/vps-bootstrap.sh` automatiza instalación de Docker, clone, generación de `.env` con secretos aleatorios y creación de SSH key dedicada. `infra/docker-compose.yml` actualizado con servicio `api` + interpolación desde `.env` (postgres ya no expone puerto al host, solo red interna). `apps/api/Dockerfile` corre `prisma migrate deploy` antes de arrancar (vía `docker-entrypoint.sh`). — `67ac315`
