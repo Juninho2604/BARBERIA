@@ -2,6 +2,7 @@
 # Se ejecuta desde la raíz del monorepo: docker build -f apps/api/Dockerfile .
 
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl
 RUN corepack enable
 WORKDIR /app
 
