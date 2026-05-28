@@ -1,8 +1,11 @@
 # Multi-stage build para reducir tamaño de imagen.
 # Se ejecuta desde la raíz del monorepo: docker build -f apps/api/Dockerfile .
 
-FROM node:20-alpine AS base
-RUN apk add --no-cache openssl
+FROM node:20-bookworm-slim AS base
+# openssl + ca-certificates: Prisma necesita libssl3 explícita en bookworm-slim.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /app
 

@@ -4,8 +4,8 @@
 generator client {
   provider      = "prisma-client-js"
   // native = host del build local
-  // linux-musl-openssl-3.0.x = Alpine 3.19+ (la imagen node:20-alpine del Dockerfile)
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  // debian-openssl-3.0.x = Debian Bookworm (la imagen node:20-bookworm-slim del Dockerfile)
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
