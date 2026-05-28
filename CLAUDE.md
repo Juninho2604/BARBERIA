@@ -126,7 +126,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
-- **2026-05-28** — `apps/web/package.json`: añadido `packageManager: pnpm@9.12.0` y `engines.node: >=20` para que Vercel use pnpm moderno vía corepack (las versiones <8.15 tienen un bug `ERR_INVALID_THIS` con el fetch de Node que rompía installs). Subidas deps a estables: React 19, Tailwind 4, @types/react 19. — _este commit_
+- **2026-05-28** — Commiteado `pnpm-lock.yaml` y cambiado vercel install a `--frozen-lockfile`. El lockfile evita la fase de fetch de metadata del registry, que era donde el bug `ERR_INVALID_THIS` de pnpm/undici (versión vieja de Node en Vercel) hacía fallar el deploy. — _este commit_
+- **2026-05-28** — `apps/web/package.json`: añadido `packageManager: pnpm@9.12.0` y `engines.node: >=20`. Subidas deps a estables: React 19, Tailwind 4, @types/react 19. — `858347c`
 - **2026-05-28** — `vercel.json` reubicado a `apps/web/vercel.json` (compatible con el setup donde Vercel tiene Root Directory = `apps/web`). Mantiene install/build filtrados a `@barberia/web...` para no traer deps del backend. — `5c3b812`
 - **2026-05-28** — Scaffold del monorepo completo. Estructura pnpm con `apps/api` (Fastify + Prisma + Zod, schema con User/Barber/Service/WorkingHour/TimeOff/Appointment, Dockerfile multi-stage, healthcheck `/health`), `apps/web` (Next.js 15 + Tailwind v4 con design tokens centralizados en `globals.css @theme` + `theme/tokens.ts` como puente JS, landing con hero/services/footer), `packages/shared` (Zod schemas), `infra/docker-compose.yml` (Postgres 16). — `4b85371`
 - **2026-05-28** — Pivote: el usuario prioriza construcción del producto y aclara que NO desarrolla en local; todo el código vive en GitHub, frontend en Vercel, backend en VPS. Saltamos a M2+M5 en paralelo. M1 pausado con clave SSH ya en `authorized_keys` del VPS.
