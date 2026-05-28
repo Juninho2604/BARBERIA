@@ -7,12 +7,23 @@
 
 import type {
   AppointmentDto,
+  AuthSessionDto,
+  AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
   CreateAppointmentInputDto,
+  CreateBarberInputDto,
+  CreateServiceInputDto,
+  CreateTimeOffInputDto,
+  LoginInputDto,
   ServiceDto,
+  TimeOffDto,
+  UpdateServiceInputDto,
 } from "./types";
+import { ApiError } from "./api-error";
 import { mockApi } from "./mock";
+
+export { ApiError };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
@@ -20,12 +31,18 @@ function useMock() {
   return !API_URL;
 }
 
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
+interface HttpOptions extends RequestInit {
+  token?: string;
+}
+
+async function http<T>(path: string, options: HttpOptions = {}): Promise<T> {
+  const { token, headers, ...rest } = options;
   const res = await fetch(`${API_URL}${path}`, {
-    ...init,
+    ...rest,
     headers: {
       "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(headers ?? {}),
     },
     cache: "no-store",
   });
@@ -42,15 +59,10 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
-export class ApiError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
-
 export const api = {
   isMock: useMock,
+
+  // --- públicos ---
   async listServices(): Promise<ServiceDto[]> {
     if (useMock()) return mockApi.listServices();
     return http<ServiceDto[]>("/services");
@@ -72,11 +84,106 @@ export const api = {
   },
   async createAppointment(
     input: CreateAppointmentInputDto,
+    token?: string,
   ): Promise<AppointmentDto> {
     if (useMock()) return mockApi.createAppointment(input);
     return http<AppointmentDto>("/appointments", {
       method: "POST",
       body: JSON.stringify(input),
+      token,
     });
+  },
+
+  // --- auth ---
+  async login(input: LoginInputDto): Promise<AuthSessionDto> {
+    if (useMock()) return mockApi.login(input);
+    return http<AuthSessionDto>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+  async me(token: string): Promise<AuthUserDto> {
+    if (useMock()) return mockApi.me(token);
+    return http<AuthUserDto>("/auth/me", { token });
+  },
+
+  // --- admin ---
+  async adminListServices(token: string): Promise<ServiceDto[]> {
+    if (useMock()) return mockApi.adminListServices(token);
+    return http<ServiceDto[]>("/services?includeInactive=true", { token });
+  },
+  async createService(input: CreateServiceInputDto, token: string): Promise<ServiceDto> {
+    if (useMock()) return mockApi.createService(input, token);
+    return http<ServiceDto>("/services", {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async updateService(
+    id: string,
+    input: UpdateServiceInputDto,
+    token: string,
+  ): Promise<ServiceDto> {
+    if (useMock()) return mockApi.updateService(id, input, token);
+    return http<ServiceDto>(`/services/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async deleteService(id: string, token: string): Promise<void> {
+    if (useMock()) return mockApi.deleteService(id, token);
+    return http<void>(`/services/${id}`, { method: "DELETE", token });
+  },
+
+  async adminListBarbers(token: string): Promise<BarberDto[]> {
+    if (useMock()) return mockApi.adminListBarbers(token);
+    return http<BarberDto[]>("/barbers?includeInactive=true", { token });
+  },
+  async createBarber(input: CreateBarberInputDto, token: string): Promise<BarberDto> {
+    if (useMock()) return mockApi.createBarber(input, token);
+    return http<BarberDto>("/barbers", {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async deleteBarber(id: string, token: string): Promise<void> {
+    if (useMock()) return mockApi.deleteBarber(id, token);
+    return http<void>(`/barbers/${id}`, { method: "DELETE", token });
+  },
+
+  async adminListAppointments(token: string): Promise<AppointmentDto[]> {
+    if (useMock()) return mockApi.adminListAppointments(token);
+    return http<AppointmentDto[]>("/appointments", { token });
+  },
+  async cancelAppointment(id: string, token: string): Promise<AppointmentDto> {
+    if (useMock()) return mockApi.cancelAppointment(id, token);
+    return http<AppointmentDto>(`/appointments/${id}/cancel`, {
+      method: "PATCH",
+      token,
+    });
+  },
+
+  async listTimeOff(barberId: string): Promise<TimeOffDto[]> {
+    if (useMock()) return mockApi.listTimeOff(barberId);
+    return http<TimeOffDto[]>(`/barbers/${barberId}/time-off`);
+  },
+  async createTimeOff(
+    barberId: string,
+    input: CreateTimeOffInputDto,
+    token: string,
+  ): Promise<TimeOffDto> {
+    if (useMock()) return mockApi.createTimeOff(barberId, input, token);
+    return http<TimeOffDto>(`/barbers/${barberId}/time-off`, {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async deleteTimeOff(id: string, token: string): Promise<void> {
+    if (useMock()) return mockApi.deleteTimeOff(id, token);
+    return http<void>(`/time-off/${id}`, { method: "DELETE", token });
   },
 };
