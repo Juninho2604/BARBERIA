@@ -10,6 +10,8 @@ import {
 import { type Env } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
+import { servicesRoutes } from "./routes/services.js";
+import { barbersRoutes } from "./routes/barbers.js";
 import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
@@ -37,6 +39,8 @@ export async function buildServer(env: Env) {
 
   await app.register(healthRoutes, { prefix: "/health" });
   await app.register(authRoutes(env, guards), { prefix: "/auth" });
+  await app.register(servicesRoutes(guards), { prefix: "/services" });
+  await app.register(barbersRoutes(guards), { prefix: "/barbers" });
 
   app.setErrorHandler((err: FastifyError, _req, reply) => {
     if (hasZodFastifySchemaValidationErrors(err)) {
