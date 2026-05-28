@@ -3,18 +3,19 @@ import Image from "next/image";
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-6xl px-6 pt-24 pb-32 sm:pt-32 sm:pb-40">
-        {/* Logo horizontal blanco sobre grafito (versión inverso de la guía). */}
+      <div className="mx-auto max-w-6xl px-6 pt-16 pb-32 sm:pt-24 sm:pb-40">
+        {/* Logo horizontal blanco sobre grafito (versión inverso de la guía).
+            Llena el ancho del hero para que respire como wordmark editorial. */}
         <Image
           src="/brand/logo-combinado-inverso.svg"
           alt="Brothers Club Barbershop · since 2026"
           width={1125}
           height={411}
           priority
-          className="h-16 w-auto sm:h-20"
+          className="mx-auto block h-auto w-full max-w-4xl"
         />
 
-        <h1 className="mt-12 max-w-3xl text-balance text-5xl font-light leading-[1.05] tracking-tight sm:text-7xl">
+        <h1 className="mt-16 max-w-3xl text-balance text-5xl font-light leading-[1.05] tracking-tight sm:text-7xl">
           Tu corte,
           <br />
           a tu hora.
