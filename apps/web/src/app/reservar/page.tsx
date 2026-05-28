@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 import { BookingFlow } from "@/components/booking/flow";
 
 export const metadata = {
-  title: "Reservar — Barbería",
+  title: "Reservar — Brothers Club Barbershop",
 };
 
 export default async function ReservarPage() {
@@ -12,18 +12,21 @@ export default async function ReservarPage() {
   ]);
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-3xl px-6 py-16">
+    <main className="min-h-screen bg-[color:var(--color-bg)]">
+      <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
         <a
           href="/"
-          className="text-sm text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
+          className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
         >
           ← Volver
         </a>
-        <h1 className="mt-6 font-[family-name:var(--font-display)] text-4xl sm:text-5xl">
+        <p className="mt-10 text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
+          — Reserva —
+        </p>
+        <h1 className="mt-4 text-4xl font-light tracking-tight sm:text-5xl">
           Reservar cita
         </h1>
-        <p className="mt-3 text-[color:var(--color-fg-muted)]">
+        <p className="mt-4 max-w-xl text-[color:var(--color-fg-muted)]">
           Elige servicio, barbero y horario. Sin cuenta necesaria.
         </p>
 

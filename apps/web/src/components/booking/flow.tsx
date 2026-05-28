@@ -17,7 +17,16 @@ interface Props {
 }
 
 function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `$${(cents / 100).toFixed(0)}`;
+}
+
+function formatDuration(min: number) {
+  if (min >= 60) {
+    const h = Math.floor(min / 60);
+    const rest = min % 60;
+    return rest === 0 ? `${h} h` : `${h} h ${rest} min`;
+  }
+  return `${min} min`;
 }
 
 function formatLocalTime(iso: string, tz: string) {
@@ -114,10 +123,10 @@ export function BookingFlow({ services, barbers }: Props) {
   }
 
   return (
-    <div className="mt-10">
+    <div className="mt-12">
       {isMock && step !== "done" && (
-        <p className="mb-6 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-fg-muted)]">
-          Modo demo — los datos son de prueba.
+        <p className="mb-8 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-xs uppercase tracking-[0.18em] text-[color:var(--color-fg-muted)]">
+          Modo demo · datos de prueba
         </p>
       )}
 
@@ -125,7 +134,7 @@ export function BookingFlow({ services, barbers }: Props) {
 
       {step === "service" && (
         <StepShell title="¿Qué te haces?">
-          <ul className="grid gap-3">
+          <ul className="divide-y divide-[color:var(--color-border)] border-y border-[color:var(--color-border)]">
             {services.map((s) => (
               <li key={s.id}>
                 <button
@@ -134,17 +143,17 @@ export function BookingFlow({ services, barbers }: Props) {
                     setService(s);
                     setStep("barber");
                   }}
-                  className="flex w-full items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5 text-left transition hover:border-[color:var(--color-accent)]"
+                  className="group flex w-full items-baseline justify-between gap-6 py-5 text-left transition hover:opacity-80"
                 >
                   <div>
-                    <p className="font-medium">{s.name}</p>
+                    <p className="text-lg font-normal text-[color:var(--color-fg)]">{s.name}</p>
                     <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
-                      {s.durationMinutes} min
+                      {formatPrice(s.priceCents)} · {formatDuration(s.durationMinutes)}
                     </p>
                   </div>
-                  <p className="font-[family-name:var(--font-display)] text-xl text-[color:var(--color-accent)]">
-                    {formatPrice(s.priceCents)}
-                  </p>
+                  <span className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] group-hover:text-[color:var(--color-fg)]">
+                    Elegir →
+                  </span>
                 </button>
               </li>
             ))}
@@ -155,10 +164,10 @@ export function BookingFlow({ services, barbers }: Props) {
       {step === "barber" && service && (
         <StepShell
           title="¿Con quién?"
-          summary={`${service.name} · ${service.durationMinutes} min`}
+          summary={`${service.name} · ${formatDuration(service.durationMinutes)}`}
           onBack={() => setStep("service")}
         >
-          <ul className="grid gap-3">
+          <ul className="divide-y divide-[color:var(--color-border)] border-y border-[color:var(--color-border)]">
             {barbers.map((b) => (
               <li key={b.id}>
                 <button
@@ -167,17 +176,17 @@ export function BookingFlow({ services, barbers }: Props) {
                     setBarber(b);
                     setStep("datetime");
                   }}
-                  className="flex w-full items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5 text-left transition hover:border-[color:var(--color-accent)]"
+                  className="group flex w-full items-baseline justify-between gap-6 py-5 text-left transition hover:opacity-80"
                 >
                   <div>
-                    <p className="font-medium">{b.name}</p>
+                    <p className="text-lg font-normal text-[color:var(--color-fg)]">{b.name}</p>
                     {b.bio && (
-                      <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
-                        {b.bio}
-                      </p>
+                      <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">{b.bio}</p>
                     )}
                   </div>
-                  <span className="text-[color:var(--color-fg-muted)]">→</span>
+                  <span className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] group-hover:text-[color:var(--color-fg)]">
+                    Elegir →
+                  </span>
                 </button>
               </li>
             ))}
@@ -191,12 +200,9 @@ export function BookingFlow({ services, barbers }: Props) {
           summary={`${service.name} con ${barber.name}`}
           onBack={() => setStep("barber")}
         >
-          {submitError && (
-            <p className="mb-4 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
-              {submitError}
-            </p>
-          )}
-          <div className="mb-6 flex flex-wrap gap-2">
+          {submitError && <Notice>{submitError}</Notice>}
+
+          <div className="mb-8 flex flex-wrap gap-2">
             {upcomingDates.map((d) => {
               const selected = d === date;
               return (
@@ -204,10 +210,10 @@ export function BookingFlow({ services, barbers }: Props) {
                   key={d}
                   type="button"
                   onClick={() => setDate(d)}
-                  className={`rounded-[var(--radius-md)] border px-3 py-2 text-sm transition ${
+                  className={`rounded-[var(--radius-md)] border px-3 py-2 text-xs uppercase tracking-[0.16em] transition ${
                     selected
-                      ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent)] text-[color:var(--color-accent-fg)]"
-                      : "border-[color:var(--color-border)] bg-[color:var(--color-surface)] hover:border-[color:var(--color-accent)]"
+                      ? "border-[color:var(--color-fg)] bg-[color:var(--color-fg)] text-[color:var(--color-bg)]"
+                      : "border-[color:var(--color-border)] bg-transparent text-[color:var(--color-fg-muted)] hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
                   }`}
                 >
                   {new Date(`${d}T12:00:00Z`).toLocaleDateString("es-ES", {
@@ -221,7 +227,9 @@ export function BookingFlow({ services, barbers }: Props) {
           </div>
 
           {loadingSlots ? (
-            <p className="text-[color:var(--color-fg-muted)]">Buscando horarios…</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+              Buscando horarios…
+            </p>
           ) : !availability || availability.slots.length === 0 ? (
             <p className="text-[color:var(--color-fg-muted)]">
               No hay horarios disponibles ese día. Prueba otra fecha.
@@ -236,7 +244,7 @@ export function BookingFlow({ services, barbers }: Props) {
                     setSlot(s);
                     setStep("contact");
                   }}
-                  className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-sm transition hover:border-[color:var(--color-accent)]"
+                  className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-transparent px-3 py-2 text-sm transition hover:border-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-surface)]"
                 >
                   {formatLocalTime(s.startsAt, availability.tz)}
                 </button>
@@ -253,7 +261,7 @@ export function BookingFlow({ services, barbers }: Props) {
           onBack={() => setStep("datetime")}
         >
           <form
-            className="grid gap-4"
+            className="grid gap-5"
             onSubmit={(e) => {
               e.preventDefault();
               submit();
@@ -265,7 +273,7 @@ export function BookingFlow({ services, barbers }: Props) {
                 minLength={2}
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 outline-none focus:border-[color:var(--color-accent)]"
+                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
               />
             </Field>
             <Field label="Email">
@@ -274,7 +282,7 @@ export function BookingFlow({ services, barbers }: Props) {
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 outline-none focus:border-[color:var(--color-accent)]"
+                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
               />
             </Field>
             <Field label="Teléfono">
@@ -283,20 +291,16 @@ export function BookingFlow({ services, barbers }: Props) {
                 minLength={6}
                 value={guestPhone}
                 onChange={(e) => setGuestPhone(e.target.value)}
-                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 outline-none focus:border-[color:var(--color-accent)]"
+                className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
               />
             </Field>
 
-            {submitError && (
-              <p className="rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
-                {submitError}
-              </p>
-            )}
+            {submitError && <Notice>{submitError}</Notice>}
 
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-6 py-3 font-medium text-[color:var(--color-accent-fg)] transition hover:brightness-110 disabled:opacity-50"
+              className="mt-2 inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-fg)] px-6 py-3 text-sm font-medium uppercase tracking-[0.18em] text-[color:var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? "Reservando…" : "Confirmar reserva"}
             </button>
@@ -305,14 +309,14 @@ export function BookingFlow({ services, barbers }: Props) {
       )}
 
       {step === "done" && confirmed && (
-        <div className="mt-8 rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8">
-          <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--color-accent)]">
-            Reserva confirmada
+        <div className="mt-10 border-y border-[color:var(--color-border)] py-12">
+          <p className="text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
+            — Reserva confirmada —
           </p>
-          <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl">
-            Te esperamos
+          <h2 className="mt-4 text-3xl font-light tracking-tight sm:text-4xl">
+            Te esperamos.
           </h2>
-          <dl className="mt-6 grid gap-3 text-[color:var(--color-fg-muted)]">
+          <dl className="mt-10 grid gap-3 text-[color:var(--color-fg-muted)]">
             <Row label="Servicio" value={confirmed.service?.name ?? ""} />
             <Row label="Barbero" value={confirmed.barber?.name ?? ""} />
             <Row
@@ -322,7 +326,7 @@ export function BookingFlow({ services, barbers }: Props) {
           </dl>
           <a
             href="/"
-            className="mt-8 inline-block text-sm text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
+            className="mt-10 inline-block text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
           >
             ← Volver al inicio
           </a>
@@ -342,14 +346,14 @@ function ProgressBar({ step }: { step: Step }) {
   const order = ["service", "barber", "datetime", "contact", "done"] as const;
   const currentIndex = order.indexOf(step);
   return (
-    <ol className="mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[color:var(--color-fg-muted)]">
-      {steps.map((s, i) => {
+    <ol className="mb-10 flex flex-wrap items-center gap-3 text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+      {steps.map((s) => {
         const active = order.indexOf(s.id) <= currentIndex;
         return (
           <li key={s.id} className="flex items-center gap-2">
             <span
-              className={`h-1.5 w-6 rounded-full ${
-                active ? "bg-[color:var(--color-accent)]" : "bg-[color:var(--color-border)]"
+              className={`h-px w-8 transition ${
+                active ? "bg-[color:var(--color-fg)]" : "bg-[color:var(--color-border)]"
               }`}
             />
             <span className={active ? "text-[color:var(--color-fg)]" : ""}>{s.label}</span>
@@ -373,22 +377,22 @@ function StepShell({
 }) {
   return (
     <section className="mt-2">
-      <div className="flex items-baseline justify-between">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl">{title}</h2>
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-2xl font-light tracking-tight sm:text-3xl">{title}</h2>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="text-sm text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
+            className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
           >
             ← Cambiar
           </button>
         )}
       </div>
       {summary && (
-        <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">{summary}</p>
+        <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">{summary}</p>
       )}
-      <div className="mt-6">{children}</div>
+      <div className="mt-8">{children}</div>
     </section>
   );
 }
@@ -396,7 +400,9 @@ function StepShell({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm text-[color:var(--color-fg-muted)]">{label}</span>
+      <span className="mb-2 block text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -404,9 +410,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-[color:var(--color-border)] pb-2">
-      <dt>{label}</dt>
-      <dd className="text-[color:var(--color-fg)]">{value}</dd>
+    <div className="flex justify-between border-b border-[color:var(--color-border)] py-3">
+      <dt className="text-xs uppercase tracking-[0.22em]">{label}</dt>
+      <dd className="text-right text-[color:var(--color-fg)]">{value}</dd>
     </div>
+  );
+}
+
+function Notice({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-4 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-fg)]">
+      {children}
+    </p>
   );
 }
