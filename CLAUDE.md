@@ -12,7 +12,17 @@
 
 ## 1. Resumen del proyecto
 
-Plataforma integral para una barbería:
+Plataforma integral para una barbería — cliente: **Brothers Club Barbershop** (Florida, US), since 2026.
+
+Identidad (de la guía v4 final del cliente, PDF + SVGs guardados en `apps/web/public/brand/`):
+- **Paleta monocromática editorial:** `#0F0F0F` grafito · `#5A5A5A` gris oscuro · `#9A9A9A` gris claro · `#ECECEC` blanco roto. **Sin acentos de color.**
+- **Tipografía:** Jost (Medium 500 para BROTHERS, Light 300 tracked +72 para CLUB / SINCE 2026). Cargada como `--font-jost` en `layout.tsx`.
+- **Logo:** tijera lineal + "BROTHERS CLUB" — la L de "CLUB" es una navaja a 90° (easter-egg tipográfico).
+- **Vibe (de las fotos del local):** editorial, minimal, masculino refinado. Negro + gris + verde planta (acento fotográfico, no de marca). Vintage barber (Layrite radio) + design contemporáneo (Porsche poster, cinder blocks).
+- **El teal de la fachada NO está en la guía digital** → mantenemos monocromático en web.
+
+Tokens TS en `apps/web/src/lib/brand.ts`.
+
 - **Landing pública** + **panel de administración**.
 - **Reservas online** con agenda por barbero, CRUD de servicios y usuarios.
 - **Infra:** VPS del usuario (Docker: Postgres + API Fastify, Nginx + Let's Encrypt en host). Next.js en Vercel **provisionalmente** — cuando llegue el dominio, el frontend se migra al VPS y Vercel sale de la ecuación (todo mismo origen, sin CORS cross-domain, sin tunnel separado).
@@ -131,6 +141,10 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
+- **2026-05-28** — **Identidad del cliente recibida.** El cliente envió manual de marca v4 + 4 logos (combinado principal/negro/inverso + horizontal) + fotos del local. Cliente real: **Brothers Club Barbershop**. Convertidos los PDFs a SVG vectorial vía `pdf2svg` y guardados en `apps/web/public/brand/` (junto con los PDFs originales y la guía completa). Creado `apps/web/src/lib/brand.ts` con tokens tipados (paleta monocromática `#0F0F0F`/`#5A5A5A`/`#9A9A9A`/`#ECECEC`, fuente Jost, paths a los SVGs, copy oficial). Cargada **Jost** vía `next/font/google` en `layout.tsx` (weights 300 y 500) y expuesta como `--font-jost`. **No tocada todavía** la paleta global de `globals.css` ni la intro — esperan dirección del cliente (light vs dark) + lista de servicios antes de rediseñar la landing. **Pendiente:** que el cliente re-suba las 5 fotos como archivos (las del último mensaje llegaron como visual, no como archivos en disco) para alojarlas en `/photos/`, y que mande la **lista de servicios** con precios/duraciones.
+- **2026-05-28** — **Anti-flash del intro.** El `IntroGate` renderizaba primero la landing y solo después de hidratar mostraba la intro, dejando ver el landing por un instante. Ahora pinta un overlay opaco con el fondo de la intro desde el primer paint (SSR + hidratación) y en `useEffect` decide si montar `BarberIntro` o esconder el overlay (visitas repetidas / `prefers-reduced-motion`). Tres fases: `cover` → `intro` → `done`.
+- **2026-05-28** — **UI intro / anillo abajo y más chico.** El indicador "gírala para entrar" estaba centrado sobre la silla y la tapaba. Movido al borde inferior (`justify-content: flex-end` + `paddingBottom: 54`) y reducido de 118px → 64px, con su símbolo ↻ y textos en proporción. La barra de progreso (download + giro) sigue igual.
+- **2026-05-28** — **Fix orientación silla 3D.** La corrección Z→Y la dejaba acostada — el modelo ya venía Y-up. Quitada la rotación `rotation.x = -PI/2` en `BarberIntro.tsx`; ahora solo se recentra y escala.
 - **2026-05-28** — **Intro 3D / modelo real.** El usuario subió un `.glb` de silla de barbero (3.7 MB, export Sketchfab OBJ→glTF, materiales PBR Leather/Metal/Plastic con baseColor+metallic-roughness+normal, sin Draco). Guardado en `apps/web/public/models/barber-chair.glb`. Reescrito `BarberIntro.tsx`: sustituye la silla procedural por carga del GLB con `GLTFLoader`. El modelo viene Y-up y en unidades ~1000 → se recentra con `Box3` y se escala a altura objetivo (3 u) sin reorientar el eje (un intento inicial de `rotation.x = -PI/2` lo dejaba acostado). RoomEnvironment (PMREM) alimenta los reflejos del cromo; `envMapIntensity` realzado en todos los materiales; sombras PCF + shadowCatcher reposicionado bajo el modelo. El anillo de progreso muestra primero la descarga del .glb (onProgress) y, una vez listo, el avance del giro (gate `ready`). Disposición correcta de geometrías/materiales/texturas al desmontar. Typecheck + build ✅. **Modelo comprado** → sin atribución requerida.
 - **2026-05-28** — **M1 / Fail2ban en el VPS.** Instalado `fail2ban` (jail `sshd` por defecto), `systemctl enable --now`. Verificado: ya está baneando IPs de fuerza bruta SSH (8 baneadas, 84 intentos fallidos en el primer chequeo) — confirma el bombardeo habitual a `root@22`. **Pendiente M1:** deshabilitar password auth en SSH, crear usuario non-root con sudo, UFW. **Aviso del VPS:** kernel pendiente de upgrade (`6.8.0-110` → `6.8.0-117`); programar `reboot` en ventana tranquila (los contenedores levantan solos por `restart: unless-stopped`).
 - **2026-05-28** — **M8.1 / backups + healthcheck.** `infra/scripts/backup.sh`: vuelca Postgres con `docker exec ... pg_dump`, comprime con gzip, guarda en `/opt/barberia/backups/` y rota >14 días con `find -mtime`. `infra/scripts/restore.sh`: pide confirmación interactiva, hace `DROP SCHEMA public CASCADE`, restaura desde gz y reinicia el contenedor API. Healthcheck del API añadido en `docker-compose.yml` (usa `fetch` nativo de Node 20). `.gitignore`: excluye `backups/` para que el volcado en el VPS no se confunda con código. **M6.2 (emails) descartado para v1** — el usuario prefiere no pagar/configurar Resend hasta más adelante.
