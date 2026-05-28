@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -52,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading && !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-[color:var(--color-fg-muted)]">
+      <main className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
         Cargando…
       </main>
     );
@@ -61,27 +62,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!user || user.role !== "ADMIN") return null;
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <a
-            href="/"
-            className="font-[family-name:var(--font-display)] text-lg"
-          >
-            Barbería · admin
+    <div className="min-h-screen bg-[color:var(--color-bg)]">
+      <header className="border-b border-[color:var(--color-border)]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
+          <a href="/" className="flex items-center gap-3">
+            <Image
+              src="/brand/logo-combinado-inverso.svg"
+              alt="Brothers Club Barbershop"
+              width={1125}
+              height={411}
+              className="h-8 w-auto opacity-90"
+            />
+            <span className="text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
+              · admin
+            </span>
           </a>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-[color:var(--color-fg-muted)]">{user.email}</span>
+          <div className="flex items-center gap-4 text-xs uppercase tracking-[0.18em]">
+            <span className="hidden text-[color:var(--color-fg-muted)] sm:inline">
+              {user.email}
+            </span>
             <button
               type="button"
               onClick={logout}
-              className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1 text-[color:var(--color-fg-muted)] transition hover:text-[color:var(--color-fg)]"
+              className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
             >
               Salir
             </button>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-6 pb-2 text-sm">
+        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-6 pb-3 text-xs uppercase tracking-[0.22em]">
           {NAV.map((item) => {
             const active = pathname === item.href;
             return (
@@ -90,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={item.href}
                 className={`rounded-[var(--radius-md)] px-3 py-2 transition ${
                   active
-                    ? "bg-[color:var(--color-accent)] text-[color:var(--color-accent-fg)]"
+                    ? "bg-[color:var(--color-fg)] text-[color:var(--color-bg)]"
                     : "text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
                 }`}
               >
@@ -100,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+      <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
     </div>
   );
 }

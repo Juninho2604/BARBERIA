@@ -6,7 +6,7 @@ import { readAccessToken } from "@/lib/auth-client";
 import type { AppointmentDto } from "@/lib/types";
 
 function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `$${(cents / 100).toFixed(0)}`;
 }
 
 function formatDateTime(iso: string) {
@@ -64,39 +64,42 @@ export default function AdminAppointments() {
 
   return (
     <section>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl">Citas</h1>
-      <p className="mt-2 text-[color:var(--color-fg-muted)]">
+      <p className="text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
+        — Agenda —
+      </p>
+      <h1 className="mt-4 text-4xl font-light tracking-tight sm:text-5xl">Citas</h1>
+      <p className="mt-3 text-[color:var(--color-fg-muted)]">
         Todas las reservas, ordenadas por fecha.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+        <p className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-4 py-3 text-sm">
           {error}
         </p>
       )}
 
-      <div className="mt-8 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-border)]">
+      <div className="mt-10 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
         <table className="w-full text-sm">
-          <thead className="bg-[color:var(--color-surface)] text-left text-xs uppercase tracking-[0.15em] text-[color:var(--color-fg-muted)]">
+          <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
             <tr>
-              <th className="px-4 py-3">Cuándo</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Servicio</th>
-              <th className="px-4 py-3">Barbero</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-4 py-4">Cuándo</th>
+              <th className="px-4 py-4">Cliente</th>
+              <th className="px-4 py-4">Servicio</th>
+              <th className="px-4 py-4">Barbero</th>
+              <th className="px-4 py-4">Estado</th>
+              <th className="px-4 py-4"></th>
             </tr>
           </thead>
           <tbody>
             {loading && appts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-[color:var(--color-fg-muted)]">
+                <td colSpan={6} className="px-4 py-10 text-center text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
                   Cargando…
                 </td>
               </tr>
             ) : appts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-[color:var(--color-fg-muted)]">
+                <td colSpan={6} className="px-4 py-10 text-center text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
                   Aún no hay reservas.
                 </td>
               </tr>
@@ -104,45 +107,43 @@ export default function AdminAppointments() {
               appts.map((a) => (
                 <tr
                   key={a.id}
-                  className="border-t border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]"
+                  className="border-t border-[color:var(--color-border)]"
                 >
-                  <td className="px-4 py-3">{formatDateTime(a.startsAt)}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4">{formatDateTime(a.startsAt)}</td>
+                  <td className="px-4 py-4">
                     {a.client?.name ?? "—"}
                     {a.client?.phone && (
-                      <p className="text-xs text-[color:var(--color-fg-muted)]">
+                      <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
                         {a.client.phone}
                       </p>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4">
                     {a.service?.name ?? "—"}
                     {a.service && (
-                      <p className="text-xs text-[color:var(--color-fg-muted)]">
+                      <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
                         {formatPrice(a.service.priceCents)}
                       </p>
                     )}
                   </td>
-                  <td className="px-4 py-3">{a.barber?.name ?? "—"}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4 text-[color:var(--color-fg-muted)]">{a.barber?.name ?? "—"}</td>
+                  <td className="px-4 py-4">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
+                      className={`inline-block rounded-full border px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] ${
                         a.status === "CANCELLED"
-                          ? "bg-[color:var(--color-border)] text-[color:var(--color-fg-muted)]"
-                          : a.status === "COMPLETED"
-                            ? "bg-green-500/20 text-green-300"
-                            : "bg-[color:var(--color-accent)]/20 text-[color:var(--color-accent)]"
+                          ? "border-[color:var(--color-border)] text-[color:var(--color-fg-muted)]"
+                          : "border-[color:var(--color-fg-muted)] text-[color:var(--color-fg)]"
                       }`}
                     >
                       {STATUS_LABEL[a.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-4 text-right">
                     {a.status !== "CANCELLED" && (
                       <button
                         type="button"
                         onClick={() => onCancel(a.id)}
-                        className="text-xs text-[color:var(--color-fg-muted)] hover:text-red-500"
+                        className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
                       >
                         Cancelar
                       </button>

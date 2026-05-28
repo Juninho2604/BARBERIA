@@ -83,7 +83,7 @@ export default function BarberDetailPage({
   }, [id]);
 
   if (loading && !barber) {
-    return <p className="text-[color:var(--color-fg-muted)]">Cargando…</p>;
+    return <p className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">Cargando…</p>;
   }
   if (error || !barber) {
     return (
@@ -91,11 +91,11 @@ export default function BarberDetailPage({
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-sm text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
+          className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
         >
           ← Volver
         </button>
-        <p className="mt-6 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+        <p className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-4 py-3 text-sm">
           {error ?? "No encontrado"}
         </p>
       </section>
@@ -107,15 +107,15 @@ export default function BarberDetailPage({
       <header>
         <a
           href="/admin/barbers"
-          className="text-sm text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
+          className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
         >
           ← Barberos
         </a>
-        <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl">
+        <h1 className="mt-6 text-4xl font-light tracking-tight sm:text-5xl">
           {barber.name}
         </h1>
-        <p className="mt-1 text-[color:var(--color-fg-muted)]">{barber.email}</p>
-        {barber.bio && <p className="mt-3 max-w-2xl text-sm">{barber.bio}</p>}
+        <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">{barber.email}</p>
+        {barber.bio && <p className="mt-4 max-w-2xl text-sm text-[color:var(--color-fg-muted)]">{barber.bio}</p>}
       </header>
 
       <WorkingHoursEditor barber={barber} onSaved={refresh} />
@@ -175,9 +175,9 @@ function WorkingHoursEditor({
   }
 
   return (
-    <article className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
-      <h2 className="font-[family-name:var(--font-display)] text-xl">Horario semanal</h2>
-      <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
+    <article className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
+      <h2 className="text-2xl font-light tracking-tight">Horario semanal</h2>
+      <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
         Marca los días que trabaja y ajusta las horas. Guarda al final.
       </p>
 
@@ -219,12 +219,12 @@ function WorkingHoursEditor({
       </div>
 
       {error && (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-bg)] px-4 py-3 text-sm">
           {error}
         </p>
       )}
       {okMessage && (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--color-accent)]/30 bg-[color:var(--color-accent)]/10 px-4 py-3 text-sm">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-bg)] px-4 py-3 text-xs uppercase tracking-[0.18em] text-[color:var(--color-fg)]">
           {okMessage}
         </p>
       )}
@@ -234,7 +234,7 @@ function WorkingHoursEditor({
           type="button"
           onClick={save}
           disabled={saving}
-          className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-6 py-2 text-sm font-medium text-[color:var(--color-accent-fg)] transition hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-fg)] px-5 py-2 text-xs font-medium uppercase tracking-[0.18em] text-[color:var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Guardar horario"}
         </button>
@@ -284,27 +284,25 @@ function TimeOffSection({ barberId }: { barberId: string }) {
   }
 
   return (
-    <article className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
-      <header className="flex items-baseline justify-between">
+    <article className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
+      <header className="flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-xl">
-            Vacaciones / permisos
-          </h2>
-          <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
+          <h2 className="text-2xl font-light tracking-tight">Vacaciones · permisos</h2>
+          <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
             Bloques en los que no se pueden reservar citas.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1 text-sm transition hover:border-[color:var(--color-accent)]"
+          className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
         >
           {showForm ? "Cancelar" : "+ Nuevo"}
         </button>
       </header>
 
       {error && (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-bg)] px-4 py-3 text-sm">
           {error}
         </p>
       )}
@@ -330,10 +328,10 @@ function TimeOffSection({ barberId }: { barberId: string }) {
           items.map((t) => (
             <div
               key={t.id}
-              className="flex items-center justify-between rounded-[var(--radius-md)] bg-[color:var(--color-surface-muted)] px-4 py-3 text-sm"
+              className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 py-3 text-sm"
             >
               <div>
-                <p>
+                <p className="text-[color:var(--color-fg)]">
                   {new Date(t.startsAt).toLocaleString("es-ES", {
                     dateStyle: "medium",
                     timeStyle: "short",
@@ -345,13 +343,13 @@ function TimeOffSection({ barberId }: { barberId: string }) {
                   })}
                 </p>
                 {t.reason && (
-                  <p className="text-xs text-[color:var(--color-fg-muted)]">{t.reason}</p>
+                  <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">{t.reason}</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => onDelete(t.id)}
-                className="text-xs text-[color:var(--color-fg-muted)] hover:text-red-500"
+                className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
               >
                 Eliminar
               </button>
@@ -443,7 +441,7 @@ function NewTimeOffForm({
       </label>
 
       {error && (
-        <p className="sm:col-span-2 rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+        <p className="sm:col-span-2 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-bg)] px-4 py-3 text-sm">
           {error}
         </p>
       )}
@@ -452,7 +450,7 @@ function NewTimeOffForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-4 py-2 text-sm font-medium text-[color:var(--color-accent-fg)] transition hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-fg)] px-5 py-2 text-xs font-medium uppercase tracking-[0.18em] text-[color:var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Crear permiso"}
         </button>

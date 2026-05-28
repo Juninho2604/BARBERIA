@@ -33,12 +33,17 @@ export default function AdminHome() {
 
   return (
     <section>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl">Resumen</h1>
-      <p className="mt-2 text-[color:var(--color-fg-muted)]">
-        Estado actual de la barbería.
+      <p className="text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
+        — Panel —
+      </p>
+      <h1 className="mt-4 text-4xl font-light tracking-tight sm:text-5xl">
+        Resumen
+      </h1>
+      <p className="mt-3 text-[color:var(--color-fg-muted)]">
+        Estado actual de Brothers Club.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-12 grid gap-px overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-border)] sm:grid-cols-3">
         <Stat label="Servicios activos" value={stats?.services ?? "—"} />
         <Stat label="Barberos activos" value={stats?.barbers ?? "—"} />
         <Stat label="Citas pendientes" value={stats?.pendingAppointments ?? "—"} />
@@ -49,11 +54,11 @@ export default function AdminHome() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
-      <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--color-fg-muted)]">
+    <div className="bg-[color:var(--color-bg)] p-8">
+      <p className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
         {label}
       </p>
-      <p className="mt-3 font-[family-name:var(--font-display)] text-4xl">{value}</p>
+      <p className="mt-4 text-5xl font-light tracking-tight">{value}</p>
     </div>
   );
 }
