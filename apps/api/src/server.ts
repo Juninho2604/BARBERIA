@@ -14,6 +14,7 @@ import { servicesRoutes } from "./routes/services.js";
 import { barbersRoutes } from "./routes/barbers.js";
 import { availabilityRoutes } from "./routes/availability.js";
 import { appointmentsRoutes } from "./routes/appointments.js";
+import { timeOffRoutes } from "./routes/timeoff.js";
 import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
@@ -45,6 +46,7 @@ export async function buildServer(env: Env) {
   await app.register(barbersRoutes(guards), { prefix: "/barbers" });
   await app.register(availabilityRoutes(env), { prefix: "/barbers" });
   await app.register(appointmentsRoutes(env, guards), { prefix: "/appointments" });
+  await app.register(timeOffRoutes(guards));
 
   app.setErrorHandler((err: FastifyError, _req, reply) => {
     if (hasZodFastifySchemaValidationErrors(err)) {

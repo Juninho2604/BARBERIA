@@ -1,16 +1,12 @@
-// Placeholder: estos servicios saldrán del API en M3/M6. Por ahora son demo.
-const demoServices = [
-  { name: "Corte clásico", duration: 30, priceCents: 1500 },
-  { name: "Corte + barba", duration: 45, priceCents: 2200 },
-  { name: "Arreglo de barba", duration: 20, priceCents: 1000 },
-  { name: "Afeitado tradicional", duration: 40, priceCents: 1800 },
-];
+import { api } from "@/lib/api";
 
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function Services() {
+export async function Services() {
+  const services = await api.listServices().catch(() => []);
+
   return (
     <section
       id="servicios"
@@ -24,24 +20,39 @@ export function Services() {
           Precios fijos. Sin sorpresas. Reserva el que necesites.
         </p>
 
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-lg)] bg-[color:var(--color-border)] sm:grid-cols-2">
-          {demoServices.map((s) => (
-            <li
-              key={s.name}
-              className="flex items-baseline justify-between bg-[color:var(--color-surface-muted)] p-6"
-            >
-              <div>
-                <p className="font-medium">{s.name}</p>
-                <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
-                  {s.duration} min
+        {services.length === 0 ? (
+          <p className="mt-12 text-[color:var(--color-fg-muted)]">
+            Estamos preparando el catálogo. Vuelve en un momento.
+          </p>
+        ) : (
+          <ul className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-lg)] bg-[color:var(--color-border)] sm:grid-cols-2">
+            {services.map((s) => (
+              <li
+                key={s.id}
+                className="flex items-baseline justify-between bg-[color:var(--color-surface-muted)] p-6"
+              >
+                <div>
+                  <p className="font-medium">{s.name}</p>
+                  <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
+                    {s.durationMinutes} min
+                  </p>
+                </div>
+                <p className="font-[family-name:var(--font-display)] text-xl text-[color:var(--color-accent)]">
+                  {formatPrice(s.priceCents)}
                 </p>
-              </div>
-              <p className="font-[family-name:var(--font-display)] text-xl text-[color:var(--color-accent)]">
-                {formatPrice(s.priceCents)}
-              </p>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-12">
+          <a
+            href="/reservar"
+            className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-6 py-3 font-medium text-[color:var(--color-accent-fg)] transition hover:brightness-110"
+          >
+            Reservar ahora
+          </a>
+        </div>
       </div>
     </section>
   );
