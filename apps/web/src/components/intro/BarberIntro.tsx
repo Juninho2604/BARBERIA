@@ -200,8 +200,7 @@ export default function BarberIntro({
         if (disposed) return;
         const root3d = gltf.scene;
 
-        // Z-up (export OBJ de Sketchfab) -> Y-up.
-        root3d.rotation.x = -Math.PI / 2;
+        // El modelo ya viene Y-up: no hace falta reorientar el eje.
         root3d.updateMatrixWorld(true);
 
         // Recentrar + escalar a altura objetivo.
