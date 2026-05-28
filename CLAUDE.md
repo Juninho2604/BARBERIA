@@ -26,7 +26,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 - **Fecha última actualización:** 2026-05-28
 - **Rama activa:** `claude/quirky-ride-pD2AK`
-- **Hito actual:** **M3 en curso** — primera migración Prisma creada (`20260528120000_init`), `PrismaClient` singleton wired en la API, `/health/ready` chequea la DB. Pendiente: auth (register/login/me) y CRUD de servicios/barberos.
+- **Hito actual:** **M3 en curso** — auth completo (`POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `GET /auth/me`) con JWT (jose) + bcryptjs. Schemas en `packages/shared`. Migración inicial aplicada. Pendiente: CRUD de servicios y barberos.
 - **M2 cerrado:** API Fastify corriendo en el VPS dentro de Docker, Postgres saludable, migraciones automáticas vía `prisma migrate deploy` en el entrypoint.
 - **M1 pausado:** clave SSH ya está en `authorized_keys` del VPS. Pendiente: hardening (deshabilitar password auth, crear usuario non-root, UFW, Fail2ban).
 - **Exposición de la API:** el usuario decidió **esperar a tener dominio (un par de días)**. Cuando llegue, **Vercel sale**: frontend se migra al VPS, Nginx hace reverse proxy a la API en el mismo origen, Let's Encrypt para HTTPS. Hasta entonces, la API sólo es accesible desde el propio VPS (`127.0.0.1:4000`); desarrollamos backend y se prueba con curl vía SSH.
@@ -40,7 +40,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 | M0 — Prerrequisitos VPS/dominio | ✅ Cerrado (sin dominio aún → estrategia Cloudflare Tunnel) |
 | M1 — Provisioning VPS + TLS | ⏸️ Pausado (clave SSH ya instalada en VPS) |
 | M2 — Esqueleto backend (Fastify+Prisma) | ✅ Cerrado (corriendo en el VPS) |
-| M3 — Auth + Servicios + Barberos | En curso (M3.1 ✅ migración inicial + Prisma client) |
+| M3 — Auth + Servicios + Barberos | En curso (M3.1 ✅ migración, M3.2 ✅ auth, M3.3 pendiente servicios/barberos) |
 | M4 — Disponibilidad + Reservas | Pendiente |
 | M5 — Next.js + Vercel + design tokens | En curso (en paralelo con M2) |
 | M6 — Flujo público de reserva | Pendiente |
@@ -130,6 +130,7 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
 
+- **2026-05-28** — **M3.2 hecho.** Auth completo en la API. Endpoints: `POST /auth/register` (crea User CLIENT; si existe un User sin `passwordHash` — creado por reserva sin registro — lo reclama), `POST /auth/login`, `POST /auth/refresh`, `GET /auth/me` (protegido). JWT con `jose` (HS256, issuer `barberia-api`, TTL configurable). Hash con `bcryptjs` (12 rounds, pure JS — evita compilar nativo en el contenedor). Middleware `requireAuth` + `requireRole` expuesto vía factory `makeAuthGuards(env)`. Schemas (`Login`/`Register`/`Refresh`/`AuthSession`) en `packages/shared`. Errores de validación Zod devuelven 400 con `code: VALIDATION_ERROR`. **Fix lateral importante:** `@barberia/shared` exportaba `.ts` directo, lo que funciona en compile pero rompe en runtime de Node (`node dist/index.js` no lee TypeScript). Ahora se compila a `dist/`, `exports` apuntan a JS, y el Dockerfile + Vercel buildCommand construyen `shared` antes que su consumidor. Web y API typecheckean y buildan ✅.
 - **2026-05-28** — **M3.1 hecho.** Primera migración Prisma generada offline con `prisma migrate diff --from-empty` (no necesitamos una DB local, el SQL se escribe a mano y `migrate deploy` lo aplicará en el VPS al siguiente despliegue). Archivos: `apps/api/prisma/migrations/20260528120000_init/migration.sql` + `migration_lock.toml`. `PrismaClient` singleton en `apps/api/src/db.ts`, instanciado en `index.ts` con shutdown limpio (`$disconnect`). Nuevo endpoint `/health/ready` que hace `SELECT 1` contra Postgres (devuelve 503 si falla) — útil para healthcheck del contenedor y para diagnóstico desde el VPS. Build + typecheck verificados ✅.
 - **2026-05-28** — Decisión: cuando llegue el dominio (~días), **Vercel sale de la ecuación**. Frontend se moverá al VPS, Nginx hará reverse proxy de `/api/*` → API en el mismo origen. Esto elimina CORS cross-domain, evita el tunnel y simplifica secretos (todo en el VPS).
 - **2026-05-28** — **M2 cerrado.** API corriendo en el VPS dentro de Docker. Postgres saludable, migraciones aplicadas (cero hasta ahora — schema sin cambios desde la primera versión), API escuchando en `127.0.0.1:4000` del VPS. Healthcheck `/health` operativo. El fix de Debian funcionó pero requería rebuild sin cache para descartar layers stale.

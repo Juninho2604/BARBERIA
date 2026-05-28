@@ -2,8 +2,15 @@ import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import sensible from "@fastify/sensible";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  hasZodFastifySchemaValidationErrors,
+} from "fastify-type-provider-zod";
 import { type Env } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
+import { authRoutes } from "./routes/auth.js";
+import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
   const app = Fastify({
@@ -16,6 +23,9 @@ export async function buildServer(env: Env) {
     },
   });
 
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, {
     origin: env.CORS_ORIGINS,
@@ -23,9 +33,21 @@ export async function buildServer(env: Env) {
   });
   await app.register(sensible);
 
+  const guards = makeAuthGuards(env);
+
   await app.register(healthRoutes, { prefix: "/health" });
+  await app.register(authRoutes(env, guards), { prefix: "/auth" });
 
   app.setErrorHandler((err: FastifyError, _req, reply) => {
+    if (hasZodFastifySchemaValidationErrors(err)) {
+      return reply.status(400).send({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Datos inválidos",
+          details: err.validation,
+        },
+      });
+    }
     app.log.error(err);
     const statusCode = err.statusCode ?? 500;
     reply.status(statusCode).send({

@@ -23,6 +23,7 @@ COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
 RUN pnpm --filter @barberia/api exec prisma generate
+RUN pnpm --filter @barberia/shared build
 RUN pnpm --filter @barberia/api build
 
 # ---- runtime ----
