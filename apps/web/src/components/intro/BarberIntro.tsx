@@ -73,16 +73,13 @@ export default function BarberIntro({
     scene.add(chairWrap);
     let model: THREE.Object3D | null = null;
     let modelBottom = -0.1; // se recalcula al cargar; sitúa el shadowCatcher
-    let logoPlanes: THREE.Mesh[] = [];
     let floatingLogo: THREE.Mesh | null = null;
     let logoAssets: {
       tex: THREE.Texture;
-      geoChair: THREE.BufferGeometry;
-      matChair: THREE.Material;
       geoFloat: THREE.BufferGeometry;
       matFloat: THREE.Material;
     } | null = null;
-    const FLOAT_LOGO_Y = FLOAT_Y + 2.05;
+    const FLOAT_LOGO_Y = FLOAT_Y + 2.25;
 
     // ---------- SUELO INVISIBLE PARA SOMBRA ----------
     const floorGeo = new THREE.CircleGeometry(8, 64);
@@ -262,34 +259,19 @@ export default function BarberIntro({
           try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch { /* noop */ }
           tex.needsUpdate = true;
 
-          // 1) Logos sobre el respaldar (cara delantera y trasera del
-          //    cuero). Hijos del `chairWrap` → giran con la silla.
-          const chairPlaneW = 1.4;
-          const chairPlaneH = chairPlaneW / aspect;
-          const geoChair = new THREE.PlaneGeometry(chairPlaneW, chairPlaneH);
-          const matChair = new THREE.MeshBasicMaterial({
-            map: tex,
-            transparent: true,
-            depthWrite: false,
-            opacity: 1,
-          });
-
-          const planeBack = new THREE.Mesh(geoChair, matChair);
-          planeBack.position.set(0, 0.75, 0.48);
-          chairWrap.add(planeBack);
-
-          const planeFront = new THREE.Mesh(geoChair, matChair);
-          planeFront.position.set(0, 0.75, -0.48);
-          planeFront.rotation.y = Math.PI;
-          chairWrap.add(planeFront);
-
-          logoPlanes = [planeBack, planeFront];
-
-          // 2) Logo flotante grande por encima de la silla. Vive en la
-          //    escena (no en chairWrap) → no gira con el arrastre; siempre
-          //    encara al usuario porque usa DoubleSide. Tiene bamboleo y
-          //    leve sway en el tick para feel 3D.
-          const floatPlaneW = 2.6;
+          // Logo flotante 3D por encima de la silla. Vive en la escena
+          // (no en chairWrap) → no gira con el arrastre; siempre encara
+          // al usuario gracias a DoubleSide. Bamboleo + sway sutil dan
+          // sensación de hover 3D.
+          //
+          // (Intento previo de grabarlo sobre el cuero del respaldar:
+          // funciona técnicamente pero requiere conocer la geometría
+          // exacta del modelo — los planos terminaban flotando junto a
+          // la silla en lugar de pegados al cuero. Para una solución
+          // robusta haría falta `THREE.DecalGeometry` proyectando sobre
+          // la mesh real del respaldo. Dejamos solo el flotante por
+          // ahora; tiene más impacto visual.)
+          const floatPlaneW = 3.0;
           const floatPlaneH = floatPlaneW / aspect;
           const geoFloat = new THREE.PlaneGeometry(floatPlaneW, floatPlaneH);
           const matFloat = new THREE.MeshBasicMaterial({
@@ -303,7 +285,7 @@ export default function BarberIntro({
           floatingLogo.position.set(0, FLOAT_LOGO_Y, 0);
           scene.add(floatingLogo);
 
-          logoAssets = { tex, geoChair, matChair, geoFloat, matFloat };
+          logoAssets = { tex, geoFloat, matFloat };
         };
         logoImg.onerror = () => { /* sin logo si falla */ };
         logoImg.src = '/brand/logo-combinado-inverso.svg';
@@ -383,13 +365,10 @@ export default function BarberIntro({
           }
         });
       }
-      // Limpia los planos del logo y sus CanvasTextures/geometries/materiales.
-      logoPlanes.forEach((p) => p.removeFromParent());
+      // Limpia el logo flotante (texture, geo, material).
       floatingLogo?.removeFromParent();
       if (logoAssets) {
         logoAssets.tex.dispose();
-        logoAssets.geoChair.dispose();
-        logoAssets.matChair.dispose();
         logoAssets.geoFloat.dispose();
         logoAssets.matFloat.dispose();
       }
