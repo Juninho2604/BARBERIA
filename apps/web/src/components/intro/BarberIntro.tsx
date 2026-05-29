@@ -74,7 +74,15 @@ export default function BarberIntro({
     let model: THREE.Object3D | null = null;
     let modelBottom = -0.1; // se recalcula al cargar; sitúa el shadowCatcher
     let logoPlanes: THREE.Mesh[] = [];
-    let logoAssets: { tex: THREE.Texture; geo: THREE.BufferGeometry; mat: THREE.Material } | null = null;
+    let floatingLogo: THREE.Mesh | null = null;
+    let logoAssets: {
+      tex: THREE.Texture;
+      geoChair: THREE.BufferGeometry;
+      matChair: THREE.Material;
+      geoFloat: THREE.BufferGeometry;
+      matFloat: THREE.Material;
+    } | null = null;
+    const FLOAT_LOGO_Y = FLOAT_Y + 2.05;
 
     // ---------- SUELO INVISIBLE PARA SOMBRA ----------
     const floorGeo = new THREE.CircleGeometry(8, 64);
@@ -254,29 +262,48 @@ export default function BarberIntro({
           try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch { /* noop */ }
           tex.needsUpdate = true;
 
-          const planeW = 0.95;
-          const planeH = planeW / aspect;
-          const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
-          const planeMat = new THREE.MeshBasicMaterial({
+          // 1) Logos sobre el respaldar (cara delantera y trasera del
+          //    cuero). Hijos del `chairWrap` → giran con la silla.
+          const chairPlaneW = 1.4;
+          const chairPlaneH = chairPlaneW / aspect;
+          const geoChair = new THREE.PlaneGeometry(chairPlaneW, chairPlaneH);
+          const matChair = new THREE.MeshBasicMaterial({
             map: tex,
             transparent: true,
             depthWrite: false,
             opacity: 1,
           });
 
-          // Cara trasera del respaldo (visible desde +Z)
-          const planeBack = new THREE.Mesh(planeGeo, planeMat);
-          planeBack.position.set(0, 0.75, 0.42);
+          const planeBack = new THREE.Mesh(geoChair, matChair);
+          planeBack.position.set(0, 0.75, 0.48);
           chairWrap.add(planeBack);
 
-          // Cara delantera del respaldo (visible desde -Z)
-          const planeFront = new THREE.Mesh(planeGeo, planeMat);
-          planeFront.position.set(0, 0.75, -0.42);
+          const planeFront = new THREE.Mesh(geoChair, matChair);
+          planeFront.position.set(0, 0.75, -0.48);
           planeFront.rotation.y = Math.PI;
           chairWrap.add(planeFront);
 
           logoPlanes = [planeBack, planeFront];
-          logoAssets = { tex, geo: planeGeo, mat: planeMat };
+
+          // 2) Logo flotante grande por encima de la silla. Vive en la
+          //    escena (no en chairWrap) → no gira con el arrastre; siempre
+          //    encara al usuario porque usa DoubleSide. Tiene bamboleo y
+          //    leve sway en el tick para feel 3D.
+          const floatPlaneW = 2.6;
+          const floatPlaneH = floatPlaneW / aspect;
+          const geoFloat = new THREE.PlaneGeometry(floatPlaneW, floatPlaneH);
+          const matFloat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            opacity: 1,
+          });
+          floatingLogo = new THREE.Mesh(geoFloat, matFloat);
+          floatingLogo.position.set(0, FLOAT_LOGO_Y, 0);
+          scene.add(floatingLogo);
+
+          logoAssets = { tex, geoChair, matChair, geoFloat, matFloat };
         };
         logoImg.onerror = () => { /* sin logo si falla */ };
         logoImg.src = '/brand/logo-combinado-inverso.svg';
@@ -314,6 +341,10 @@ export default function BarberIntro({
       }
       chairWrap.position.y = FLOAT_Y + Math.sin(t * 0.9) * 0.04;
       stars.rotation.y += 0.0004;
+      if (floatingLogo) {
+        floatingLogo.position.y = FLOAT_LOGO_Y + Math.sin(t * 0.6) * 0.06;
+        floatingLogo.rotation.y = Math.sin(t * 0.32) * 0.18;
+      }
       if (transitioning) {
         transitionT = Math.min(transitionT + 0.02, 1);
         const e = transitionT * transitionT * (3 - 2 * transitionT);
@@ -352,12 +383,15 @@ export default function BarberIntro({
           }
         });
       }
-      // Limpia los planos del logo y su CanvasTexture.
+      // Limpia los planos del logo y sus CanvasTextures/geometries/materiales.
       logoPlanes.forEach((p) => p.removeFromParent());
+      floatingLogo?.removeFromParent();
       if (logoAssets) {
         logoAssets.tex.dispose();
-        logoAssets.geo.dispose();
-        logoAssets.mat.dispose();
+        logoAssets.geoChair.dispose();
+        logoAssets.matChair.dispose();
+        logoAssets.geoFloat.dispose();
+        logoAssets.matFloat.dispose();
       }
       envRT.dispose();
       pmrem.dispose();
