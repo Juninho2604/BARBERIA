@@ -16,6 +16,7 @@ import type {
   Service,
   StaffMember,
   TimeOff,
+  UpdateAppointmentInput,
   UpdateServiceInput,
   UpdateStaffInput,
 } from "@barberia/shared";
@@ -30,6 +31,7 @@ export type CreateTimeOffInputDto = CreateTimeOffInput;
 export type AvailabilityResponseDto = AvailabilityResponse;
 export type AppointmentDto = Appointment;
 export type CreateAppointmentInputDto = CreateAppointmentInput;
+export type UpdateAppointmentInputDto = UpdateAppointmentInput;
 export type LoginInputDto = LoginInput;
 export type AuthSessionDto = AuthSession;
 export type AuthUserDto = AuthUser;

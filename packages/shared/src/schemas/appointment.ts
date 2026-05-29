@@ -60,6 +60,16 @@ export const AppointmentSchema = z.object({
 });
 export type Appointment = z.infer<typeof AppointmentSchema>;
 
+/**
+ * Update parcial de una cita — usado desde el panel admin para cambiar el
+ * estado (confirmar, completar, marcar no-show) o anotar.
+ */
+export const UpdateAppointmentSchema = z.object({
+  status: AppointmentStatusSchema.optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+export type UpdateAppointmentInput = z.infer<typeof UpdateAppointmentSchema>;
+
 export const AvailabilityQuerySchema = z.object({
   serviceId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD"),

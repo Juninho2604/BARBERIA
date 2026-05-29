@@ -15,11 +15,12 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: "/admin",              label: "Resumen",   requires: "panel.access" },
-  { href: "/admin/appointments", label: "Citas",     requires: "appointments.viewOwn" },
-  { href: "/admin/services",     label: "Servicios", requires: "services.manage" },
-  { href: "/admin/barbers",      label: "Barberos",  requires: "barbers.manage" },
-  { href: "/admin/staff",        label: "Staff",     requires: "staff.manage" },
+  { href: "/admin",              label: "Resumen",    requires: "panel.access" },
+  { href: "/admin/calendar",     label: "Calendario", requires: "appointments.viewOwn" },
+  { href: "/admin/appointments", label: "Lista",      requires: "appointments.viewOwn" },
+  { href: "/admin/services",     label: "Servicios",  requires: "services.manage" },
+  { href: "/admin/barbers",      label: "Barberos",   requires: "barbers.manage" },
+  { href: "/admin/staff",        label: "Staff",      requires: "staff.manage" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
