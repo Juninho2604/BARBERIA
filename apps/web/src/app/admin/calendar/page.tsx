@@ -519,9 +519,18 @@ function Composer({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!whenLocal) {
+      setError("Selecciona una fecha y hora.");
+      return;
+    }
+    const whenDate = new Date(whenLocal);
+    if (Number.isNaN(whenDate.getTime())) {
+      setError("Fecha u hora inválida.");
+      return;
+    }
     setSaving(true);
     try {
-      const whenIso = new Date(whenLocal).toISOString();
+      const whenIso = whenDate.toISOString();
       await api.createAppointment({
         serviceId,
         barberId: selectedBarberId,

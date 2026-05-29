@@ -73,9 +73,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const visibleNav = NAV.filter((item) => can(user.role, item.requires));
   const roleLabel = ROLE_LABEL[user.role];
+  const showDemoBanner = api.isMock();
 
   return (
     <div className="min-h-screen bg-[color:var(--color-bg)]">
+      {showDemoBanner && (
+        <div className="border-b border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-6 py-2 text-center text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+          · Modo demo · cualquier credencial entra como OWNER · configura
+          NEXT_PUBLIC_API_URL para activar el backend real ·
+        </div>
+      )}
       <header className="border-b border-[color:var(--color-border)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
           <a href="/" className="flex items-center gap-3">

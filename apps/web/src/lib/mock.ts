@@ -408,9 +408,17 @@ export const mockApi = {
     const endsAt = new Date(
       new Date(input.startsAt).getTime() + service.durationMinutes * 60_000,
     ).toISOString();
+    // Derivamos el clientId del email del guest cuando reserva sin cuenta —
+    // así dos reservas del mismo email se atribuyen al mismo cliente en
+    // `buildClientSummaries`. Sin esto, todas las reservas manuales se
+    // agruparían bajo "mock-client" y la página /admin/clients mostraba un
+    // único cliente fantasma.
+    const clientId = input.guest
+      ? `mock-${input.guest.email.toLowerCase()}`
+      : "mock-client";
     const created: AppointmentDto = {
       id: `appt-${Date.now()}`,
-      clientId: "mock-client",
+      clientId,
       barberId: barber.id,
       serviceId: service.id,
       startsAt: new Date(input.startsAt).toISOString(),
