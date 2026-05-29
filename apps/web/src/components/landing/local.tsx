@@ -1,37 +1,62 @@
 import Image from "next/image";
 
 /**
- * Galería silente — tres fotos verticales del local en tira, sin títulos
- * ni captions. Funciona como ritmo visual entre el hero y los servicios,
- * no como sección expositiva.
+ * El Espacio — galería editorial en grid 12-col asimétrico (design handoff):
+ *  - fig--a (cols 1/6, span 6 rows) → workstation
+ *  - fig--b (cols 6/13, span 4 rows) → coffee
+ *  - fig--c (cols 6/13, span 4 rows) → cut-detail
+ *
+ * Cada foto en grayscale tenue + brillo bajo; en hover vuelve a color con
+ * leve zoom (controlado por `.bc-fig:hover`). Captions con título Bodoni y
+ * número/etiqueta Hanken sobre degradado de abajo a arriba.
+ *
+ * En móvil (<760px) la galería pasa a stack vertical.
  */
-const PHOTOS = [
-  { src: "/photos/workstation.jpg", alt: "Carrito vintage y sillón de barbero" },
-  { src: "/photos/coffee.jpg", alt: "Cafetera y planta junto a la entrada" },
-  { src: "/photos/cut-detail.jpg", alt: "Detalle de un fade sobre cabello rizado" },
+const FIGS = [
+  { src: "/photos/workstation.jpg", title: "La estación", number: "01 / Estilo",   class: "bc-fig--a" },
+  { src: "/photos/coffee.jpg",      title: "La espera",   number: "02 / Café",    class: "bc-fig--b" },
+  { src: "/photos/cut-detail.jpg",  title: "El acabado",  number: "03 / Detalle", class: "bc-fig--c" },
 ];
 
 export function Local() {
   return (
-    <section
-      aria-label="El espacio"
-      className="border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]"
-    >
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-          {PHOTOS.map((p) => (
-            <div
-              key={p.src}
-              className="relative aspect-[2/3] overflow-hidden bg-[color:var(--color-surface)]"
+    <section className="bc-section" id="espacio">
+      <div className="bc-wrap">
+        <div className="bc-espacio__head">
+          <div>
+            <p className="bc-eyebrow" data-reveal>
+              El espacio
+            </p>
+            <h2 className="bc-display" data-reveal data-delay="1">
+              Un lugar hecho para quedarse.
+            </h2>
+          </div>
+          <p className="bc-lead" data-reveal data-delay="2">
+            Material profesional, café recién hecho y una silla con tu nombre.
+            El detalle está en cada esquina.
+          </p>
+        </div>
+
+        <div className="bc-gallery">
+          {FIGS.map((f, i) => (
+            <figure
+              key={f.src}
+              className={`bc-fig ${f.class}`}
+              data-reveal
+              data-delay={i > 0 ? String(i) : undefined}
             >
               <Image
-                src={p.src}
-                alt={p.alt}
+                src={f.src}
+                alt={f.title}
                 fill
-                sizes="(min-width: 1024px) 360px, 100vw"
-                className="object-cover transition duration-700 hover:scale-[1.02]"
+                sizes="(min-width: 760px) 50vw, 100vw"
+                className="bc-fig__img"
               />
-            </div>
+              <figcaption>
+                <span className="bc-fig__t">{f.title}</span>
+                <span className="bc-fig__n">{f.number}</span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>

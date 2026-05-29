@@ -1,25 +1,45 @@
 import Image from "next/image";
 
+/**
+ * Footer — bloque superior con logo (decisión del cliente: mantenemos el
+ * SVG de la marca) a la izquierda y dos columnas de links a la derecha.
+ * Bloque inferior con copyright y enlace a la reserva.
+ */
 export function Footer() {
+  const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:flex-row sm:items-center sm:justify-between">
-        <Image
-          src="/brand/logo-combinado-inverso.svg"
-          alt="Brothers Club Barbershop"
-          width={1125}
-          height={411}
-          className="h-10 w-auto opacity-90"
-        />
-        <div className="flex flex-col items-start gap-1 text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] sm:items-end">
-          <p>© {new Date().getFullYear()} Brothers Club Barbershop</p>
-          <a
-            href="/reservar"
-            className="text-[color:var(--color-fg)] underline-offset-4 hover:underline"
-          >
-            Reservar online
-          </a>
+    <footer className="bc-footer">
+      <div className="bc-footer__top">
+        <div className="bc-footer__brand">
+          <Image
+            src="/brand/logo-combinado-inverso.svg"
+            alt="Brothers Club Barbershop"
+            width={1125}
+            height={411}
+            className="h-10 w-auto"
+          />
         </div>
+        <div className="bc-footer__cols">
+          <div className="bc-footer__col">
+            <h4>Navegar</h4>
+            <a href="#servicios">Servicios</a>
+            <a href="#espacio">El Espacio</a>
+            <a href="#visitanos">Visítanos</a>
+            <a href="/reservar">Reservar</a>
+          </div>
+          <div className="bc-footer__col">
+            <h4>Síguenos</h4>
+            <a href="#" aria-label="Instagram">Instagram</a>
+            <a href="#" aria-label="TikTok">TikTok</a>
+            <a href="#" aria-label="WhatsApp">WhatsApp</a>
+          </div>
+        </div>
+      </div>
+      <div className="bc-footer__bot">
+        <span>© {year} Brothers Club Barbershop</span>
+        <a href="/reservar">
+          <span>Reserva online</span>
+        </a>
       </div>
     </footer>
   );

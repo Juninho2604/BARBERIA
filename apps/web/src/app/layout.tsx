@@ -1,25 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Jost, Playfair_Display } from "next/font/google";
+import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+// Tipografía oficial post-rebrand (design handoff v1).
+// Bodoni Moda — serif display de alto contraste (titulares, nombres,
+// precios, monograma). Hanken Grotesk — sans neutra (cuerpo, etiquetas,
+// botones, nav).
+const bodoni = Bodoni_Moda({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const hanken = Hanken_Grotesk({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-// Jost — tipografía oficial de Brothers Club.
-// Display 500 (BROTHERS) y Light 300 (CLUB / SINCE 2026).
-const jost = Jost({
-  subsets: ["latin"],
-  weight: ["300", "500"],
-  variable: "--font-jost",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans-brand",
   display: "swap",
 });
 
@@ -33,7 +31,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${playfair.variable} ${jost.variable}`}>
+    <html lang="es" className={`${bodoni.variable} ${hanken.variable}`}>
       <body>{children}</body>
     </html>
   );

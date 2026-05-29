@@ -40,7 +40,7 @@ export default function BarberIntro({
     const canvas = canvasRef.current!;
     const root = rootRef.current!;
 
-    const STAR_COLOR = 0xececec; // blanco roto (brand)
+    const STAR_COLOR = 0xf1ede4; // bone (brand v2)
     const TARGET_HEIGHT = 3.0; // altura del modelo en unidades de escena
     const FLOAT_Y = 1.4; // centro vertical del modelo flotando
 
@@ -312,7 +312,7 @@ export default function BarberIntro({
       ref={rootRef}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: '#0F0F0F',
+        background: '#0a0a0b',
         transition: 'opacity .7s ease',
         // @ts-expect-error CSS var
         '--ui-op': 1,
@@ -338,7 +338,7 @@ export default function BarberIntro({
             <circle cx="59" cy="59" r="54" fill="none" stroke="rgba(233,226,210,.18)" strokeWidth="2" />
             <circle
               ref={ringRef}
-              cx="59" cy="59" r="54" fill="none" stroke="#ECECEC" strokeWidth="4"
+              cx="59" cy="59" r="54" fill="none" stroke="#f1ede4" strokeWidth="4"
               strokeLinecap="round" strokeDasharray="339.3" strokeDashoffset="339.3"
               style={{ transition: 'stroke-dashoffset .12s linear' }}
             />

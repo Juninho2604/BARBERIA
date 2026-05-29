@@ -1,5 +1,13 @@
 import { api } from "@/lib/api";
 
+/**
+ * Servicios — lista editorial numerada (handoff). Cada fila es un `<a>` al
+ * flujo de reserva real (`/reservar`). Hover: padding-left aumenta, fondo
+ * de `--bone` al 6% crece de 0→100%, "Reservar →" entra desde la izquierda.
+ *
+ * Datos vienen de la API (mismos que ya muestra el sitio); soft-fail a [].
+ * El precio se formatea sin decimales (los del cliente son enteros USD).
+ */
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
 }
@@ -13,61 +21,55 @@ function formatDuration(min: number) {
   return `${min} min`;
 }
 
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
 export async function Services() {
   const services = await api.listServices().catch(() => []);
 
   return (
-    <section
-      id="servicios"
-      className="border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]"
-    >
-      <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
-        <p className="text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
-          — Servicios —
-        </p>
-        <h2 className="mt-4 text-4xl font-light tracking-tight sm:text-5xl">
-          Lo que hacemos.
-        </h2>
-        <p className="mt-4 max-w-xl text-[color:var(--color-fg-muted)]">
-          Precios fijos. Sin sorpresas. Reserva el que necesites.
-        </p>
+    <section className="bc-section" id="servicios">
+      <div className="bc-wrap">
+        <header className="bc-services__head">
+          <p className="bc-eyebrow" data-reveal>
+            Servicios
+          </p>
+          <h2 className="bc-display" data-reveal data-delay="1">
+            Lo que hacemos.
+          </h2>
+          <p className="bc-lead" data-reveal data-delay="2">
+            Precios fijos. Sin sorpresas. Reserva el que necesites.
+          </p>
+        </header>
 
         {services.length === 0 ? (
-          <p className="mt-16 text-[color:var(--color-fg-muted)]">
+          <p className="bc-lead">
             Estamos preparando el catálogo. Vuelve en un momento.
           </p>
         ) : (
-          <ul className="mt-16 divide-y divide-[color:var(--color-border)] border-y border-[color:var(--color-border)]">
-            {services.map((s) => (
-              <li
+          <div className="bc-svc-list">
+            {services.map((s, i) => (
+              <a
                 key={s.id}
-                className="flex items-baseline justify-between gap-6 py-6"
+                href="/reservar"
+                className="bc-svc"
+                data-reveal
+                data-delay={Math.min(i % 3, 2) || undefined}
               >
-                <div>
-                  <p className="text-lg font-normal text-[color:var(--color-fg)]">
-                    {s.name}
-                  </p>
-                  <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
-                    {formatPrice(s.priceCents)} · {formatDuration(s.durationMinutes)}
-                  </p>
-                </div>
-                <a
-                  href="/reservar"
-                  className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
-                >
-                  Reservar
-                </a>
-              </li>
+                <span className="bc-svc__no">{pad2(i + 1)}</span>
+                <span className="bc-svc__name">{s.name}</span>
+                <span className="bc-svc__meta">{formatDuration(s.durationMinutes)}</span>
+                <span className="bc-svc__price">{formatPrice(s.priceCents)}</span>
+                <span className="bc-svc__go">Reservar →</span>
+              </a>
             ))}
-          </ul>
+          </div>
         )}
 
-        <div className="mt-16">
-          <a
-            href="/reservar"
-            className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-fg)] px-6 py-3 text-sm font-medium uppercase tracking-[0.18em] text-[color:var(--color-bg)] transition hover:opacity-90"
-          >
-            Reservar ahora
+        <div className="bc-services__foot" data-reveal>
+          <a className="bc-btn bc-btn--solid" href="/reservar">
+            Reservar ahora <span className="arw">→</span>
           </a>
         </div>
       </div>
