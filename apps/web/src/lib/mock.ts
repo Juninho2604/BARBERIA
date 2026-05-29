@@ -13,6 +13,8 @@ import type {
   AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
+  ClientDetailDto,
+  ClientSummaryDto,
   CreateAppointmentInputDto,
   CreateBarberInputDto,
   CreateServiceInputDto,
@@ -328,6 +330,49 @@ function assertAdminToken(token: string) {
   }
 }
 
+// --- clients (derivado de appointments) ---
+const clientNotes = new Map<string, string>();
+clientNotes.set("mock-marco@ex.com", "Prefiere fade bajo, sin máquina alta en la nuca.");
+clientNotes.set("mock-hugo@ex.com", "Cliente habitual desde 2023. Vino con barba clásica.");
+
+function buildClientSummaries(): ClientSummaryDto[] {
+  const map = new Map<string, ClientSummaryDto & { _ends: string[] }>();
+  for (const a of appointments) {
+    if (!a.client?.email) continue;
+    const id = a.clientId;
+    let entry = map.get(id);
+    if (!entry) {
+      entry = {
+        id,
+        name: a.client.name,
+        email: a.client.email,
+        phone: a.client.phone,
+        totalAppointments: 0,
+        completedAppointments: 0,
+        lifetimeCents: 0,
+        firstVisitAt: a.startsAt,
+        lastVisitAt: a.startsAt,
+        notes: clientNotes.get(id) ?? null,
+        _ends: [],
+      };
+      map.set(id, entry);
+    }
+    entry.totalAppointments += 1;
+    if (a.status === "COMPLETED") {
+      entry.completedAppointments += 1;
+      entry.lifetimeCents += a.service?.priceCents ?? 0;
+    }
+    entry._ends.push(a.startsAt);
+    if (a.startsAt < entry.firstVisitAt!) entry.firstVisitAt = a.startsAt;
+    if (a.startsAt > entry.lastVisitAt!) entry.lastVisitAt = a.startsAt;
+  }
+  return Array.from(map.values())
+    .map(({ _ends, ...rest }) => rest)
+    .sort((a, b) =>
+      (b.lastVisitAt ?? "").localeCompare(a.lastVisitAt ?? ""),
+    );
+}
+
 export const mockApi = {
   async listServices(): Promise<ServiceDto[]> {
     return services.filter((s) => s.isActive);
@@ -425,6 +470,43 @@ export const mockApi = {
     staffMembers.push(created);
     return created;
   },
+  // --- admin: clients ---
+  async adminListClients(token: string): Promise<ClientSummaryDto[]> {
+    assertAdminToken(token);
+    return buildClientSummaries();
+  },
+  async adminGetClient(id: string, token: string): Promise<ClientDetailDto | null> {
+    assertAdminToken(token);
+    const summaries = buildClientSummaries();
+    const found = summaries.find((c) => c.id === id);
+    if (!found) return null;
+    const history = appointments
+      .filter((a) => a.clientId === id)
+      .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
+      .map((a) => ({
+        id: a.id,
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        status: a.status,
+        serviceName: a.service?.name ?? "—",
+        barberName: a.barber?.name ?? "—",
+        priceCents: a.service?.priceCents ?? 0,
+      }));
+    return { ...found, appointments: history };
+  },
+  async adminUpdateClientNotes(
+    id: string,
+    notes: string,
+    token: string,
+  ): Promise<ClientSummaryDto> {
+    assertAdminToken(token);
+    clientNotes.set(id, notes);
+    const summaries = buildClientSummaries();
+    const found = summaries.find((c) => c.id === id);
+    if (!found) throw new ApiError(404, "Cliente no encontrado");
+    return found;
+  },
+
   async adminUpdateStaff(
     id: string,
     input: UpdateStaffInputDto,

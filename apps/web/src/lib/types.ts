@@ -6,6 +6,8 @@ import type {
   AuthUser,
   AvailabilityResponse,
   Barber,
+  ClientDetail,
+  ClientSummary,
   CreateAppointmentInput,
   CreateBarberInput,
   CreateServiceInput,
@@ -17,6 +19,7 @@ import type {
   StaffMember,
   TimeOff,
   UpdateAppointmentInput,
+  UpdateClientNotesInput,
   UpdateServiceInput,
   UpdateStaffInput,
 } from "@barberia/shared";
@@ -39,3 +42,6 @@ export type RoleDto = Role;
 export type StaffMemberDto = StaffMember;
 export type InviteStaffInputDto = InviteStaffInput;
 export type UpdateStaffInputDto = UpdateStaffInput;
+export type ClientSummaryDto = ClientSummary;
+export type ClientDetailDto = ClientDetail;
+export type UpdateClientNotesInputDto = UpdateClientNotesInput;
