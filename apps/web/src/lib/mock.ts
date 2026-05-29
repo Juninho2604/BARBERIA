@@ -17,10 +17,13 @@ import type {
   CreateBarberInputDto,
   CreateServiceInputDto,
   CreateTimeOffInputDto,
+  InviteStaffInputDto,
   LoginInputDto,
   ServiceDto,
+  StaffMemberDto,
   TimeOffDto,
   UpdateServiceInputDto,
+  UpdateStaffInputDto,
 } from "./types";
 
 // Catálogo oficial de Brothers Club Barbershop.
@@ -185,14 +188,75 @@ function generateMockSlots(barberId: string, date: string, durationMinutes: numb
   return slots;
 }
 
-// --- auth ---
+// --- auth + staff ---
 
-const MOCK_ADMIN: AuthUserDto = {
-  id: "user-admin",
-  email: "admin@demo.local",
-  name: "Admin Demo",
-  phone: null,
-  role: "ADMIN",
+const nowIso = () => new Date().toISOString();
+
+// Equipo demo. El que abra la sesión asume identidad del primero (OWNER).
+const staffMembers: StaffMemberDto[] = [
+  {
+    id: "user-owner",
+    email: "owner@brothersclub.co",
+    name: "Owner Demo",
+    phone: null,
+    role: "OWNER",
+    isActive: true,
+    barberId: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    lastLoginAt: nowIso(),
+  },
+  {
+    id: "user-manager",
+    email: "manager@brothersclub.co",
+    name: "Carla Manager",
+    phone: "+1 305 555 0102",
+    role: "MANAGER",
+    isActive: true,
+    barberId: null,
+    createdAt: "2026-02-01T00:00:00.000Z",
+    lastLoginAt: null,
+  },
+  {
+    id: "user-reception",
+    email: "reception@brothersclub.co",
+    name: "Sofía Recepción",
+    phone: "+1 305 555 0103",
+    role: "RECEPTIONIST",
+    isActive: true,
+    barberId: null,
+    createdAt: "2026-02-10T00:00:00.000Z",
+    lastLoginAt: null,
+  },
+  {
+    id: "user-juan",
+    email: "juan@brothersclub.co",
+    name: "Juan",
+    phone: null,
+    role: "BARBER",
+    isActive: true,
+    barberId: "barb-juan",
+    createdAt: "2026-01-15T00:00:00.000Z",
+    lastLoginAt: null,
+  },
+  {
+    id: "user-luis",
+    email: "luis@brothersclub.co",
+    name: "Luis",
+    phone: null,
+    role: "BARBER",
+    isActive: true,
+    barberId: "barb-luis",
+    createdAt: "2026-01-20T00:00:00.000Z",
+    lastLoginAt: null,
+  },
+];
+
+const MOCK_OWNER: AuthUserDto = {
+  id: staffMembers[0]!.id,
+  email: staffMembers[0]!.email,
+  name: staffMembers[0]!.name,
+  phone: staffMembers[0]!.phone,
+  role: staffMembers[0]!.role,
 };
 
 function fakeToken(): string {
@@ -267,15 +331,67 @@ export const mockApi = {
 
   // --- auth ---
   async login(_input: LoginInputDto): Promise<AuthSessionDto> {
-    // En modo demo aceptamos cualquier credencial y devolvemos sesión admin.
+    // En modo demo aceptamos cualquier credencial y devolvemos sesión owner.
     return {
-      user: MOCK_ADMIN,
+      user: MOCK_OWNER,
       tokens: { accessToken: fakeToken(), refreshToken: fakeToken() },
     };
   },
   async me(token: string): Promise<AuthUserDto> {
     assertAdminToken(token);
-    return MOCK_ADMIN;
+    return MOCK_OWNER;
+  },
+
+  // --- admin: staff ---
+  async adminListStaff(token: string): Promise<StaffMemberDto[]> {
+    assertAdminToken(token);
+    return [...staffMembers];
+  },
+  async adminInviteStaff(input: InviteStaffInputDto, token: string): Promise<StaffMemberDto> {
+    assertAdminToken(token);
+    if (staffMembers.some((s) => s.email.toLowerCase() === input.email.toLowerCase())) {
+      throw new ApiError(409, "Ya existe un miembro con ese email");
+    }
+    const created: StaffMemberDto = {
+      id: `user-${Date.now()}`,
+      email: input.email.toLowerCase(),
+      name: input.name.trim(),
+      phone: null,
+      role: input.role,
+      isActive: true,
+      barberId: input.barberId ?? null,
+      createdAt: nowIso(),
+      lastLoginAt: null,
+    };
+    staffMembers.push(created);
+    return created;
+  },
+  async adminUpdateStaff(
+    id: string,
+    input: UpdateStaffInputDto,
+    token: string,
+  ): Promise<StaffMemberDto> {
+    assertAdminToken(token);
+    const idx = staffMembers.findIndex((s) => s.id === id);
+    if (idx < 0) throw new ApiError(404, "Miembro no encontrado");
+    const cur = staffMembers[idx]!;
+    // No permitir degradar al único OWNER.
+    if (input.role && cur.role === "OWNER" && input.role !== "OWNER") {
+      const owners = staffMembers.filter((s) => s.role === "OWNER" && s.isActive).length;
+      if (owners <= 1) throw new ApiError(400, "Debe haber al menos un OWNER activo");
+    }
+    if (input.isActive === false && cur.role === "OWNER") {
+      const owners = staffMembers.filter((s) => s.role === "OWNER" && s.isActive).length;
+      if (owners <= 1) throw new ApiError(400, "Debe haber al menos un OWNER activo");
+    }
+    staffMembers[idx] = {
+      ...cur,
+      role: input.role ?? cur.role,
+      isActive: input.isActive ?? cur.isActive,
+      name: input.name?.trim() ?? cur.name,
+      phone: input.phone === undefined ? cur.phone : input.phone,
+    };
+    return staffMembers[idx]!;
   },
 
   // --- admin: services ---

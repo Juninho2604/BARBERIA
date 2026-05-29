@@ -5,13 +5,21 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { clearSession, readAccessToken, readUser } from "@/lib/auth-client";
+import { ROLE_LABEL, can, type Action } from "@/lib/permissions";
 import type { AuthUserDto } from "@/lib/types";
 
-const NAV = [
-  { href: "/admin", label: "Resumen" },
-  { href: "/admin/services", label: "Servicios" },
-  { href: "/admin/barbers", label: "Barberos" },
-  { href: "/admin/appointments", label: "Citas" },
+interface NavItem {
+  href: string;
+  label: string;
+  requires: Action;
+}
+
+const NAV: NavItem[] = [
+  { href: "/admin",              label: "Resumen",   requires: "panel.access" },
+  { href: "/admin/appointments", label: "Citas",     requires: "appointments.viewOwn" },
+  { href: "/admin/services",     label: "Servicios", requires: "services.manage" },
+  { href: "/admin/barbers",      label: "Barberos",  requires: "barbers.manage" },
+  { href: "/admin/staff",        label: "Staff",     requires: "staff.manage" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -32,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     api
       .me(token)
       .then((u) => {
-        if (u.role !== "ADMIN") {
+        if (!can(u.role, "panel.access")) {
           clearSession();
           router.replace("/login");
           return;
@@ -59,7 +67,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user || user.role !== "ADMIN") return null;
+  if (!user || !can(user.role, "panel.access")) return null;
+
+  const visibleNav = NAV.filter((item) => can(user.role, item.requires));
+  const roleLabel = ROLE_LABEL[user.role];
 
   return (
     <div className="min-h-screen bg-[color:var(--color-bg)]">
@@ -78,8 +89,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </span>
           </a>
           <div className="flex items-center gap-4 text-xs uppercase tracking-[0.18em]">
-            <span className="hidden text-[color:var(--color-fg-muted)] sm:inline">
-              {user.email}
+            <span className="hidden flex-col items-end gap-0.5 sm:flex">
+              <span className="text-[color:var(--color-fg)]">{user.email}</span>
+              <span className="text-[0.65rem] text-[color:var(--color-fg-muted)]">
+                {roleLabel}
+              </span>
             </span>
             <button
               type="button"
@@ -91,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-6 pb-3 text-xs uppercase tracking-[0.22em]">
-          {NAV.map((item) => {
+          {visibleNav.map((item) => {
             const active = pathname === item.href;
             return (
               <a

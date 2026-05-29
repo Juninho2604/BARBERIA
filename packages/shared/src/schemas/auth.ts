@@ -19,8 +19,31 @@ export const RefreshSchema = z.object({
 });
 export type RefreshInput = z.infer<typeof RefreshSchema>;
 
-export const RoleSchema = z.enum(["CLIENT", "BARBER", "ADMIN"]);
+/**
+ * Roles del sistema.
+ *
+ *  - OWNER        — dueño/a. Acceso total: staff, servicios, barberos, finanzas, settings.
+ *  - MANAGER      — gestiona operación día a día (servicios, barberos, citas) pero no
+ *                   maneja staff ni settings críticos. Ve reportes.
+ *  - RECEPTIONIST — atiende citas y clientes (crear, modificar, cancelar reservas).
+ *                   No edita servicios ni barberos.
+ *  - BARBER       — solo ve y gestiona SU agenda + perfil. No ve a los demás.
+ *  - CLIENT       — usuario final que reserva citas en la web pública.
+ *  - ADMIN        — alias deprecated, mantenido por compat. Se trata como OWNER.
+ */
+export const RoleSchema = z.enum([
+  "OWNER",
+  "MANAGER",
+  "RECEPTIONIST",
+  "BARBER",
+  "CLIENT",
+  "ADMIN", // alias deprecated → OWNER
+]);
 export type Role = z.infer<typeof RoleSchema>;
+
+/** Roles que pueden acceder al panel admin (cualquiera que no sea CLIENT puro). */
+export const STAFF_ROLES = ["OWNER", "MANAGER", "RECEPTIONIST", "BARBER", "ADMIN"] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number];
 
 export const AuthUserSchema = z.object({
   id: z.string(),
