@@ -1,7 +1,8 @@
 /**
  * Brothers Club — tokens de marca.
  *
- * Fuente: GUIA_DE_MARCA v4 final del cliente (v1 = 2026-05-28).
+ * Fuente: design handoff v1 (2026-05-29) — paleta cálida monocromática
+ * (ink + bone) + tipografía Bodoni Moda (serif) / Hanken Grotesk (sans).
  * Los assets vectoriales viven en `/public/brand/`.
  *
  * Este archivo expone los valores literales (hex / nombres) para usarlos
@@ -11,28 +12,25 @@
 
 export const brand = {
   name: 'Brothers Club',
-  tagline: 'since 2026',
+  tagline: 'Barbershop · Est. 2026',
   fullName: 'Brothers Club Barbershop',
 
-  /** Paleta monocromática editorial — sin colores cálidos ni acentos saturados. */
+  /** Paleta cálida monocromática — ink (negro cálido) + bone (blanco hueso). */
   color: {
-    grafito: '#0F0F0F',     // texto principal — "BROTHERS"
-    grisOscuro: '#5A5A5A',  // texto secundario — "CLUB" / "SINCE 2026"
-    grisClaro: '#9A9A9A',   // líneas accent, dividers
-    blancoRoto: '#ECECEC',  // fondo principal
+    ink:      '#0a0a0b', // fondo base
+    ink2:     '#050506', // negro más profundo (gradients)
+    panel:    '#131315', // superficies elevadas
+    bone:     '#f1ede4', // texto principal
+    boneDim:  '#c3bdb1', // texto secundario
+    muted:    '#807b70', // texto terciario / meta
+    line:     'rgba(241,237,228,0.13)',
+    line2:    'rgba(241,237,228,0.26)',
   },
 
-  /** Tipografía oficial — Google Fonts: Jost. */
+  /** Tipografía oficial post-rebrand. */
   font: {
-    family: 'Jost',
-    weights: {
-      display: 500, // "BROTHERS" — Medium
-      light: 300,   // "CLUB" / "SINCE 2026" — Light
-    },
-    tracking: {
-      normal: '0em',
-      wide: '0.072em', // +72 (tracking de "CLUB" y "SINCE 2026")
-    },
+    serif: 'Bodoni Moda', // titulares, nombres, precios, monograma
+    sans:  'Hanken Grotesk', // cuerpo, etiquetas, botones, nav
   },
 
   /** Logos vectoriales (SVG en /public/brand/). */

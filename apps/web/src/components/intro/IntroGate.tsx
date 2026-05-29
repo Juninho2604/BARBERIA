@@ -56,7 +56,7 @@ export function IntroGate({ children }: { children: React.ReactNode }) {
             position: 'fixed',
             inset: 0,
             zIndex: 9998,
-            background: '#0F0F0F',
+            background: '#0a0a0b',
             pointerEvents: 'none',
           }}
         />
