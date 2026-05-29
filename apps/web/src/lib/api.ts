@@ -15,6 +15,8 @@ import type {
   CreateBarberInputDto,
   CreateServiceInputDto,
   CreateTimeOffInputDto,
+  ClientDetailDto,
+  ClientSummaryDto,
   InviteStaffInputDto,
   LoginInputDto,
   ServiceDto,
@@ -257,6 +259,33 @@ export const api = {
     return http<StaffMemberDto>(`/staff/${id}`, {
       method: "PATCH",
       body: JSON.stringify(input),
+      token,
+    });
+  },
+
+  // --- admin: clients ---
+  async adminListClients(token: string): Promise<ClientSummaryDto[]> {
+    if (useMock()) return mockApi.adminListClients(token);
+    return http<ClientSummaryDto[]>("/clients", { token });
+  },
+  async adminGetClient(id: string, token: string): Promise<ClientDetailDto | null> {
+    if (useMock()) return mockApi.adminGetClient(id, token);
+    try {
+      return await http<ClientDetailDto>(`/clients/${id}`, { token });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  },
+  async adminUpdateClientNotes(
+    id: string,
+    notes: string,
+    token: string,
+  ): Promise<ClientSummaryDto> {
+    if (useMock()) return mockApi.adminUpdateClientNotes(id, notes, token);
+    return http<ClientSummaryDto>(`/clients/${id}/notes`, {
+      method: "PATCH",
+      body: JSON.stringify({ notes }),
       token,
     });
   },
