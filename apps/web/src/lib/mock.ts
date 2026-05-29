@@ -152,8 +152,67 @@ const barbers: BarberDto[] = [
 
 const timeOffs: TimeOffDto[] = [];
 const appointments: AppointmentDto[] = [];
-
 const BOOKINGS = new Set<string>(); // claves "barberId|startsAt"
+
+// Citas demo — distribuidas entre hoy y los próximos 3 días para poblar
+// el calendario y la lista de citas. Se siembran al cargar el módulo.
+function seedDemoAppointments() {
+  const seed: Array<{
+    barberId: string;
+    serviceId: string;
+    dayOffset: number;
+    hour: number;
+    minute: number;
+    client: { name: string; email: string; phone: string };
+    status: AppointmentDto["status"];
+  }> = [
+    { barberId: "barb-juan", serviceId: "svc-haircut",        dayOffset: 0, hour: 10, minute: 0,  client: { name: "Marco Velez",     email: "marco@ex.com",     phone: "+1 305 555 0201" }, status: "CONFIRMED" },
+    { barberId: "barb-juan", serviceId: "svc-royal-package",  dayOffset: 0, hour: 12, minute: 0,  client: { name: "James Boateng",   email: "james@ex.com",     phone: "+1 305 555 0202" }, status: "PENDING" },
+    { barberId: "barb-juan", serviceId: "svc-beard-trim",     dayOffset: 0, hour: 15, minute: 30, client: { name: "Diego Ramos",     email: "diego@ex.com",     phone: "+1 305 555 0203" }, status: "CONFIRMED" },
+    { barberId: "barb-luis", serviceId: "svc-king-shave",     dayOffset: 0, hour: 11, minute: 30, client: { name: "Hugo Martín",     email: "hugo@ex.com",      phone: "+1 305 555 0204" }, status: "CONFIRMED" },
+    { barberId: "barb-luis", serviceId: "svc-haircut",        dayOffset: 0, hour: 14, minute: 0,  client: { name: "Andrés Pino",     email: "andres@ex.com",    phone: "+1 305 555 0205" }, status: "PENDING" },
+    { barberId: "barb-juan", serviceId: "svc-haircut",        dayOffset: 1, hour: 9,  minute: 30, client: { name: "Marco Velez",     email: "marco@ex.com",     phone: "+1 305 555 0201" }, status: "CONFIRMED" },
+    { barberId: "barb-juan", serviceId: "svc-eyebrow-wax",    dayOffset: 1, hour: 11, minute: 0,  client: { name: "Camilo Soto",     email: "camilo@ex.com",    phone: "+1 305 555 0206" }, status: "PENDING" },
+    { barberId: "barb-luis", serviceId: "svc-balding-head-shave", dayOffset: 1, hour: 13, minute: 0, client: { name: "Iván Rivero",  email: "ivan@ex.com",      phone: "+1 305 555 0207" }, status: "CONFIRMED" },
+    { barberId: "barb-juan", serviceId: "svc-haircut",        dayOffset: 2, hour: 10, minute: 30, client: { name: "Luca Petrov",     email: "luca@ex.com",      phone: "+1 305 555 0208" }, status: "PENDING" },
+    { barberId: "barb-luis", serviceId: "svc-king-shave",     dayOffset: 2, hour: 16, minute: 0,  client: { name: "Hugo Martín",     email: "hugo@ex.com",      phone: "+1 305 555 0204" }, status: "CONFIRMED" },
+  ];
+
+  const baseDay = new Date();
+  baseDay.setHours(0, 0, 0, 0);
+
+  for (const s of seed) {
+    const service = services.find((x) => x.id === s.serviceId);
+    const barber = barbers.find((x) => x.id === s.barberId);
+    if (!service || !barber) continue;
+    const start = new Date(baseDay);
+    start.setDate(start.getDate() + s.dayOffset);
+    start.setHours(s.hour, s.minute, 0, 0);
+    const end = new Date(start.getTime() + service.durationMinutes * 60_000);
+    const id = `appt-seed-${s.barberId}-${s.dayOffset}-${s.hour}-${s.minute}`;
+    appointments.push({
+      id,
+      clientId: `mock-${s.client.email}`,
+      barberId: barber.id,
+      serviceId: service.id,
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString(),
+      status: s.status,
+      notes: null,
+      createdAt: new Date(baseDay.getTime() - 86_400_000 * 7).toISOString(),
+      client: s.client,
+      barber: { id: barber.id, name: barber.name },
+      service: {
+        id: service.id,
+        name: service.name,
+        durationMinutes: service.durationMinutes,
+        priceCents: service.priceCents,
+      },
+    });
+    BOOKINGS.add(`${barber.id}|${start.toISOString()}`);
+  }
+}
+seedDemoAppointments();
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -496,15 +555,42 @@ export const mockApi = {
   },
 
   // --- admin: appointments ---
-  async adminListAppointments(token: string): Promise<AppointmentDto[]> {
+  async adminListAppointments(
+    token: string,
+    range?: { from?: string; to?: string; barberId?: string },
+  ): Promise<AppointmentDto[]> {
     assertAdminToken(token);
-    return [...appointments].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    let list = [...appointments];
+    if (range?.from) {
+      const fromMs = new Date(range.from).getTime();
+      list = list.filter((a) => new Date(a.endsAt).getTime() > fromMs);
+    }
+    if (range?.to) {
+      const toMs = new Date(range.to).getTime();
+      list = list.filter((a) => new Date(a.startsAt).getTime() < toMs);
+    }
+    if (range?.barberId) {
+      list = list.filter((a) => a.barberId === range.barberId);
+    }
+    return list.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   },
   async cancelAppointment(id: string, token: string): Promise<AppointmentDto> {
     assertAdminToken(token);
     const appt = appointments.find((a) => a.id === id);
     if (!appt) throw new ApiError(404, "Cita no encontrada");
     appt.status = "CANCELLED";
+    return appt;
+  },
+  async updateAppointment(
+    id: string,
+    input: { status?: AppointmentDto["status"]; notes?: string | null },
+    token: string,
+  ): Promise<AppointmentDto> {
+    assertAdminToken(token);
+    const appt = appointments.find((a) => a.id === id);
+    if (!appt) throw new ApiError(404, "Cita no encontrada");
+    if (input.status !== undefined) appt.status = input.status;
+    if (input.notes !== undefined) appt.notes = input.notes;
     return appt;
   },
 

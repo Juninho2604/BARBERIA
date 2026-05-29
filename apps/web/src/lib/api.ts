@@ -20,6 +20,7 @@ import type {
   ServiceDto,
   StaffMemberDto,
   TimeOffDto,
+  UpdateAppointmentInputDto,
   UpdateServiceInputDto,
   UpdateStaffInputDto,
 } from "./types";
@@ -178,14 +179,34 @@ export const api = {
     });
   },
 
-  async adminListAppointments(token: string): Promise<AppointmentDto[]> {
-    if (useMock()) return mockApi.adminListAppointments(token);
-    return http<AppointmentDto[]>("/appointments", { token });
+  async adminListAppointments(
+    token: string,
+    range?: { from?: string; to?: string; barberId?: string },
+  ): Promise<AppointmentDto[]> {
+    if (useMock()) return mockApi.adminListAppointments(token, range);
+    const qs = new URLSearchParams();
+    if (range?.from) qs.set("from", range.from);
+    if (range?.to) qs.set("to", range.to);
+    if (range?.barberId) qs.set("barberId", range.barberId);
+    const tail = qs.toString() ? `?${qs.toString()}` : "";
+    return http<AppointmentDto[]>(`/appointments${tail}`, { token });
   },
   async cancelAppointment(id: string, token: string): Promise<AppointmentDto> {
     if (useMock()) return mockApi.cancelAppointment(id, token);
     return http<AppointmentDto>(`/appointments/${id}/cancel`, {
       method: "PATCH",
+      token,
+    });
+  },
+  async updateAppointment(
+    id: string,
+    input: UpdateAppointmentInputDto,
+    token: string,
+  ): Promise<AppointmentDto> {
+    if (useMock()) return mockApi.updateAppointment(id, input, token);
+    return http<AppointmentDto>(`/appointments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
       token,
     });
   },
