@@ -254,24 +254,24 @@ export default function BarberIntro({
           try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch { /* noop */ }
           tex.needsUpdate = true;
 
-          const planeW = 0.62;
+          const planeW = 0.95;
           const planeH = planeW / aspect;
           const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
           const planeMat = new THREE.MeshBasicMaterial({
             map: tex,
             transparent: true,
             depthWrite: false,
-            opacity: 0.95,
+            opacity: 1,
           });
 
           // Cara trasera del respaldo (visible desde +Z)
           const planeBack = new THREE.Mesh(planeGeo, planeMat);
-          planeBack.position.set(0, 0.55, 0.42);
+          planeBack.position.set(0, 0.75, 0.42);
           chairWrap.add(planeBack);
 
           // Cara delantera del respaldo (visible desde -Z)
           const planeFront = new THREE.Mesh(planeGeo, planeMat);
-          planeFront.position.set(0, 0.55, -0.42);
+          planeFront.position.set(0, 0.75, -0.42);
           planeFront.rotation.y = Math.PI;
           chairWrap.add(planeFront);
 
