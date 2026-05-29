@@ -80,7 +80,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.post(
       "/",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { body: CreateBarberSchema },
       },
       async (req, reply) => {
@@ -128,7 +128,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.put(
       "/:id",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { params: IdParam, body: UpdateBarberSchema },
       },
       async (req, reply) => {
@@ -170,7 +170,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.delete(
       "/:id",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { params: IdParam },
       },
       async (req, reply) => {
@@ -191,7 +191,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.put(
       "/:id/working-hours",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { params: IdParam, body: SetWorkingHoursSchema },
       },
       async (req, reply) => {

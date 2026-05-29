@@ -4,6 +4,8 @@ import { z } from "zod";
 import type { Appointment as PrismaAppointment } from "@prisma/client";
 import {
   CreateAppointmentSchema,
+  UpdateAppointmentSchema,
+  can,
   type Appointment as AppointmentDto,
 } from "@barberia/shared";
 import { prisma } from "../db.js";
@@ -229,10 +231,16 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         if (role === "CLIENT") {
           where.clientId = userId;
         } else if (role === "BARBER") {
+          // Un BARBER siempre solo ve sus propias citas, sin importar el
+          // filtro `barberId` que mande la query.
           const profile = await prisma.barber.findUnique({ where: { userId } });
           where.barberId = profile?.id ?? "__none__";
-        } else if (barberId) {
-          where.barberId = barberId;
+        } else if (can(role, "appointments.viewAll")) {
+          // OWNER / MANAGER / RECEPTIONIST / ADMIN pueden filtrar opcional.
+          if (barberId) where.barberId = barberId;
+        } else {
+          // Cualquier otro rol sin permiso → vacío.
+          where.clientId = "__none__";
         }
 
         const appointments = await prisma.appointment.findMany({
@@ -262,7 +270,10 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         const isOwner = appointment.clientId === userId;
         const isAssignedBarber =
           role === "BARBER" && appointment.barber.userId === userId;
-        if (role !== "ADMIN" && !isOwner && !isAssignedBarber) {
+        // Roles admin (OWNER/MANAGER/RECEPTIONIST/ADMIN) pueden cancelar
+        // cualquier cita. Cliente solo la suya. BARBER solo las suyas.
+        const canForce = can(role, "appointments.cancel") && role !== "BARBER" && role !== "CLIENT";
+        if (!canForce && !isOwner && !isAssignedBarber) {
           return reply.status(403).send({
             error: { code: "FORBIDDEN", message: "Permisos insuficientes" },
           });
