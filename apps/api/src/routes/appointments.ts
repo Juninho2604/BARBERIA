@@ -291,5 +291,41 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         return toDto(updated);
       },
     );
+
+    // PATCH /:id — cambio parcial (estado, notas). Usado por el calendario
+    // operativo del admin para confirmar / completar / marcar no-show.
+    r.patch(
+      "/:id",
+      {
+        preHandler: [guards.requireAuth, guards.requireAction("appointments.changeStatus")],
+        schema: { params: IdParam, body: UpdateAppointmentSchema },
+      },
+      async (req, reply) => {
+        const appointment = await prisma.appointment.findUnique({
+          where: { id: req.params.id },
+          include: { barber: true },
+        });
+        if (!appointment) {
+          return reply.status(404).send({
+            error: { code: "NOT_FOUND", message: "Cita no encontrada" },
+          });
+        }
+        // BARBER solo puede modificar sus propias citas.
+        if (req.auth!.role === "BARBER" && appointment.barber.userId !== req.auth!.userId) {
+          return reply.status(403).send({
+            error: { code: "FORBIDDEN", message: "No es tu cita" },
+          });
+        }
+        const data: { status?: AppointmentDto["status"]; notes?: string | null } = {};
+        if (req.body.status !== undefined) data.status = req.body.status;
+        if (req.body.notes !== undefined) data.notes = req.body.notes;
+        const updated = await prisma.appointment.update({
+          where: { id: appointment.id },
+          data,
+          include: INCLUDE,
+        });
+        return toDto(updated);
+      },
+    );
   };
 }
