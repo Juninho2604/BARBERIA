@@ -10,10 +10,14 @@ import type {
   CreateBarberInput,
   CreateServiceInput,
   CreateTimeOffInput,
+  InviteStaffInput,
   LoginInput,
+  Role,
   Service,
+  StaffMember,
   TimeOff,
   UpdateServiceInput,
+  UpdateStaffInput,
 } from "@barberia/shared";
 
 export type ServiceDto = Service;
@@ -29,3 +33,7 @@ export type CreateAppointmentInputDto = CreateAppointmentInput;
 export type LoginInputDto = LoginInput;
 export type AuthSessionDto = AuthSession;
 export type AuthUserDto = AuthUser;
+export type RoleDto = Role;
+export type StaffMemberDto = StaffMember;
+export type InviteStaffInputDto = InviteStaffInput;
+export type UpdateStaffInputDto = UpdateStaffInput;

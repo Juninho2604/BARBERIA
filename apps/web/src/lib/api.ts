@@ -15,10 +15,13 @@ import type {
   CreateBarberInputDto,
   CreateServiceInputDto,
   CreateTimeOffInputDto,
+  InviteStaffInputDto,
   LoginInputDto,
   ServiceDto,
+  StaffMemberDto,
   TimeOffDto,
   UpdateServiceInputDto,
+  UpdateStaffInputDto,
 } from "./types";
 import { ApiError } from "./api-error";
 import { mockApi } from "./mock";
@@ -206,5 +209,34 @@ export const api = {
   async deleteTimeOff(id: string, token: string): Promise<void> {
     if (useMock()) return mockApi.deleteTimeOff(id, token);
     return http<void>(`/time-off/${id}`, { method: "DELETE", token });
+  },
+
+  // --- admin: staff ---
+  async adminListStaff(token: string): Promise<StaffMemberDto[]> {
+    if (useMock()) return mockApi.adminListStaff(token);
+    return http<StaffMemberDto[]>("/staff", { token });
+  },
+  async adminInviteStaff(
+    input: InviteStaffInputDto,
+    token: string,
+  ): Promise<StaffMemberDto> {
+    if (useMock()) return mockApi.adminInviteStaff(input, token);
+    return http<StaffMemberDto>("/staff/invite", {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async adminUpdateStaff(
+    id: string,
+    input: UpdateStaffInputDto,
+    token: string,
+  ): Promise<StaffMemberDto> {
+    if (useMock()) return mockApi.adminUpdateStaff(id, input, token);
+    return http<StaffMemberDto>(`/staff/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+      token,
+    });
   },
 };
