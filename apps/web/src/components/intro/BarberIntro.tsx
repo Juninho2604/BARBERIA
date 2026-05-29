@@ -73,6 +73,8 @@ export default function BarberIntro({
     scene.add(chairWrap);
     let model: THREE.Object3D | null = null;
     let modelBottom = -0.1; // se recalcula al cargar; sitúa el shadowCatcher
+    let logoPlanes: THREE.Mesh[] = [];
+    let logoAssets: { tex: THREE.Texture; geo: THREE.BufferGeometry; mat: THREE.Material } | null = null;
 
     // ---------- SUELO INVISIBLE PARA SOMBRA ----------
     const floorGeo = new THREE.CircleGeometry(8, 64);
@@ -229,6 +231,56 @@ export default function BarberIntro({
         model = root3d;
         chairWrap.add(root3d);
 
+        // Logo en el espaldar (cara delantera y trasera).
+        // Cargamos el SVG como CanvasTexture y lo aplicamos a dos planos
+        // hijos del `chairWrap` (rotan junto a la silla). El SVG inverso
+        // tiene paths blancos sobre transparente → se ve como un grabado
+        // sobre el cuero negro del respaldo.
+        const logoImg = new Image();
+        logoImg.onload = () => {
+          if (disposed) return;
+          const sw = 1024;
+          const aspect = 1125 / 411;
+          const sh = Math.round(sw / aspect);
+          const cnv = document.createElement('canvas');
+          cnv.width = sw;
+          cnv.height = sh;
+          const ctx = cnv.getContext('2d');
+          if (!ctx) return;
+          ctx.drawImage(logoImg, 0, 0, sw, sh);
+
+          const tex = new THREE.CanvasTexture(cnv);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch { /* noop */ }
+          tex.needsUpdate = true;
+
+          const planeW = 0.62;
+          const planeH = planeW / aspect;
+          const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
+          const planeMat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            depthWrite: false,
+            opacity: 0.95,
+          });
+
+          // Cara trasera del respaldo (visible desde +Z)
+          const planeBack = new THREE.Mesh(planeGeo, planeMat);
+          planeBack.position.set(0, 0.55, 0.42);
+          chairWrap.add(planeBack);
+
+          // Cara delantera del respaldo (visible desde -Z)
+          const planeFront = new THREE.Mesh(planeGeo, planeMat);
+          planeFront.position.set(0, 0.55, -0.42);
+          planeFront.rotation.y = Math.PI;
+          chairWrap.add(planeFront);
+
+          logoPlanes = [planeBack, planeFront];
+          logoAssets = { tex, geo: planeGeo, mat: planeMat };
+        };
+        logoImg.onerror = () => { /* sin logo si falla */ };
+        logoImg.src = '/brand/logo-combinado-inverso.svg';
+
         // Listo: el anillo pasa a medir el giro.
         ready = true;
         total = 0;
@@ -299,6 +351,13 @@ export default function BarberIntro({
             m.dispose();
           }
         });
+      }
+      // Limpia los planos del logo y su CanvasTexture.
+      logoPlanes.forEach((p) => p.removeFromParent());
+      if (logoAssets) {
+        logoAssets.tex.dispose();
+        logoAssets.geo.dispose();
+        logoAssets.mat.dispose();
       }
       envRT.dispose();
       pmrem.dispose();
