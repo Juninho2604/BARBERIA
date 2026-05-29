@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { Role } from "@prisma/client";
 import { verifyAccessToken } from "./tokens.js";
+import { can, type Action } from "./permissions.js";
 import type { Env } from "../env.js";
 
 declare module "fastify" {
@@ -46,7 +47,27 @@ export function makeAuthGuards(env: Env) {
     };
   }
 
-  return { requireAuth, requireRole };
+  /**
+   * Guard por acción — resuelve los roles permitidos contra la matriz de
+   * `permissions.ts`. Preferir esto sobre `requireRole` para que añadir un rol
+   * a una capacidad sea un cambio en un solo sitio (la matriz), no en cada ruta.
+   */
+  function requireAction(action: Action) {
+    return async function (req: FastifyRequest, reply: FastifyReply) {
+      if (!req.auth) {
+        return reply.status(401).send({
+          error: { code: "UNAUTHORIZED", message: "Token requerido" },
+        });
+      }
+      if (!can(req.auth.role, action)) {
+        return reply.status(403).send({
+          error: { code: "FORBIDDEN", message: "Permisos insuficientes" },
+        });
+      }
+    };
+  }
+
+  return { requireAuth, requireRole, requireAction };
 }
 
 export type AuthGuards = ReturnType<typeof makeAuthGuards>;

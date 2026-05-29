@@ -41,7 +41,7 @@ export function servicesRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.post(
       "/",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("services.manage")],
         schema: { body: CreateServiceSchema },
       },
       async (req, reply) => {
@@ -53,7 +53,7 @@ export function servicesRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.put(
       "/:id",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("services.manage")],
         schema: { params: IdParam, body: UpdateServiceSchema },
       },
       async (req, reply) => {
@@ -73,7 +73,7 @@ export function servicesRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.delete(
       "/:id",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("services.manage")],
         schema: { params: IdParam },
       },
       async (req, reply) => {

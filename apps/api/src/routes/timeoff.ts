@@ -40,7 +40,7 @@ export function timeOffRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.post(
       "/barbers/:id/time-off",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { params: BarberIdParam, body: CreateTimeOffSchema },
       },
       async (req, reply) => {
@@ -65,7 +65,7 @@ export function timeOffRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.delete(
       "/time-off/:id",
       {
-        preHandler: [guards.requireAuth, guards.requireRole("ADMIN")],
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
         schema: { params: TimeOffIdParam },
       },
       async (req, reply) => {

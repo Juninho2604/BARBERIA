@@ -78,6 +78,15 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
           error: { code: "INVALID_CREDENTIALS", message: "Email o contraseña inválidos" },
         });
       }
+      if (!user.isActive) {
+        return reply.status(403).send({
+          error: { code: "ACCOUNT_DISABLED", message: "Cuenta desactivada" },
+        });
+      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
       return issueSession(env, user);
     });
 

@@ -4,10 +4,12 @@ import { z } from "zod";
 import type { Appointment as PrismaAppointment } from "@prisma/client";
 import {
   CreateAppointmentSchema,
+  UpdateAppointmentSchema,
   type Appointment as AppointmentDto,
 } from "@barberia/shared";
 import { prisma } from "../db.js";
 import type { AuthGuards } from "../auth/middleware.js";
+import { can } from "../auth/permissions.js";
 import { verifyAccessToken } from "../auth/tokens.js";
 import type { Env } from "../env.js";
 
@@ -260,9 +262,10 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         }
         const { userId, role } = req.auth!;
         const isOwner = appointment.clientId === userId;
-        const isAssignedBarber =
-          role === "BARBER" && appointment.barber.userId === userId;
-        if (role !== "ADMIN" && !isOwner && !isAssignedBarber) {
+        const isAssignedBarber = appointment.barber.userId === userId;
+        // El cliente dueño y el barbero asignado siempre pueden cancelar lo
+        // suyo; el resto necesita la capacidad `appointments.cancel`.
+        if (!isOwner && !isAssignedBarber && !can(role, "appointments.cancel")) {
           return reply.status(403).send({
             error: { code: "FORBIDDEN", message: "Permisos insuficientes" },
           });
@@ -275,6 +278,53 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         const updated = await prisma.appointment.update({
           where: { id: appointment.id },
           data: { status: "CANCELLED" },
+          include: INCLUDE,
+        });
+        return toDto(updated);
+      },
+    );
+
+    // PATCH /:id — actualizar estado / notas desde el panel (confirmar,
+    // completar, marcar no-show, anotar). El barbero asignado puede tocar lo
+    // suyo; el resto del staff necesita `appointments.changeStatus`.
+    r.patch(
+      "/:id",
+      {
+        preHandler: guards.requireAuth,
+        schema: { params: IdParam, body: UpdateAppointmentSchema },
+      },
+      async (req, reply) => {
+        const { status, notes } = req.body;
+        if (status === undefined && notes === undefined) {
+          return reply.status(400).send({
+            error: { code: "EMPTY_UPDATE", message: "Nada que actualizar" },
+          });
+        }
+
+        const appointment = await prisma.appointment.findUnique({
+          where: { id: req.params.id },
+          include: { barber: true },
+        });
+        if (!appointment) {
+          return reply.status(404).send({
+            error: { code: "NOT_FOUND", message: "Cita no encontrada" },
+          });
+        }
+
+        const { userId, role } = req.auth!;
+        const isAssignedBarber = appointment.barber.userId === userId;
+        if (!isAssignedBarber && !can(role, "appointments.changeStatus")) {
+          return reply.status(403).send({
+            error: { code: "FORBIDDEN", message: "Permisos insuficientes" },
+          });
+        }
+
+        const updated = await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: {
+            ...(status !== undefined ? { status } : {}),
+            ...(notes !== undefined ? { notes } : {}),
+          },
           include: INCLUDE,
         });
         return toDto(updated);
