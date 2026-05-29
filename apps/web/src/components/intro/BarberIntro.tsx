@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
 
 /**
  * BarberIntro — intro 3D "gira para entrar".
@@ -74,10 +75,12 @@ export default function BarberIntro({
     let model: THREE.Object3D | null = null;
     let modelBottom = -0.1; // se recalcula al cargar; sitúa el shadowCatcher
     let floatingLogo: THREE.Mesh | null = null;
+    const decalMeshes: THREE.Mesh[] = [];
     let logoAssets: {
       tex: THREE.Texture;
       geoFloat: THREE.BufferGeometry;
       matFloat: THREE.Material;
+      matDecal: THREE.Material | null;
     } | null = null;
     const FLOAT_LOGO_Y = FLOAT_Y + 2.25;
 
@@ -285,7 +288,112 @@ export default function BarberIntro({
           floatingLogo.position.set(0, FLOAT_LOGO_Y, 0);
           scene.add(floatingLogo);
 
-          logoAssets = { tex, geoFloat, matFloat };
+          // ---------- Decals sobre el respaldar (cuero) ----------
+          // Usamos raycasting para encontrar la superficie real del
+          // respaldar y proyectamos el logo sobre la curva del cuero con
+          // DecalGeometry. Robusto: no depende de coordenadas hard-coded.
+          let leatherMesh: THREE.Mesh | null = null;
+          root3d.traverse((obj) => {
+            const m = obj as THREE.Mesh;
+            if (!m.isMesh) return;
+            const mats = Array.isArray(m.material) ? m.material : [m.material];
+            for (const mt of mats) {
+              if (mt?.name === 'Leather' && !leatherMesh) leatherMesh = m;
+            }
+          });
+
+          let matDecal: THREE.MeshBasicMaterial | null = null;
+          if (leatherMesh) {
+            const lm: THREE.Mesh = leatherMesh;
+            // Aseguramos que las matrices estén actualizadas a chairWrap.rotation = 0
+            // (el tick podría haberla avanzado unos grados antes de cargar el GLB).
+            const savedRotY = chairWrap.rotation.y;
+            chairWrap.rotation.y = 0;
+            chairWrap.updateMatrixWorld(true);
+
+            const leatherBox = new THREE.Box3().setFromObject(lm);
+            const lbCenter = leatherBox.getCenter(new THREE.Vector3());
+            const lbSize = leatherBox.getSize(new THREE.Vector3());
+            const farDist = Math.max(lbSize.x, lbSize.y, lbSize.z) * 2;
+
+            // Probamos a varias alturas: 20%, 30% y 40% por encima del centro.
+            // Para cada una, disparamos rayos desde +Z y −Z y nos quedamos
+            // con el hit cuya normal sea más paralela al eje Z (= cara plana
+            // del respaldar, no costuras o curvaturas raras).
+            const probeHeights = [0.18, 0.28, 0.38].map((f) => lbCenter.y + lbSize.y * f);
+            const raycaster = new THREE.Raycaster();
+
+            const pickBest = (dir: 1 | -1): THREE.Intersection | null => {
+              let best: THREE.Intersection | null = null;
+              let bestAxisDot = 0;
+              for (const y of probeHeights) {
+                raycaster.set(
+                  new THREE.Vector3(lbCenter.x, y, lbCenter.z + dir * farDist),
+                  new THREE.Vector3(0, 0, -dir),
+                );
+                const hits = raycaster.intersectObject(lm, false);
+                if (hits.length === 0) continue;
+                const hit = hits[0]!;
+                if (!hit.face) continue;
+                const nWorld = hit.face.normal.clone().transformDirection(lm.matrixWorld);
+                const axisDot = Math.abs(nWorld.z); // 1 = paralela al eje Z
+                if (axisDot > bestAxisDot) {
+                  bestAxisDot = axisDot;
+                  best = hit;
+                }
+              }
+              return best;
+            };
+
+            const hitPlus = pickBest(1);   // cara orientada hacia +Z
+            const hitMinus = pickBest(-1); // cara orientada hacia −Z
+
+            const decalW = 0.95;
+            const decalH = decalW / aspect;
+            const decalSize = new THREE.Vector3(decalW, decalH, 0.4);
+            matDecal = new THREE.MeshBasicMaterial({
+              map: tex,
+              transparent: true,
+              depthWrite: false,
+              polygonOffset: true,
+              polygonOffsetFactor: -4,
+              polygonOffsetUnits: -4,
+            });
+
+            const addDecal = (hit: THREE.Intersection | null) => {
+              if (!hit || !hit.face) return;
+              const worldNormal = hit.face.normal
+                .clone()
+                .transformDirection(lm.matrixWorld)
+                .normalize();
+              // Posición justo sobre la superficie (pequeño offset evita z-fighting).
+              const decalPos = hit.point.clone().add(worldNormal.clone().multiplyScalar(0.005));
+              // Orientación: alineamos el +Z del proyector con la normal de la cara.
+              const quat = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 0, 1),
+                worldNormal,
+              );
+              const orientation = new THREE.Euler().setFromQuaternion(quat);
+
+              const decalGeo = new DecalGeometry(lm, decalPos, orientation, decalSize);
+              const decalMesh = new THREE.Mesh(decalGeo, matDecal!);
+              // Los vértices vienen en world space; compensamos la traslación
+              // de chairWrap para que sigan a la silla al rotar.
+              decalMesh.position.set(0, -FLOAT_Y, 0);
+              decalMesh.renderOrder = 2;
+              chairWrap.add(decalMesh);
+              decalMeshes.push(decalMesh);
+            };
+
+            addDecal(hitPlus);
+            addDecal(hitMinus);
+
+            // Restauramos la rotación previa de chairWrap.
+            chairWrap.rotation.y = savedRotY;
+            chairWrap.updateMatrixWorld(true);
+          }
+
+          logoAssets = { tex, geoFloat, matFloat, matDecal };
         };
         logoImg.onerror = () => { /* sin logo si falla */ };
         logoImg.src = '/brand/logo-combinado-inverso.svg';
@@ -365,12 +473,17 @@ export default function BarberIntro({
           }
         });
       }
-      // Limpia el logo flotante (texture, geo, material).
+      // Limpia el logo flotante + decals (textures, geos, materiales).
       floatingLogo?.removeFromParent();
+      decalMeshes.forEach((m) => {
+        m.geometry.dispose();
+        m.removeFromParent();
+      });
       if (logoAssets) {
         logoAssets.tex.dispose();
         logoAssets.geoFloat.dispose();
         logoAssets.matFloat.dispose();
+        logoAssets.matDecal?.dispose();
       }
       envRT.dispose();
       pmrem.dispose();
