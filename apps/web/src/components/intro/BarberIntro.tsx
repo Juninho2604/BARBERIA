@@ -345,8 +345,7 @@ export default function BarberIntro({
               return best;
             };
 
-            const hitPlus = pickBest(1);   // cara orientada hacia +Z
-            const hitMinus = pickBest(-1); // cara orientada hacia −Z
+            const hitPlus = pickBest(1); // cara orientada hacia +Z (frontal, donde apoya la espalda)
 
             const decalW = 0.95;
             const decalH = decalW / aspect;
@@ -385,8 +384,9 @@ export default function BarberIntro({
               decalMeshes.push(decalMesh);
             };
 
+            // Solo el frontal — la cara posterior se eliminó por
+            // pedido del cliente (estética más limpia, una sola marca).
             addDecal(hitPlus);
-            addDecal(hitMinus);
 
             // Restauramos la rotación previa de chairWrap.
             chairWrap.rotation.y = savedRotY;
