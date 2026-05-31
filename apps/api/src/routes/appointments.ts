@@ -74,9 +74,14 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
     const r = app.withTypeProvider<ZodTypeProvider>();
 
     // POST / — crear reserva. Auth opcional: si no hay token, guest es obligatorio.
+    // Rate limit: 10/hora por IP para evitar que un bot reserve todos los
+    // slots futuros como denegación de servicio del negocio.
     r.post(
       "/",
-      { schema: { body: CreateAppointmentSchema } },
+      {
+        schema: { body: CreateAppointmentSchema },
+        config: { rateLimit: { max: 10, timeWindow: "1 hour" } },
+      },
       async (req, reply) => {
         const { serviceId, barberId, startsAt, guest, notes } = req.body;
 
@@ -128,9 +133,20 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
               },
             });
           }
-          const normalizedEmail = guest.email.toLowerCase();
+          const normalizedEmail = guest.email.toLowerCase().trim();
           const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
           if (existing) {
+            // Bloqueamos: un usuario anónimo no puede usar el email de
+            // un miembro del staff (sería vector para manipular su PII y
+            // ensuciar su historial con citas falsas).
+            if (existing.role !== "CLIENT") {
+              return reply.status(409).send({
+                error: {
+                  code: "EMAIL_BELONGS_TO_STAFF",
+                  message: "Ese email pertenece a un miembro del equipo. Si eres tú, inicia sesión.",
+                },
+              });
+            }
             clientId = existing.id;
             // Si el guest llega con un teléfono y el User no lo tenía, lo guardamos sin tocar nada más.
             if (!existing.phone && guest.phone) {
@@ -153,47 +169,68 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
           }
         }
 
-        // Crear en transacción con re-chequeo de solapamiento.
+        // Crear en transacción con re-chequeo de solapamiento + isolation
+        // SERIALIZABLE. Doble protección:
+        //   1) Re-check dentro de la tx capta solapamientos parciales (citas
+        //      que se cruzan en el medio de un slot).
+        //   2) Índice único parcial en DB (migration
+        //      20260531120000_appointment_unique_active_index) bloquea el
+        //      caso de mismo (barberId, startsAt) entre dos tx serializadas.
         try {
-          const appointment = await prisma.$transaction(async (tx) => {
-            const conflict = await tx.appointment.findFirst({
-              where: {
-                barberId,
-                status: { not: "CANCELLED" },
-                startsAt: { lt: endsAtDate },
-                endsAt: { gt: startsAtDate },
-              },
-              select: { id: true },
-            });
-            if (conflict) {
-              throw new Error("SLOT_TAKEN");
-            }
-            const timeOff = await tx.timeOff.findFirst({
-              where: {
-                barberId,
-                startsAt: { lt: endsAtDate },
-                endsAt: { gt: startsAtDate },
-              },
-              select: { id: true },
-            });
-            if (timeOff) {
-              throw new Error("BARBER_UNAVAILABLE");
-            }
-            return tx.appointment.create({
-              data: {
-                clientId,
-                barberId,
-                serviceId,
-                startsAt: startsAtDate,
-                endsAt: endsAtDate,
-                notes,
-                status: "PENDING",
-              },
-              include: INCLUDE,
-            });
-          });
+          const appointment = await prisma.$transaction(
+            async (tx) => {
+              const conflict = await tx.appointment.findFirst({
+                where: {
+                  barberId,
+                  status: { not: "CANCELLED" },
+                  startsAt: { lt: endsAtDate },
+                  endsAt: { gt: startsAtDate },
+                },
+                select: { id: true },
+              });
+              if (conflict) {
+                throw new Error("SLOT_TAKEN");
+              }
+              const timeOff = await tx.timeOff.findFirst({
+                where: {
+                  barberId,
+                  startsAt: { lt: endsAtDate },
+                  endsAt: { gt: startsAtDate },
+                },
+                select: { id: true },
+              });
+              if (timeOff) {
+                throw new Error("BARBER_UNAVAILABLE");
+              }
+              return tx.appointment.create({
+                data: {
+                  clientId,
+                  barberId,
+                  serviceId,
+                  startsAt: startsAtDate,
+                  endsAt: endsAtDate,
+                  notes,
+                  status: "PENDING",
+                },
+                include: INCLUDE,
+              });
+            },
+            { isolationLevel: "Serializable" },
+          );
           return reply.status(201).send(toDto(appointment));
         } catch (err) {
+          // Prisma P2002 = unique constraint violation. Pasa si dos tx
+          // serializables compiten por el mismo slot exacto.
+          if (
+            err &&
+            typeof err === "object" &&
+            "code" in err &&
+            (err as { code?: string }).code === "P2002"
+          ) {
+            return reply.status(409).send({
+              error: { code: "SLOT_TAKEN", message: "Ese horario acaba de ser reservado" },
+            });
+          }
           if (err instanceof Error && err.message === "SLOT_TAKEN") {
             return reply.status(409).send({
               error: { code: "SLOT_TAKEN", message: "Ese horario acaba de ser reservado" },

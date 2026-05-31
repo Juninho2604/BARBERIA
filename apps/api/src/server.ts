@@ -1,7 +1,8 @@
-import Fastify, { type FastifyError } from "fastify";
+import Fastify, { type FastifyError, type FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import sensible from "@fastify/sensible";
+import rateLimit from "@fastify/rate-limit";
 import {
   serializerCompiler,
   validatorCompiler,
@@ -39,6 +40,26 @@ export async function buildServer(env: Env) {
     credentials: true,
   });
   await app.register(sensible);
+
+  // Rate limiting global como red de seguridad. Cada handler crítico
+  // (login, register, booking guest) puede sobrescribir con límites más
+  // estrictos vía `config: { rateLimit: { ... } }`.
+  await app.register(rateLimit, {
+    global: true,
+    max: 200,
+    timeWindow: "1 minute",
+    keyGenerator: (req: FastifyRequest) => {
+      // IP del cliente, respetando X-Forwarded-For que Nginx en el VPS
+      // enviará tras el reverse proxy (cuando llegue el dominio).
+      return (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip;
+    },
+    errorResponseBuilder: () => ({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Demasiadas peticiones, intenta en un minuto",
+      },
+    }),
+  });
 
   const guards = makeAuthGuards(env);
 

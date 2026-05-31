@@ -141,11 +141,37 @@ export function staffRoutes(guards: AuthGuards): FastifyPluginAsync {
           target.role === "OWNER" && req.body.role && req.body.role !== "OWNER";
         const willDeactivateOwner =
           target.role === "OWNER" && req.body.isActive === false;
-        if (willDegradeOwner || willDeactivateOwner) {
-          const ownerCount = await prisma.user.count({
-            where: { role: "OWNER", isActive: true },
-          });
-          if (ownerCount <= 1) {
+        // Atomización del check LAST_OWNER: dos requests degradando OWNERs
+        // distintos a la vez pueden hacer pass de su count individual y
+        // dejarnos sin OWNERs. Lo metemos en una transacción SERIALIZABLE
+        // que aborta si hay conflicto.
+        try {
+          const updated = await prisma.$transaction(
+            async (tx) => {
+              if (willDegradeOwner || willDeactivateOwner) {
+                const ownerCount = await tx.user.count({
+                  where: { role: "OWNER", isActive: true },
+                });
+                if (ownerCount <= 1) {
+                  throw new Error("LAST_OWNER");
+                }
+              }
+              return tx.user.update({
+                where: { id: target.id },
+                data: {
+                  role: req.body.role,
+                  isActive: req.body.isActive,
+                  name: req.body.name?.trim(),
+                  phone: req.body.phone === undefined ? undefined : req.body.phone,
+                },
+                include: { barberProfile: { select: { id: true } } },
+              });
+            },
+            { isolationLevel: "Serializable" },
+          );
+          return toDto(updated);
+        } catch (err) {
+          if (err instanceof Error && err.message === "LAST_OWNER") {
             return reply.status(400).send({
               error: {
                 code: "LAST_OWNER",
@@ -153,18 +179,8 @@ export function staffRoutes(guards: AuthGuards): FastifyPluginAsync {
               },
             });
           }
+          throw err;
         }
-        const updated = await prisma.user.update({
-          where: { id: target.id },
-          data: {
-            role: req.body.role,
-            isActive: req.body.isActive,
-            name: req.body.name?.trim(),
-            phone: req.body.phone === undefined ? undefined : req.body.phone,
-          },
-          include: { barberProfile: { select: { id: true } } },
-        });
-        return toDto(updated);
       },
     );
   };
