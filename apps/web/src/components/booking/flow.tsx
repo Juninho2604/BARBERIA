@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api";
+import { formatDayLabel, formatDuration, formatPrice, formatTime } from "@/lib/format";
 import type {
   AppointmentDto,
   AvailabilityResponseDto,
@@ -16,20 +17,11 @@ interface Props {
   barbers: BarberDto[];
 }
 
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(0)}`;
-}
-
-function formatDuration(min: number) {
-  if (min >= 60) {
-    const h = Math.floor(min / 60);
-    const rest = min % 60;
-    return rest === 0 ? `${h} h` : `${h} h ${rest} min`;
-  }
-  return `${min} min`;
-}
-
-function formatLocalTime(iso: string, tz: string) {
+// formatTimeAt/formatDateAt aceptan tz explícito (viene de la API en
+// availability.tz). Para el step "done" usamos formatTime/formatDayLabel
+// de @/lib/format que respetan BUSINESS.timezone — antes el done step
+// tenía "America/Caracas" hardcoded.
+function formatTimeAt(iso: string, tz: string) {
   return new Date(iso).toLocaleTimeString("es-ES", {
     hour: "2-digit",
     minute: "2-digit",
@@ -37,7 +29,7 @@ function formatLocalTime(iso: string, tz: string) {
   });
 }
 
-function formatLocalDate(iso: string, tz: string) {
+function formatDateAt(iso: string, tz: string) {
   return new Date(iso).toLocaleDateString("es-ES", {
     weekday: "long",
     day: "numeric",
@@ -246,7 +238,7 @@ export function BookingFlow({ services, barbers }: Props) {
                   }}
                   className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-transparent px-3 py-2 text-sm transition hover:border-[color:var(--color-fg-muted)] hover:bg-[color:var(--color-surface)]"
                 >
-                  {formatLocalTime(s.startsAt, availability.tz)}
+                  {formatTimeAt(s.startsAt, availability.tz)}
                 </button>
               ))}
             </div>
@@ -257,7 +249,7 @@ export function BookingFlow({ services, barbers }: Props) {
       {step === "contact" && service && barber && slot && availability && (
         <StepShell
           title="Tus datos"
-          summary={`${service.name} · ${barber.name} · ${formatLocalDate(slot.startsAt, availability.tz)} ${formatLocalTime(slot.startsAt, availability.tz)}`}
+          summary={`${service.name} · ${barber.name} · ${formatDateAt(slot.startsAt, availability.tz)} ${formatTimeAt(slot.startsAt, availability.tz)}`}
           onBack={() => setStep("datetime")}
         >
           <form
@@ -321,7 +313,7 @@ export function BookingFlow({ services, barbers }: Props) {
             <Row label="Barbero" value={confirmed.barber?.name ?? ""} />
             <Row
               label="Cuándo"
-              value={`${formatLocalDate(confirmed.startsAt, "America/Caracas")} · ${formatLocalTime(confirmed.startsAt, "America/Caracas")}`}
+              value={`${formatDayLabel(confirmed.startsAt)} · ${formatTime(confirmed.startsAt)}`}
             />
           </dl>
           <a

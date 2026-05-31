@@ -32,10 +32,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<AuthUserDto | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Validamos sesión SOLO al montar el layout. Antes el efecto dependía
+  // de `pathname` y disparaba `api.me()` en cada click del nav → con
+  // backend real serían ~50ms × N clicks extra por sesión.
   useEffect(() => {
     const token = readAccessToken();
     if (!token) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     const cached = readUser();
@@ -53,10 +56,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
       .catch(() => {
         clearSession();
-        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       })
       .finally(() => setLoading(false));
-  }, [pathname, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function logout() {
     clearSession();

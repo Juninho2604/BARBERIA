@@ -5,20 +5,10 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
+import { formatDate, formatPrice } from "@/lib/format";
 import type { ClientSummaryDto } from "@/lib/types";
 
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(0)}`;
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+// formatPrice / formatDate viven en @/lib/format (timezone consistente).
 
 export default function AdminClientsPage() {
   const router = useRouter();

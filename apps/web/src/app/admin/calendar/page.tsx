@@ -401,13 +401,16 @@ export default function AdminCalendarPage() {
         />
       )}
 
-      {/* Composer — crear cita manual */}
+      {/* Composer — crear cita manual. Si el usuario es BARBER bloqueamos
+          la selección de barbero al que clickeó (su propia columna), así
+          no crea citas a nombre de otros. */}
       {composer && (
         <Composer
           services={services}
           barberId={composer.barberId}
           startsAt={composer.startsAt}
           barbers={barbers}
+          lockBarber={me?.role === "BARBER"}
           onClose={() => setComposer(null)}
           onCreated={async () => {
             setComposer(null);
@@ -529,6 +532,7 @@ function Composer({
   barbers,
   barberId,
   startsAt,
+  lockBarber,
   onClose,
   onCreated,
 }: {
@@ -536,6 +540,8 @@ function Composer({
   barbers: BarberDto[];
   barberId: string;
   startsAt: string;
+  /** Si true, el dropdown de barbero queda disabled (usado para BARBER). */
+  lockBarber?: boolean;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -644,7 +650,8 @@ function Composer({
               required
               value={selectedBarberId}
               onChange={(e) => setSelectedBarberId(e.target.value)}
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)]"
+              disabled={lockBarber}
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)] disabled:opacity-60"
             >
               {barbers.map((b) => (
                 <option key={b.id} value={b.id}>
