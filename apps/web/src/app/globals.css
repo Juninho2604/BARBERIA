@@ -7,15 +7,20 @@
    Fuentes: Bodoni Moda (serif display) + Hanken Grotesk (sans).
    ============================================================ */
 @theme {
-  /* Paleta del handoff */
+  /* Paleta del handoff. Ajustes post-auditoría:
+     - --color-muted subido de #807b70 a #989284 → ratio ~6.3:1 sobre
+       --color-ink (antes 4.4:1, fallaba WCAG 1.4.3 AA para texto pequeño).
+     - --color-line / --color-line-2 subidos (0.13 → 0.22, 0.26 → 0.40)
+       para clarear bordes UI a ratio &gt;3:1 (WCAG 1.4.11).
+     Mantiene la estética editorial monocromática. */
   --color-ink:        #0a0a0b;
   --color-ink-2:      #050506;
   --color-panel:      #131315;
   --color-bone:       #f1ede4;
   --color-bone-dim:   #c3bdb1;
-  --color-muted:      #807b70;
-  --color-line:       rgba(241, 237, 228, 0.13);
-  --color-line-2:     rgba(241, 237, 228, 0.26);
+  --color-muted:      #989284;
+  --color-line:       rgba(241, 237, 228, 0.22);
+  --color-line-2:     rgba(241, 237, 228, 0.40);
 
   /* Aliases para no romper /reservar /admin /login que ya consumen --color-* */
   --color-bg:             var(--color-ink);
@@ -64,6 +69,89 @@ a { color: inherit; text-decoration: none; }
 ::selection {
   background-color: var(--color-bone);
   color: var(--color-ink);
+}
+
+/* ---------- focus visible (WCAG 2.4.7) ----------
+   Antes los inputs/botones usaban `outline-none` y solo cambiaban el
+   border en focus, indistinguible para usuarios de teclado. Reset al
+   default + outline propio con buen contraste. */
+:focus-visible {
+  outline: 2px solid var(--color-bone);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Botones invertidos (bg-bone) necesitan outline interior visible. */
+.bc-btn--solid:focus-visible {
+  outline-color: var(--color-bone);
+  outline-offset: 3px;
+}
+
+/* ---------- skip to content (WCAG 2.4.1) ----------
+   Link invisible que aparece al primer Tab. Permite a usuarios de
+   teclado/SR saltar el nav repetitivo. */
+.bc-skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  padding: 0.75em 1.25em;
+  background: var(--color-bone);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: translateY(-110%);
+  transition: transform 0.2s var(--ease);
+}
+.bc-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ---------- modal / dialog ----------
+   Estilos base para modales accesibles (role=dialog, aria-modal=true).
+   El scroll del body se bloquea via JS (data-modal-open en <html>). */
+html[data-modal-open="true"] {
+  overflow: hidden;
+}
+.bc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(8, 8, 9, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  animation: bc-modal-fade 0.2s var(--ease);
+}
+.bc-modal-backdrop.is-center {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+@keyframes bc-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc-modal-backdrop { animation: none; }
+}
+
+/* ---------- reduced motion global ----------
+   Reduce duración de animaciones/transiciones globalmente para
+   usuarios con `prefers-reduced-motion: reduce`. Los `[data-reveal]`
+   y el sello ya tenían su propio override; esto cubre el resto
+   (hover scale del bc-fig, padding-left de bc-svc, etc). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---------- shared editorial utilities ---------- */

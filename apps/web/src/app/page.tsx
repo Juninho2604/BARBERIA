@@ -15,7 +15,7 @@ export default function HomePage() {
     <IntroGate>
       <LocalBusinessSchema />
       <Nav />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <Hero />
         <Manifiesto />
         <Local />

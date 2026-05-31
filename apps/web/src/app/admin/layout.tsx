@@ -132,7 +132,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-12">{children}</main>
     </div>
   );
 }

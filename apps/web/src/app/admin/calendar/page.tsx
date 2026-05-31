@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
+import { useModal } from "@/lib/use-modal";
 import type { AppointmentDto, BarberDto, ServiceDto } from "@/lib/types";
 
 /**
@@ -399,18 +400,26 @@ function DetailPanel({
   onChangeStatus: (s: AppointmentDto["status"]) => void;
   onCancel: () => void;
 }) {
+  const ref = useModal(true, onClose);
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-[color:var(--color-bg)]/70 backdrop-blur-sm"
+      className="bc-modal-backdrop"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="h-full w-full max-w-md overflow-y-auto border-l border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8"
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="detail-panel-title"
+        tabIndex={-1}
+        className="h-full w-full max-w-md overflow-y-auto border-l border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cerrar panel de cita"
           className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
         >
           Cerrar ×
@@ -418,7 +427,7 @@ function DetailPanel({
         <p className="mt-6 text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
           — Cita —
         </p>
-        <h2 className="mt-4 text-3xl font-light tracking-tight">
+        <h2 id="detail-panel-title" className="mt-4 text-3xl font-light tracking-tight">
           {appt.client?.name ?? "Cliente"}
         </h2>
         <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
@@ -551,18 +560,26 @@ function Composer({
     }
   }
 
+  const ref = useModal(true, onClose);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--color-bg)]/70 p-6 backdrop-blur-sm"
+      className="bc-modal-backdrop is-center"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="w-full max-w-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8"
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="composer-title"
+        tabIndex={-1}
+        className="w-full max-w-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cerrar nueva cita"
           className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
         >
           Cerrar ×
@@ -570,7 +587,7 @@ function Composer({
         <p className="mt-6 text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
           — Nueva cita —
         </p>
-        <h2 className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
+        <h2 id="composer-title" className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
           Reservar a mano
         </h2>
         <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">

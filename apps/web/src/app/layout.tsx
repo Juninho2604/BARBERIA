@@ -86,7 +86,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${bodoni.variable} ${hanken.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/* Skip-to-content (WCAG 2.4.1) — invisible hasta focus.
+            Cada page tiene id="main-content" en su <main>. */}
+        <a href="#main-content" className="bc-skip-link">
+          Saltar al contenido
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
