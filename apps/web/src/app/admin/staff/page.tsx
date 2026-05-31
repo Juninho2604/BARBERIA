@@ -7,6 +7,7 @@ import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { ROLE_LABEL, can } from "@/lib/permissions";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { Field } from "@/components/admin/ui";
 import { formatDate } from "@/lib/format";
 import type { BarberDto, StaffMemberDto } from "@/lib/types";
 
@@ -415,21 +416,4 @@ function InviteForm({
   );
 }
 
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-2 block text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
+// Field se importa de @/components/admin/ui.

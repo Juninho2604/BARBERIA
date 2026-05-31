@@ -41,10 +41,6 @@ export const RoleSchema = z.enum([
 ]);
 export type Role = z.infer<typeof RoleSchema>;
 
-/** Roles que pueden acceder al panel admin (cualquiera que no sea CLIENT puro). */
-export const STAFF_ROLES = ["OWNER", "MANAGER", "RECEPTIONIST", "BARBER", "ADMIN"] as const;
-export type StaffRole = (typeof STAFF_ROLES)[number];
-
 export const AuthUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { Stat } from "@/components/admin/ui";
+import { formatPrice } from "@/lib/format";
 
 interface Stats {
   services: number;
@@ -13,10 +15,6 @@ interface Stats {
   clients: number;
   lifetimeCents: number;
   completionRate: number;
-}
-
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 export default function AdminHome() {
@@ -78,9 +76,9 @@ export default function AdminHome() {
         — Hoy —
       </h2>
       <div className="grid gap-px overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-border)] sm:grid-cols-3">
-        <Stat label="Citas de hoy" value={stats?.todayAppointments ?? "—"} />
-        <Stat label="Pendientes confirmar" value={stats?.pendingAppointments ?? "—"} />
-        <Stat label="% Completadas (histórico)" value={stats ? `${stats.completionRate}%` : "—"} />
+        <Stat size="lg" label="Citas de hoy" value={stats?.todayAppointments ?? "—"} />
+        <Stat size="lg" label="Pendientes confirmar" value={stats?.pendingAppointments ?? "—"} />
+        <Stat size="lg" label="% Completadas (histórico)" value={stats ? `${stats.completionRate}%` : "—"} />
       </div>
 
       {/* Equipo */}
@@ -88,9 +86,9 @@ export default function AdminHome() {
         — Equipo —
       </h2>
       <div className="grid gap-px overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-border)] sm:grid-cols-3">
-        <Stat label="Servicios activos" value={stats?.services ?? "—"} />
-        <Stat label="Barberos activos" value={stats?.barbers ?? "—"} />
-        <Stat label="Miembros staff" value={stats?.staff ?? "—"} />
+        <Stat size="lg" label="Servicios activos" value={stats?.services ?? "—"} />
+        <Stat size="lg" label="Barberos activos" value={stats?.barbers ?? "—"} />
+        <Stat size="lg" label="Miembros staff" value={stats?.staff ?? "—"} />
       </div>
 
       {/* Clientes */}
@@ -98,20 +96,13 @@ export default function AdminHome() {
         — Clientes —
       </h2>
       <div className="grid gap-px overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-border)] sm:grid-cols-2">
-        <Stat label="Clientes registrados" value={stats?.clients ?? "—"} />
-        <Stat label="Facturación histórica" value={stats ? formatPrice(stats.lifetimeCents) : "—"} />
+        <Stat size="lg" label="Clientes registrados" value={stats?.clients ?? "—"} />
+        <Stat size="lg" label="Facturación histórica" value={stats ? formatPrice(stats.lifetimeCents) : "—"} />
       </div>
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="bg-[color:var(--color-bg)] p-8">
-      <p className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </p>
-      <p className="mt-4 text-5xl font-light tracking-tight">{value}</p>
-    </div>
-  );
-}
+// Stat se importa de @/components/admin/ui (con size="lg" para este resumen).
+// formatPrice local porque usa toLocaleString con maximumFractionDigits — el
+// helper de @/lib/format usa el default. Es OK leve divergencia.

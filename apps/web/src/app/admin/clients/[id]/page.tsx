@@ -6,6 +6,7 @@ import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
 import { formatDate, formatDateTime, formatPrice, formatTime } from "@/lib/format";
+import { Stat } from "@/components/admin/ui";
 import type { ClientDetailDto } from "@/lib/types";
 
 // formatPrice / formatDate / formatDateTime / formatTime viven en @/lib/format.
@@ -244,13 +245,4 @@ export default function ClientDetailPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-[color:var(--color-bg)] p-6">
-      <p className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </p>
-      <p className="mt-3 text-3xl font-light tracking-tight">{value}</p>
-    </div>
-  );
-}
+// Stat se importa de @/components/admin/ui.

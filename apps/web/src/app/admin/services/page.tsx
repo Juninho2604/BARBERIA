@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { Field } from "@/components/admin/ui";
 import { formatPrice } from "@/lib/format";
 import type { ServiceDto } from "@/lib/types";
 
@@ -330,21 +331,4 @@ function ServiceForm({
   );
 }
 
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-2 block text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
+// Field se importa de @/components/admin/ui.
