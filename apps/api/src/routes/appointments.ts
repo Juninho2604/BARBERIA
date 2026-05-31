@@ -113,9 +113,23 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         }
 
         const startsAtDate = new Date(startsAt);
-        if (Number.isNaN(startsAtDate.getTime()) || startsAtDate <= new Date()) {
+        const now = new Date();
+        // Bound máximo: 90 días en el futuro. Evita basura en DB
+        // (cita para año 2099) y refleja una política realista de
+        // booking. Mover a settings cuando exista.
+        const MAX_DAYS_AHEAD = 90;
+        const maxAhead = new Date(now.getTime() + MAX_DAYS_AHEAD * 86400_000);
+        if (Number.isNaN(startsAtDate.getTime()) || startsAtDate <= now) {
           return reply.status(400).send({
             error: { code: "INVALID_TIME", message: "startsAt debe ser un instante futuro" },
+          });
+        }
+        if (startsAtDate > maxAhead) {
+          return reply.status(400).send({
+            error: {
+              code: "TOO_FAR_AHEAD",
+              message: `Solo se acepta reservar con hasta ${MAX_DAYS_AHEAD} días de antelación`,
+            },
           });
         }
         const endsAtDate = new Date(startsAtDate.getTime() + service.durationMinutes * 60_000);

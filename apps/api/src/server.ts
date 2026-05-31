@@ -34,7 +34,19 @@ export async function buildServer(env: Env) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  await app.register(helmet, { contentSecurityPolicy: false });
+  // CSP minimal — la API solo responde JSON, así que `default-src 'none'`
+  // bloquea cualquier intento de servir scripts/iframes desde la API.
+  // Si en algún momento la API renderiza HTML (improbable), revisar.
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+    referrerPolicy: { policy: "no-referrer" },
+    crossOriginResourcePolicy: { policy: "same-site" },
+  });
   await app.register(cors, {
     origin: env.CORS_ORIGINS,
     credentials: true,

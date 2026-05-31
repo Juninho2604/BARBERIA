@@ -202,6 +202,7 @@ export default function AdminCalendarPage() {
           <button
             type="button"
             onClick={() => setDate((d) => addDays(d, -1))}
+            aria-label="Día anterior"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             ← Día
@@ -213,6 +214,7 @@ export default function AdminCalendarPage() {
               t.setHours(0, 0, 0, 0);
               setDate(t);
             }}
+            aria-label="Ir al día de hoy"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             Hoy
@@ -220,6 +222,7 @@ export default function AdminCalendarPage() {
           <button
             type="button"
             onClick={() => setDate((d) => addDays(d, 1))}
+            aria-label="Día siguiente"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             Día →
