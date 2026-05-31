@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { clearSession, readAccessToken, readUser } from "@/lib/auth-client";
 import { ROLE_LABEL, can, type Action } from "@/lib/permissions";
+import { ConfirmProvider } from "@/components/ui/confirm-provider";
+import { Toaster } from "@/components/ui/toaster";
 import type { AuthUserDto } from "@/lib/types";
 
 interface NavItem {
@@ -76,7 +78,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const showDemoBanner = api.isMock();
 
   return (
+    <ConfirmProvider>
     <div className="min-h-screen bg-[color:var(--color-bg)]">
+      <Toaster />
       {showDemoBanner && (
         <div className="border-b border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-6 py-2 text-center text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
           · Modo demo · cualquier credencial entra como OWNER · configura
@@ -134,5 +138,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-12">{children}</main>
     </div>
+    </ConfirmProvider>
   );
 }

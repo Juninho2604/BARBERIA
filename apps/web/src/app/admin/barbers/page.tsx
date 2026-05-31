@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import type { BarberDto } from "@/lib/types";
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -14,6 +16,7 @@ function minutesToHHMM(min: number) {
 }
 
 export default function AdminBarbers() {
+  const confirm = useConfirm();
   const [barbers, setBarbers] = useState<BarberDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -38,14 +41,21 @@ export default function AdminBarbers() {
   }, []);
 
   async function onDelete(id: string) {
-    if (!confirm("¿Desactivar este barbero?")) return;
+    const ok = await confirm({
+      title: "¿Desactivar este barbero?",
+      description: "Dejará de aparecer en el flujo público. Citas existentes se mantienen.",
+      confirmLabel: "Desactivar",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.deleteBarber(id, token);
+      toast.success("Barbero desactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al desactivar");
     }
   }
 

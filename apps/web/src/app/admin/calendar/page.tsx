@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
 import { useModal } from "@/lib/use-modal";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { formatDayLabel, formatPrice, formatTime, pad2 } from "@/lib/format";
 import type { AppointmentDto, BarberDto, ServiceDto } from "@/lib/types";
 
@@ -57,6 +59,7 @@ function startOfDayMs(d: Date) {
 
 export default function AdminCalendarPage() {
   const router = useRouter();
+  const confirm = useConfirm();
   const me = readUser();
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [barbers, setBarbers] = useState<BarberDto[]>([]);
@@ -112,27 +115,48 @@ export default function AdminCalendarPage() {
   }, [date]);
 
   async function changeStatus(id: string, status: AppointmentDto["status"]) {
+    // Cambios destructivos requieren confirm. NO_SHOW especialmente:
+    // afecta histórico del cliente y métricas; antes la auditoría
+    // marcaba este flow como "un click destructivo sin undo".
+    if (status === "NO_SHOW") {
+      const ok = await confirm({
+        title: "¿Marcar como No vino?",
+        description: "Esto cuenta en las métricas del cliente y no se puede revertir fácilmente.",
+        confirmLabel: "Marcar no-show",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.updateAppointment(id, { status }, token);
+      toast.success("Estado actualizado");
       await refresh();
       setSelected((cur) => (cur ? { ...cur, status } : cur));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cambiar estado");
     }
   }
 
   async function cancel(id: string) {
-    if (!confirm("¿Cancelar esta cita?")) return;
+    const ok = await confirm({
+      title: "¿Cancelar esta cita?",
+      description: "El slot quedará libre para reservar de nuevo.",
+      confirmLabel: "Cancelar cita",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.cancelAppointment(id, token);
+      toast.success("Cita cancelada");
       await refresh();
       setSelected(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cancelar");
     }
   }
 

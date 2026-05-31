@@ -1,24 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { formatDateTime, formatPrice } from "@/lib/format";
 import type { AppointmentDto } from "@/lib/types";
-
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(0)}`;
-}
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("es-ES", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "America/Caracas",
-  });
-}
 
 const STATUS_LABEL: Record<AppointmentDto["status"], string> = {
   PENDING: "Pendiente",
@@ -29,6 +17,7 @@ const STATUS_LABEL: Record<AppointmentDto["status"], string> = {
 };
 
 export default function AdminAppointments() {
+  const confirm = useConfirm();
   const [appts, setAppts] = useState<AppointmentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +40,22 @@ export default function AdminAppointments() {
   }, []);
 
   async function onCancel(id: string) {
-    if (!confirm("¿Cancelar esta cita?")) return;
+    const ok = await confirm({
+      title: "¿Cancelar esta cita?",
+      description: "El cliente recibirá el slot como liberado.",
+      confirmLabel: "Cancelar cita",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.cancelAppointment(id, token);
+      toast.success("Cita cancelada");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cancelar");
     }
   }
 

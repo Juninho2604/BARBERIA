@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { formatPrice } from "@/lib/format";
 import type { ServiceDto } from "@/lib/types";
 
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 export default function AdminServices() {
+  const confirm = useConfirm();
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -35,14 +35,21 @@ export default function AdminServices() {
   }, []);
 
   async function onDelete(id: string) {
-    if (!confirm("¿Desactivar este servicio?")) return;
+    const ok = await confirm({
+      title: "¿Desactivar este servicio?",
+      description: "Dejará de aparecer en la web pública. Citas existentes lo mantienen.",
+      confirmLabel: "Desactivar",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.deleteService(id, token);
+      toast.success("Servicio desactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al desactivar");
     }
   }
 
@@ -51,9 +58,10 @@ export default function AdminServices() {
     if (!token) return;
     try {
       await api.updateService(id, { isActive: true }, token);
+      toast.success("Servicio reactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al reactivar");
     }
   }
 
