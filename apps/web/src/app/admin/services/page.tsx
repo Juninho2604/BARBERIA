@@ -107,7 +107,7 @@ export default function AdminServices() {
         />
       )}
 
-      <div className="mt-10 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
+      <div className="mt-10 overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
         <table className="w-full text-sm">
           <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
             <tr>

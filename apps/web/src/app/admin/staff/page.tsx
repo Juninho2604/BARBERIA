@@ -168,7 +168,7 @@ export default function AdminStaffPage() {
               <h2 className="mb-4 text-[0.65rem] uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
                 — {ROLE_LABEL[role]} —
               </h2>
-              <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
+              <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
                 <table className="w-full text-sm">
                   <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
                     <tr>

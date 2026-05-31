@@ -260,8 +260,10 @@ export default function AdminCalendarPage() {
               minWidth: 64 + barbers.length * 180,
             }}
           >
-            {/* Header con nombre de barberos */}
-            <div className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]" />
+            {/* Header con nombre de barberos. La esquina superior izquierda
+                (spacer) tiene sticky en LEFT+TOP para que no se mueva al
+                scrollear horizontal. */}
+            <div className="sticky left-0 top-0 z-30 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]" />
             {barbers.map((b) => (
               <div
                 key={b.id}
@@ -274,9 +276,10 @@ export default function AdminCalendarPage() {
               </div>
             ))}
 
-            {/* Columna de horas */}
+            {/* Columna de horas — sticky LEFT para que en mobile siempre
+                veas la referencia horaria mientras swipeas entre barberos. */}
             <div
-              className="relative border-r border-[color:var(--color-border)]"
+              className="sticky left-0 z-20 relative border-r border-[color:var(--color-border)] bg-[color:var(--color-bg)]"
               style={{ height: totalHeight }}
             >
               {hours.map((h) => (
