@@ -64,6 +64,13 @@ export const BUSINESS = {
 
   priceRange: "$$",
 
+  /** Zona horaria IANA del negocio. CRÍTICA: todos los formateos de
+      fechas/horas en el frontend usan esto para que admin y cliente
+      vean la misma hora sin importar dónde estén. Antes estaba
+      hardcoded en 11 sitios con valores inconsistentes.
+      TODO(cliente): confirmar. Florida = America/New_York. */
+  timezone: "America/New_York",
+
   /** URL canónica del sitio. Configurable via env para evitar hardcode. */
   baseUrl:
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??

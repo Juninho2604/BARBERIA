@@ -6,6 +6,7 @@ import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
 import { useModal } from "@/lib/use-modal";
+import { formatDayLabel, formatPrice, formatTime, pad2 } from "@/lib/format";
 import type { AppointmentDto, BarberDto, ServiceDto } from "@/lib/types";
 
 /**
@@ -50,21 +51,9 @@ function startOfDayMs(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x.getTime();
 }
-function pad2(n: number) { return n.toString().padStart(2, "0"); }
-
-function formatTimeOfDay(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-function formatDayLabel(d: Date) {
-  return d.toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
+// pad2 / formatTime / formatDayLabel viven en @/lib/format — usan
+// BUSINESS.timezone para que admin y cliente vean la misma hora sin
+// importar la zona del dispositivo.
 
 export default function AdminCalendarPage() {
   const router = useRouter();
@@ -154,14 +143,21 @@ export default function AdminCalendarPage() {
     [totalHours],
   );
 
-  // Indicador "ahora" sobre la columna, solo si el día visible es hoy.
+  // Indicador "ahora" — refresca cada minuto. Antes solo se calculaba
+  // al render inicial y se quedaba congelado durante la sesión.
+  const [nowTick, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const nowOffset = useMemo(() => {
     const now = new Date();
     if (startOfDayMs(now) !== startOfDayMs(date)) return null;
     const minSinceStart = (now.getHours() - HOUR_START) * 60 + now.getMinutes();
     if (minSinceStart < 0 || minSinceStart > totalHours * 60) return null;
     return (minSinceStart / 60) * HOUR_HEIGHT;
-  }, [date, totalHours]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, totalHours, nowTick]);
 
   return (
     <section>
@@ -315,14 +311,21 @@ export default function AdminCalendarPage() {
                       <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-[color:var(--color-fg)]" />
                     </div>
                   )}
-                  {/* Citas */}
+                  {/* Citas — clampeadas al rango [HOUR_START, HOUR_END].
+                      Si una cita empieza antes o termina después, ajustamos
+                      top/height para que no flote fuera de la grilla. */}
                   {barberAppts.map((a) => {
                     const s = new Date(a.startsAt);
                     const e = new Date(a.endsAt);
-                    const startMin = (s.getHours() - HOUR_START) * 60 + s.getMinutes();
-                    const durMin = (e.getTime() - s.getTime()) / 60_000;
+                    const rawStartMin = (s.getHours() - HOUR_START) * 60 + s.getMinutes();
+                    const rawEndMin = (e.getHours() - HOUR_START) * 60 + e.getMinutes();
+                    const dayMax = (HOUR_END - HOUR_START) * 60;
+                    // Skip si la cita está completamente fuera de la grilla.
+                    if (rawEndMin <= 0 || rawStartMin >= dayMax) return null;
+                    const startMin = Math.max(rawStartMin, 0);
+                    const endMin = Math.min(rawEndMin, dayMax);
                     const top = (startMin / 60) * HOUR_HEIGHT;
-                    const height = Math.max((durMin / 60) * HOUR_HEIGHT, 26);
+                    const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 26);
                     const isCancelled = a.status === "CANCELLED";
                     return (
                       <button
@@ -346,7 +349,7 @@ export default function AdminCalendarPage() {
                         style={{ top, height }}
                       >
                         <p className="truncate text-[0.7rem] font-medium">
-                          {formatTimeOfDay(a.startsAt)} · {a.client?.name ?? "—"}
+                          {formatTime(a.startsAt)} · {a.client?.name ?? "—"}
                         </p>
                         <p className="truncate text-[0.62rem] opacity-80">
                           {a.service?.name}
@@ -451,7 +454,7 @@ function DetailPanel({
             label="Precio"
             value={
               appt.service?.priceCents !== undefined
-                ? `$${(appt.service.priceCents / 100).toFixed(0)}`
+                ? formatPrice(appt.service.priceCents)
                 : "—"
             }
           />
@@ -604,7 +607,7 @@ function Composer({
             >
               {services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} · {s.durationMinutes} min · ${(s.priceCents / 100).toFixed(0)}
+                  {s.name} · {s.durationMinutes} min · {formatPrice(s.priceCents)}
                 </option>
               ))}
             </select>

@@ -46,7 +46,18 @@ export default function BarberIntro({
     const FLOAT_Y = 1.4; // centro vertical del modelo flotando
 
     // ---------- RENDERER ----------
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    // Defensa en profundidad: si new WebGLRenderer falla (driver issue,
+    // contexto perdido, navegador raro), saltamos la intro en lugar de
+    // dejar pantalla negra. `IntroGate` ya filtra "sin WebGL" pero esto
+    // cubre runtime failures.
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch (err) {
+      console.warn('[BarberIntro] WebGL renderer failed, skipping intro', err);
+      window.setTimeout(() => onEnterRef.current?.(), 50);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -413,8 +424,14 @@ export default function BarberIntro({
         }
       },
       () => {
+        // El GLB no cargó (timeout, 404, network). Antes el usuario quedaba
+        // atrapado leyendo "No se pudo cargar" sin más. Ahora saltamos
+        // automáticamente la intro tras 1.5s para no bloquear el sitio.
         if (labelRef.current) labelRef.current.textContent = 'No se pudo cargar';
-        if (subRef.current) subRef.current.textContent = 'Pulsa “Saltar intro”';
+        if (subRef.current) subRef.current.textContent = 'Saltando intro…';
+        window.setTimeout(() => {
+          if (!disposed) onEnterRef.current?.();
+        }, 1500);
       },
     );
 
