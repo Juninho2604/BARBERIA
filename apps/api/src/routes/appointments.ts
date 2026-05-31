@@ -114,14 +114,31 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
 
         const startsAtDate = new Date(startsAt);
         const now = new Date();
-        // Bound máximo: 90 días en el futuro. Evita basura en DB
-        // (cita para año 2099) y refleja una política realista de
-        // booking. Mover a settings cuando exista.
+        // Política de tiempos:
+        //  - Bound máximo: 90 días en el futuro. Evita basura en DB
+        //    (cita para año 2099). Política mover a settings cuando exista.
+        //  - Bound mínimo: futuro estricto, EXCEPTO si el usuario es staff
+        //    (OWNER/MANAGER/RECEPTIONIST/ADMIN). En ese caso se permite
+        //    registrar walk-ins de hasta 12h hacia atrás (cliente que entró
+        //    sin reserva, se le registra a posteriori para que cuente en
+        //    métricas e historial).
         const MAX_DAYS_AHEAD = 90;
+        const WALKIN_WINDOW_HOURS = 12;
         const maxAhead = new Date(now.getTime() + MAX_DAYS_AHEAD * 86400_000);
-        if (Number.isNaN(startsAtDate.getTime()) || startsAtDate <= now) {
+        const isStaff = req.auth
+          ? ["OWNER", "MANAGER", "RECEPTIONIST", "ADMIN"].includes(req.auth.role)
+          : false;
+        const minPast = isStaff
+          ? new Date(now.getTime() - WALKIN_WINDOW_HOURS * 3600_000)
+          : now;
+        if (Number.isNaN(startsAtDate.getTime()) || startsAtDate <= minPast) {
           return reply.status(400).send({
-            error: { code: "INVALID_TIME", message: "startsAt debe ser un instante futuro" },
+            error: {
+              code: "INVALID_TIME",
+              message: isStaff
+                ? `startsAt debe ser dentro de las últimas ${WALKIN_WINDOW_HOURS}h o en el futuro`
+                : "startsAt debe ser un instante futuro",
+            },
           });
         }
         if (startsAtDate > maxAhead) {
