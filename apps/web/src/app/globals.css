@@ -312,6 +312,23 @@ html[data-modal-open="true"] {
 .bc-nav__link:hover::after { width: 100%; }
 .bc-nav__cta { padding: 0.85em 1.6em !important; }
 
+/* En scroll el nav reduce padding 1.6→1rem. El logo también se achica
+   para que la barra quede compacta sin perder presencia en el primer
+   paint. Default = grande (h-12/14/16); scrolled = un paso menor. */
+.bc-nav--scrolled .bc-nav__logo {
+  height: 2.25rem !important;       /* 36px mobile */
+}
+@media (min-width: 640px) {
+  .bc-nav--scrolled .bc-nav__logo {
+    height: 2.5rem !important;      /* 40px tablet */
+  }
+}
+@media (min-width: 768px) {
+  .bc-nav--scrolled .bc-nav__logo {
+    height: 2.75rem !important;     /* 44px desktop */
+  }
+}
+
 @media (max-width: 860px) {
   .bc-nav__link { display: none; }
   .bc-nav__links { gap: 1rem; }
