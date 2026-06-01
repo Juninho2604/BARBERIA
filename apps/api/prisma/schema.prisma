@@ -16,6 +16,11 @@ datasource db {
 enum Role {
   CLIENT
   BARBER
+  RECEPTIONIST
+  MANAGER
+  OWNER
+  /// ADMIN — legacy alias. Existencias se tratan como OWNER en el cliente.
+  /// Mantenido por back-compat; nuevas filas deben usar OWNER.
   ADMIN
 }
 
@@ -28,27 +33,34 @@ enum AppointmentStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   // null = cuenta creada por reserva sin registro; se reclama al registrarse
   passwordHash String?
   name         String
   phone        String?
-  role         Role     @default(CLIENT)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         Role      @default(CLIENT)
+  /// false = miembro del staff desactivado (ya no entra al panel) o cliente
+  /// bloqueado. Se mantiene la fila para preservar historial de citas.
+  isActive     Boolean   @default(true)
+  /// Notas internas del staff sobre este usuario (típicamente cuando es
+  /// CLIENT). Alergias, preferencias, observaciones del barbero.
+  notes        String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   barberProfile        Barber?
   appointmentsAsClient Appointment[] @relation("ClientAppointments")
 }
 
 model Barber {
-  id       String   @id @default(cuid())
-  userId   String   @unique
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio      String?
   photoUrl String?
-  isActive Boolean  @default(true)
+  isActive Boolean @default(true)
 
   workingHours WorkingHour[]
   timeOff      TimeOff[]
@@ -72,8 +84,8 @@ model WorkingHour {
   id       String @id @default(cuid())
   barberId String
   barber   Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  weekday  Int    // 0=domingo … 6=sábado
-  startMin Int    // minutos desde 00:00 (9:00 -> 540)
+  weekday  Int // 0=domingo … 6=sábado
+  startMin Int // minutos desde 00:00 (9:00 -> 540)
   endMin   Int
 
   @@index([barberId, weekday])

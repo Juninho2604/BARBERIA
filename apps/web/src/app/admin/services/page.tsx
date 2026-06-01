@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { Field } from "@/components/admin/ui";
+import { formatPrice } from "@/lib/format";
 import type { ServiceDto } from "@/lib/types";
 
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 export default function AdminServices() {
+  const confirm = useConfirm();
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -35,14 +36,21 @@ export default function AdminServices() {
   }, []);
 
   async function onDelete(id: string) {
-    if (!confirm("¿Desactivar este servicio?")) return;
+    const ok = await confirm({
+      title: "¿Desactivar este servicio?",
+      description: "Dejará de aparecer en la web pública. Citas existentes lo mantienen.",
+      confirmLabel: "Desactivar",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.deleteService(id, token);
+      toast.success("Servicio desactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al desactivar");
     }
   }
 
@@ -51,9 +59,10 @@ export default function AdminServices() {
     if (!token) return;
     try {
       await api.updateService(id, { isActive: true }, token);
+      toast.success("Servicio reactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al reactivar");
     }
   }
 
@@ -99,7 +108,7 @@ export default function AdminServices() {
         />
       )}
 
-      <div className="mt-10 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
+      <div className="mt-10 overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
         <table className="w-full text-sm">
           <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
             <tr>
@@ -322,21 +331,4 @@ function ServiceForm({
   );
 }
 
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-2 block text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
+// Field se importa de @/components/admin/ui.

@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { ROLE_LABEL, can } from "@/lib/permissions";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { Field } from "@/components/admin/ui";
+import { formatDate } from "@/lib/format";
 import type { BarberDto, StaffMemberDto } from "@/lib/types";
 
 type AssignableRole = "OWNER" | "MANAGER" | "RECEPTIONIST" | "BARBER";
@@ -16,17 +20,11 @@ const ROLE_OPTIONS: { value: AssignableRole; label: string; help: string }[] = [
   { value: "BARBER",       label: "Barbero",   help: "Solo su agenda" },
 ];
 
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+// formatDate vive en @/lib/format con timezone consistente.
 
 export default function AdminStaffPage() {
   const router = useRouter();
+  const confirm = useConfirm();
   const me = readUser();
   const [staff, setStaff] = useState<StaffMemberDto[]>([]);
   const [barbers, setBarbers] = useState<BarberDto[]>([]);
@@ -65,25 +63,46 @@ export default function AdminStaffPage() {
   }, []);
 
   async function onChangeRole(id: string, role: AssignableRole) {
+    const target = staff.find((s) => s.id === id);
+    // Cambios destructivos (degradar) requieren confirm.
+    if (target && target.role === "OWNER" && role !== "OWNER") {
+      const ok = await confirm({
+        title: "¿Degradar a este OWNER?",
+        description: `Perderá acceso a Staff, Settings y configuración.`,
+        confirmLabel: `Cambiar a ${ROLE_LABEL[role]}`,
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.adminUpdateStaff(id, { role }, token);
+      toast.success("Rol actualizado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cambiar rol");
     }
   }
 
   async function onToggleActive(id: string, isActive: boolean) {
     const token = readAccessToken();
     if (!token) return;
-    if (!isActive && !confirm("¿Desactivar este miembro? Perderá acceso al panel.")) return;
+    if (!isActive) {
+      const ok = await confirm({
+        title: "¿Desactivar este miembro?",
+        description: "Perderá acceso al panel inmediatamente. Sus citas como barbero se mantienen.",
+        confirmLabel: "Desactivar",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     try {
       await api.adminUpdateStaff(id, { isActive }, token);
+      toast.success(isActive ? "Miembro reactivado" : "Miembro desactivado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error");
     }
   }
 
@@ -150,7 +169,7 @@ export default function AdminStaffPage() {
               <h2 className="mb-4 text-[0.65rem] uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
                 — {ROLE_LABEL[role]} —
               </h2>
-              <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
+              <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
                 <table className="w-full text-sm">
                   <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
                     <tr>
@@ -397,21 +416,4 @@ function InviteForm({
   );
 }
 
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-2 block text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
+// Field se importa de @/components/admin/ui.

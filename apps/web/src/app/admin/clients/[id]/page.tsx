@@ -5,31 +5,11 @@ import { useRouter } from "next/navigation";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
+import { formatDate, formatDateTime, formatPrice, formatTime } from "@/lib/format";
+import { Stat } from "@/components/admin/ui";
 import type { ClientDetailDto } from "@/lib/types";
 
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(0)}`;
-}
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("es-ES", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+// formatPrice / formatDate / formatDateTime / formatTime viven en @/lib/format.
 
 const STATUS_LABEL: Record<ClientDetailDto["appointments"][number]["status"], string> = {
   PENDING: "Pendiente",
@@ -93,6 +73,9 @@ export default function ClientDetailPage({
     try {
       await api.adminUpdateClientNotes(id, notes, token);
       setSavedAt(new Date().toISOString());
+      // Marcamos el snapshot del cliente con las notas guardadas para
+      // que `dirty` vuelva a false.
+      setClient((c) => (c ? { ...c, notes } : c));
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError(err instanceof Error ? err.message : "Error");
@@ -100,6 +83,23 @@ export default function ClientDetailPage({
       setSavingNotes(false);
     }
   }
+
+  // Dirty flag — notas modificadas vs lo que está en servidor.
+  const dirty = (client?.notes ?? "") !== notes;
+
+  // beforeunload guard: si cierras pestaña/navegas con cambios sin guardar,
+  // el navegador pregunta confirmación. Mitiga la pérdida silenciosa de
+  // notas reportada en la auditoría.
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   if (loading && !client) {
     return (
@@ -152,11 +152,22 @@ export default function ClientDetailPage({
       <article className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-2xl font-light tracking-tight">Notas internas</h2>
-          {savedAt && (
-            <span className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-              Guardado · {new Date(savedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+          {/* Dirty toma precedencia sobre 'Guardado · HH:MM' — antes
+              mostraba el último guardado aunque el textarea tuviera
+              cambios sin guardar, engañando al usuario. */}
+          {dirty ? (
+            <span
+              className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg)]"
+              role="status"
+              aria-live="polite"
+            >
+              · Cambios sin guardar ·
             </span>
-          )}
+          ) : savedAt ? (
+            <span className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+              Guardado · {formatTime(savedAt)}
+            </span>
+          ) : null}
         </header>
         <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
           Solo visibles para el staff. Alergias, preferencias, observaciones del barbero.
@@ -191,7 +202,7 @@ export default function ClientDetailPage({
             Aún no hay citas registradas.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
+          <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--color-border)]">
             <table className="w-full text-sm">
               <thead className="bg-[color:var(--color-surface)] text-left text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
                 <tr>
@@ -234,13 +245,4 @@ export default function ClientDetailPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-[color:var(--color-bg)] p-6">
-      <p className="text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
-        {label}
-      </p>
-      <p className="mt-3 text-3xl font-light tracking-tight">{value}</p>
-    </div>
-  );
-}
+// Stat se importa de @/components/admin/ui.

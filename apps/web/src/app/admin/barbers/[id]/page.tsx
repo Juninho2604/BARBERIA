@@ -2,8 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken } from "@/lib/auth-client";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import type { BarberDto, TimeOffDto } from "@/lib/types";
 
 const DAYS = [
@@ -244,6 +246,7 @@ function WorkingHoursEditor({
 }
 
 function TimeOffSection({ barberId }: { barberId: string }) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<TimeOffDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -272,14 +275,21 @@ function TimeOffSection({ barberId }: { barberId: string }) {
   }, [barberId]);
 
   async function onDelete(id: string) {
-    if (!confirm("¿Eliminar este permiso?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este permiso?",
+      description: "Los slots vuelven a estar disponibles para reserva.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.deleteTimeOff(id, token);
+      toast.success("Permiso eliminado");
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error");
     }
   }
 

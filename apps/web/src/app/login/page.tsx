@@ -54,7 +54,7 @@ function LoginForm() {
   const isMock = api.isMock();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[color:var(--color-bg)] px-6 py-16">
+    <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-[color:var(--color-bg)] px-6 py-16">
       <div className="w-full max-w-sm">
         <a
           href="/"

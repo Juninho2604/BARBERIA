@@ -8,12 +8,14 @@ import { Visitanos } from "@/components/landing/visitanos";
 import { CTA } from "@/components/landing/cta";
 import { Footer } from "@/components/landing/footer";
 import { LandingEffects } from "@/components/landing/effects";
+import { LocalBusinessSchema } from "@/components/seo/local-business-schema";
 
 export default function HomePage() {
   return (
     <IntroGate>
+      <LocalBusinessSchema />
       <Nav />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <Hero />
         <Manifiesto />
         <Local />

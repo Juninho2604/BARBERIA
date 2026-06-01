@@ -26,7 +26,16 @@ function pad2(n: number) {
 }
 
 export async function Services() {
-  const services = await api.listServices().catch(() => []);
+  // Distinguir error vs vacío: el catch silencioso hacía que un backend
+  // caído se viera igual que "no hay servicios". Ahora trackeamos el
+  // estado explícito.
+  let services: Awaited<ReturnType<typeof api.listServices>> = [];
+  let loadError = false;
+  try {
+    services = await api.listServices();
+  } catch {
+    loadError = true;
+  }
 
   return (
     <section className="bc-section" id="servicios">
@@ -43,7 +52,15 @@ export async function Services() {
           </p>
         </header>
 
-        {services.length === 0 ? (
+        {loadError ? (
+          <p className="bc-lead">
+            No pudimos cargar el catálogo en este momento.{" "}
+            <a href="/reservar" className="underline-offset-4 hover:underline">
+              Reserva directo aquí
+            </a>{" "}
+            y elige tu servicio en el flujo.
+          </p>
+        ) : services.length === 0 ? (
           <p className="bc-lead">
             Estamos preparando el catálogo. Vuelve en un momento.
           </p>

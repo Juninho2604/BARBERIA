@@ -33,6 +33,30 @@ export { ApiError };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
+// Failsafe: si el build se sube a producción sin NEXT_PUBLIC_API_URL, el
+// cliente caería al mock — donde cualquier credencial autentica como OWNER.
+// Para evitar exponer accidentalmente el panel admin (ej. olvidar la env
+// var en Vercel), exigimos un opt-in explícito vía
+// NEXT_PUBLIC_ALLOW_MOCK=true. En dev/preview es libre.
+//
+// Para mantener el demo público funcionando: añadir
+// `NEXT_PUBLIC_ALLOW_MOCK=true` en Vercel → Settings → Environment Variables.
+// El día que enchufemos backend real, basta con definir NEXT_PUBLIC_API_URL
+// y eliminar la opt-in.
+if (
+  !API_URL &&
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_ALLOW_MOCK !== "true"
+) {
+  throw new Error(
+    "[barberia] Modo mock detectado en build de producción sin opt-in. " +
+      "El mock acepta cualquier credencial como OWNER y dejaría el panel " +
+      "admin abierto. Configura NEXT_PUBLIC_API_URL en Vercel (cuando el " +
+      "backend esté listo), o define NEXT_PUBLIC_ALLOW_MOCK=true si el " +
+      "demo es deliberado.",
+  );
+}
+
 function useMock() {
   return !API_URL;
 }

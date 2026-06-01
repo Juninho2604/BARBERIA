@@ -5,3 +5,4 @@ export * from "./schemas/timeoff.js";
 export * from "./schemas/appointment.js";
 export * from "./schemas/staff.js";
 export * from "./schemas/client.js";
+export * from "./permissions.js";

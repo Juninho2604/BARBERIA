@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { clearSession, readAccessToken, readUser } from "@/lib/auth-client";
 import { ROLE_LABEL, can, type Action } from "@/lib/permissions";
+import { ConfirmProvider } from "@/components/ui/confirm-provider";
+import { Toaster } from "@/components/ui/toaster";
 import type { AuthUserDto } from "@/lib/types";
 
 interface NavItem {
@@ -30,10 +32,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<AuthUserDto | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Validamos sesión SOLO al montar el layout. Antes el efecto dependía
+  // de `pathname` y disparaba `api.me()` en cada click del nav → con
+  // backend real serían ~50ms × N clicks extra por sesión.
   useEffect(() => {
     const token = readAccessToken();
     if (!token) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     const cached = readUser();
@@ -51,10 +56,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
       .catch(() => {
         clearSession();
-        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       })
       .finally(() => setLoading(false));
-  }, [pathname, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function logout() {
     clearSession();
@@ -73,9 +79,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const visibleNav = NAV.filter((item) => can(user.role, item.requires));
   const roleLabel = ROLE_LABEL[user.role];
+  const showDemoBanner = api.isMock();
 
   return (
+    <ConfirmProvider>
     <div className="min-h-screen bg-[color:var(--color-bg)]">
+      <Toaster />
+      {showDemoBanner && (
+        <div className="border-b border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-6 py-2 text-center text-[0.65rem] uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)]">
+          · Modo demo · cualquier credencial entra como OWNER · configura
+          NEXT_PUBLIC_API_URL para activar el backend real ·
+        </div>
+      )}
       <header className="border-b border-[color:var(--color-border)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-5">
           <a href="/" className="flex items-center gap-3">
@@ -125,7 +140,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-12">{children}</main>
     </div>
+    </ConfirmProvider>
   );
 }

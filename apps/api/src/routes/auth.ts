@@ -42,9 +42,16 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
   return async (app) => {
     const r = app.withTypeProvider<ZodTypeProvider>();
 
-    r.post("/register", { schema: { body: RegisterSchema } }, async (req, reply) => {
+    r.post(
+      "/register",
+      {
+        schema: { body: RegisterSchema },
+        // Anti spam: 3 cuentas por IP por hora.
+        config: { rateLimit: { max: 3, timeWindow: "1 hour" } },
+      },
+      async (req, reply) => {
       const { email, password, name, phone } = req.body;
-      const normalizedEmail = email.toLowerCase();
+      const normalizedEmail = email.toLowerCase().trim();
 
       const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
       if (existing?.passwordHash) {
@@ -53,33 +60,75 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
         });
       }
 
+      // CRITICAL: si existe pero NO es CLIENT, alguien intenta reclamar una
+      // cuenta staff sin token de invitación. Bloqueamos. Tokens de invite
+      // formales irán en M9.4 (cuando enchufemos Resend); por ahora un
+      // OWNER comparte la URL fuera de banda y el flow de claim debería
+      // ir por un endpoint dedicado, no por /register.
+      if (existing && existing.role !== "CLIENT") {
+        return reply.status(409).send({
+          error: {
+            code: "STAFF_CLAIM_REQUIRES_INVITE",
+            message: "Esta cuenta es de staff y requiere un token de invitación. Contacta al owner.",
+          },
+        });
+      }
+
       const passwordHash = await hashPassword(password);
 
-      // Si existe sin password (cuenta creada por reserva sin registro) la reclamamos.
+      // Si existe sin password (cuenta creada por reserva sin registro)
+      // y es CLIENT, la reclamamos.
       const user = existing
         ? await prisma.user.update({
             where: { id: existing.id },
-            data: { passwordHash, name, phone: phone ?? existing.phone },
+            data: { passwordHash, name: name.trim(), phone: phone ?? existing.phone },
           })
         : await prisma.user.create({
-            data: { email: normalizedEmail, passwordHash, name, phone, role: "CLIENT" },
+            data: {
+              email: normalizedEmail,
+              passwordHash,
+              name: name.trim(),
+              phone,
+              role: "CLIENT",
+            },
           });
 
       return reply.status(201).send(await issueSession(env, user));
-    });
+      },
+    );
 
-    r.post("/login", { schema: { body: LoginSchema } }, async (req, reply) => {
+    r.post(
+      "/login",
+      {
+        schema: { body: LoginSchema },
+        // Anti brute-force: 8 intentos por IP cada 15 min. bcrypt 12 rounds
+        // ralentiza por sí solo, pero esto cierra la puerta.
+        config: { rateLimit: { max: 8, timeWindow: "15 minutes" } },
+      },
+      async (req, reply) => {
       const { email, password } = req.body;
       const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
+        where: { email: email.toLowerCase().trim() },
       });
       if (!user?.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
         return reply.status(401).send({
           error: { code: "INVALID_CREDENTIALS", message: "Email o contraseña inválidos" },
         });
       }
+      // Cuenta desactivada por OWNER → bloqueamos login.
+      if (!user.isActive) {
+        return reply.status(403).send({
+          error: { code: "ACCOUNT_DISABLED", message: "Cuenta desactivada. Contacta al owner." },
+        });
+      }
+      // Trackeo último acceso para auditoría (columna existente desde M9).
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
       return issueSession(env, user);
-    });
+      },
+    );
 
     r.post("/refresh", { schema: { body: RefreshSchema } }, async (req, reply) => {
       try {
@@ -90,6 +139,11 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
             error: { code: "INVALID_TOKEN", message: "Usuario no encontrado" },
           });
         }
+        if (!user.isActive) {
+          return reply.status(403).send({
+            error: { code: "ACCOUNT_DISABLED", message: "Cuenta desactivada" },
+          });
+        }
         return issueSession(env, user);
       } catch {
         return reply.status(401).send({
@@ -98,11 +152,32 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
       }
     });
 
+    // POST /logout — invalidación logística + cliente borra localStorage.
+    // Una rotación verdadera con tabla RefreshToken queda para v2 (requiere
+    // schema change). Hoy registramos el evento (último acceso) para
+    // auditoría y devolvemos 204.
+    r.post("/logout", { preHandler: guards.requireAuth }, async (req, reply) => {
+      await prisma.user
+        .update({
+          where: { id: req.auth!.userId },
+          data: { lastLoginAt: new Date() },
+        })
+        .catch(() => {
+          // Si el user no existe (ya borrado), igual devolvemos 204.
+        });
+      return reply.status(204).send();
+    });
+
     r.get("/me", { preHandler: guards.requireAuth }, async (req, reply) => {
       const user = await prisma.user.findUnique({ where: { id: req.auth!.userId } });
       if (!user) {
         return reply.status(404).send({
           error: { code: "USER_NOT_FOUND", message: "Usuario no encontrado" },
+        });
+      }
+      if (!user.isActive) {
+        return reply.status(403).send({
+          error: { code: "ACCOUNT_DISABLED", message: "Cuenta desactivada" },
         });
       }
       return toAuthUser(user);

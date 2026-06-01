@@ -27,12 +27,19 @@ export const BarberSchema = z.object({
 });
 export type Barber = z.infer<typeof BarberSchema>;
 
+// HTTPS-only para photoUrl: evita mixed-content y pixel-tracking desde
+// dominios HTTP arbitrarios cuando se renderiza en /reservar y /admin.
+const httpsUrl = z
+  .string()
+  .url()
+  .startsWith("https://", "La URL debe ser HTTPS");
+
 export const CreateBarberSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2).max(80),
   phone: z.string().min(6).max(20).optional(),
   bio: z.string().max(500).optional(),
-  photoUrl: z.string().url().optional(),
+  photoUrl: httpsUrl.optional(),
   workingHours: z.array(WorkingHourSchema).optional(),
 });
 export type CreateBarberInput = z.infer<typeof CreateBarberSchema>;
@@ -41,7 +48,7 @@ export const UpdateBarberSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   phone: z.string().min(6).max(20).nullable().optional(),
   bio: z.string().max(500).nullable().optional(),
-  photoUrl: z.string().url().nullable().optional(),
+  photoUrl: httpsUrl.nullable().optional(),
   isActive: z.boolean().optional(),
 });
 export type UpdateBarberInput = z.infer<typeof UpdateBarberSchema>;

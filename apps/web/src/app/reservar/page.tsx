@@ -12,7 +12,7 @@ export default async function ReservarPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[color:var(--color-bg)]">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-[color:var(--color-bg)]">
       <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
         <a
           href="/"

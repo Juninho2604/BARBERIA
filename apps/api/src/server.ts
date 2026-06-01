@@ -1,7 +1,8 @@
-import Fastify, { type FastifyError } from "fastify";
+import Fastify, { type FastifyError, type FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import sensible from "@fastify/sensible";
+import rateLimit from "@fastify/rate-limit";
 import {
   serializerCompiler,
   validatorCompiler,
@@ -15,6 +16,8 @@ import { barbersRoutes } from "./routes/barbers.js";
 import { availabilityRoutes } from "./routes/availability.js";
 import { appointmentsRoutes } from "./routes/appointments.js";
 import { timeOffRoutes } from "./routes/timeoff.js";
+import { staffRoutes } from "./routes/staff.js";
+import { clientsRoutes } from "./routes/clients.js";
 import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
@@ -31,12 +34,44 @@ export async function buildServer(env: Env) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  await app.register(helmet, { contentSecurityPolicy: false });
+  // CSP minimal — la API solo responde JSON, así que `default-src 'none'`
+  // bloquea cualquier intento de servir scripts/iframes desde la API.
+  // Si en algún momento la API renderiza HTML (improbable), revisar.
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+    referrerPolicy: { policy: "no-referrer" },
+    crossOriginResourcePolicy: { policy: "same-site" },
+  });
   await app.register(cors, {
     origin: env.CORS_ORIGINS,
     credentials: true,
   });
   await app.register(sensible);
+
+  // Rate limiting global como red de seguridad. Cada handler crítico
+  // (login, register, booking guest) puede sobrescribir con límites más
+  // estrictos vía `config: { rateLimit: { ... } }`.
+  await app.register(rateLimit, {
+    global: true,
+    max: 200,
+    timeWindow: "1 minute",
+    keyGenerator: (req: FastifyRequest) => {
+      // IP del cliente, respetando X-Forwarded-For que Nginx en el VPS
+      // enviará tras el reverse proxy (cuando llegue el dominio).
+      return (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip;
+    },
+    errorResponseBuilder: () => ({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Demasiadas peticiones, intenta en un minuto",
+      },
+    }),
+  });
 
   const guards = makeAuthGuards(env);
 
@@ -47,6 +82,8 @@ export async function buildServer(env: Env) {
   await app.register(availabilityRoutes(env), { prefix: "/barbers" });
   await app.register(appointmentsRoutes(env, guards), { prefix: "/appointments" });
   await app.register(timeOffRoutes(guards));
+  await app.register(staffRoutes(guards), { prefix: "/staff" });
+  await app.register(clientsRoutes(guards), { prefix: "/clients" });
 
   app.setErrorHandler((err: FastifyError, _req, reply) => {
     if (hasZodFastifySchemaValidationErrors(err)) {

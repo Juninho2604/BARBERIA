@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { readAccessToken, readUser } from "@/lib/auth-client";
 import { can } from "@/lib/permissions";
+import { useModal } from "@/lib/use-modal";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { formatDayLabel, formatPrice, formatTime, pad2 } from "@/lib/format";
 import type { AppointmentDto, BarberDto, ServiceDto } from "@/lib/types";
 
 /**
@@ -49,24 +53,13 @@ function startOfDayMs(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x.getTime();
 }
-function pad2(n: number) { return n.toString().padStart(2, "0"); }
-
-function formatTimeOfDay(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-function formatDayLabel(d: Date) {
-  return d.toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
+// pad2 / formatTime / formatDayLabel viven en @/lib/format — usan
+// BUSINESS.timezone para que admin y cliente vean la misma hora sin
+// importar la zona del dispositivo.
 
 export default function AdminCalendarPage() {
   const router = useRouter();
+  const confirm = useConfirm();
   const me = readUser();
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [barbers, setBarbers] = useState<BarberDto[]>([]);
@@ -122,27 +115,48 @@ export default function AdminCalendarPage() {
   }, [date]);
 
   async function changeStatus(id: string, status: AppointmentDto["status"]) {
+    // Cambios destructivos requieren confirm. NO_SHOW especialmente:
+    // afecta histórico del cliente y métricas; antes la auditoría
+    // marcaba este flow como "un click destructivo sin undo".
+    if (status === "NO_SHOW") {
+      const ok = await confirm({
+        title: "¿Marcar como No vino?",
+        description: "Esto cuenta en las métricas del cliente y no se puede revertir fácilmente.",
+        confirmLabel: "Marcar no-show",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.updateAppointment(id, { status }, token);
+      toast.success("Estado actualizado");
       await refresh();
       setSelected((cur) => (cur ? { ...cur, status } : cur));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cambiar estado");
     }
   }
 
   async function cancel(id: string) {
-    if (!confirm("¿Cancelar esta cita?")) return;
+    const ok = await confirm({
+      title: "¿Cancelar esta cita?",
+      description: "El slot quedará libre para reservar de nuevo.",
+      confirmLabel: "Cancelar cita",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
     const token = readAccessToken();
     if (!token) return;
     try {
       await api.cancelAppointment(id, token);
+      toast.success("Cita cancelada");
       await refresh();
       setSelected(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error al cancelar");
     }
   }
 
@@ -153,14 +167,21 @@ export default function AdminCalendarPage() {
     [totalHours],
   );
 
-  // Indicador "ahora" sobre la columna, solo si el día visible es hoy.
+  // Indicador "ahora" — refresca cada minuto. Antes solo se calculaba
+  // al render inicial y se quedaba congelado durante la sesión.
+  const [nowTick, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const nowOffset = useMemo(() => {
     const now = new Date();
     if (startOfDayMs(now) !== startOfDayMs(date)) return null;
     const minSinceStart = (now.getHours() - HOUR_START) * 60 + now.getMinutes();
     if (minSinceStart < 0 || minSinceStart > totalHours * 60) return null;
     return (minSinceStart / 60) * HOUR_HEIGHT;
-  }, [date, totalHours]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, totalHours, nowTick]);
 
   return (
     <section>
@@ -181,6 +202,7 @@ export default function AdminCalendarPage() {
           <button
             type="button"
             onClick={() => setDate((d) => addDays(d, -1))}
+            aria-label="Día anterior"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             ← Día
@@ -192,6 +214,7 @@ export default function AdminCalendarPage() {
               t.setHours(0, 0, 0, 0);
               setDate(t);
             }}
+            aria-label="Ir al día de hoy"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             Hoy
@@ -199,6 +222,7 @@ export default function AdminCalendarPage() {
           <button
             type="button"
             onClick={() => setDate((d) => addDays(d, 1))}
+            aria-label="Día siguiente"
             className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] px-3 py-1.5 text-[color:var(--color-fg-muted)] transition hover:border-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
           >
             Día →
@@ -239,8 +263,10 @@ export default function AdminCalendarPage() {
               minWidth: 64 + barbers.length * 180,
             }}
           >
-            {/* Header con nombre de barberos */}
-            <div className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]" />
+            {/* Header con nombre de barberos. La esquina superior izquierda
+                (spacer) tiene sticky en LEFT+TOP para que no se mueva al
+                scrollear horizontal. */}
+            <div className="sticky left-0 top-0 z-30 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]" />
             {barbers.map((b) => (
               <div
                 key={b.id}
@@ -253,9 +279,10 @@ export default function AdminCalendarPage() {
               </div>
             ))}
 
-            {/* Columna de horas */}
+            {/* Columna de horas — sticky LEFT para que en mobile siempre
+                veas la referencia horaria mientras swipeas entre barberos. */}
             <div
-              className="relative border-r border-[color:var(--color-border)]"
+              className="sticky left-0 z-20 relative border-r border-[color:var(--color-border)] bg-[color:var(--color-bg)]"
               style={{ height: totalHeight }}
             >
               {hours.map((h) => (
@@ -314,14 +341,21 @@ export default function AdminCalendarPage() {
                       <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-[color:var(--color-fg)]" />
                     </div>
                   )}
-                  {/* Citas */}
+                  {/* Citas — clampeadas al rango [HOUR_START, HOUR_END].
+                      Si una cita empieza antes o termina después, ajustamos
+                      top/height para que no flote fuera de la grilla. */}
                   {barberAppts.map((a) => {
                     const s = new Date(a.startsAt);
                     const e = new Date(a.endsAt);
-                    const startMin = (s.getHours() - HOUR_START) * 60 + s.getMinutes();
-                    const durMin = (e.getTime() - s.getTime()) / 60_000;
+                    const rawStartMin = (s.getHours() - HOUR_START) * 60 + s.getMinutes();
+                    const rawEndMin = (e.getHours() - HOUR_START) * 60 + e.getMinutes();
+                    const dayMax = (HOUR_END - HOUR_START) * 60;
+                    // Skip si la cita está completamente fuera de la grilla.
+                    if (rawEndMin <= 0 || rawStartMin >= dayMax) return null;
+                    const startMin = Math.max(rawStartMin, 0);
+                    const endMin = Math.min(rawEndMin, dayMax);
                     const top = (startMin / 60) * HOUR_HEIGHT;
-                    const height = Math.max((durMin / 60) * HOUR_HEIGHT, 26);
+                    const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 26);
                     const isCancelled = a.status === "CANCELLED";
                     return (
                       <button
@@ -345,7 +379,7 @@ export default function AdminCalendarPage() {
                         style={{ top, height }}
                       >
                         <p className="truncate text-[0.7rem] font-medium">
-                          {formatTimeOfDay(a.startsAt)} · {a.client?.name ?? "—"}
+                          {formatTime(a.startsAt)} · {a.client?.name ?? "—"}
                         </p>
                         <p className="truncate text-[0.62rem] opacity-80">
                           {a.service?.name}
@@ -370,13 +404,16 @@ export default function AdminCalendarPage() {
         />
       )}
 
-      {/* Composer — crear cita manual */}
+      {/* Composer — crear cita manual. Si el usuario es BARBER bloqueamos
+          la selección de barbero al que clickeó (su propia columna), así
+          no crea citas a nombre de otros. */}
       {composer && (
         <Composer
           services={services}
           barberId={composer.barberId}
           startsAt={composer.startsAt}
           barbers={barbers}
+          lockBarber={me?.role === "BARBER"}
           onClose={() => setComposer(null)}
           onCreated={async () => {
             setComposer(null);
@@ -399,18 +436,26 @@ function DetailPanel({
   onChangeStatus: (s: AppointmentDto["status"]) => void;
   onCancel: () => void;
 }) {
+  const ref = useModal(true, onClose);
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-[color:var(--color-bg)]/70 backdrop-blur-sm"
+      className="bc-modal-backdrop"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="h-full w-full max-w-md overflow-y-auto border-l border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8"
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="detail-panel-title"
+        tabIndex={-1}
+        className="h-full w-full max-w-md overflow-y-auto border-l border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cerrar panel de cita"
           className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
         >
           Cerrar ×
@@ -418,7 +463,7 @@ function DetailPanel({
         <p className="mt-6 text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
           — Cita —
         </p>
-        <h2 className="mt-4 text-3xl font-light tracking-tight">
+        <h2 id="detail-panel-title" className="mt-4 text-3xl font-light tracking-tight">
           {appt.client?.name ?? "Cliente"}
         </h2>
         <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
@@ -442,7 +487,7 @@ function DetailPanel({
             label="Precio"
             value={
               appt.service?.priceCents !== undefined
-                ? `$${(appt.service.priceCents / 100).toFixed(0)}`
+                ? formatPrice(appt.service.priceCents)
                 : "—"
             }
           />
@@ -490,6 +535,7 @@ function Composer({
   barbers,
   barberId,
   startsAt,
+  lockBarber,
   onClose,
   onCreated,
 }: {
@@ -497,6 +543,8 @@ function Composer({
   barbers: BarberDto[];
   barberId: string;
   startsAt: string;
+  /** Si true, el dropdown de barbero queda disabled (usado para BARBER). */
+  lockBarber?: boolean;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -519,9 +567,18 @@ function Composer({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!whenLocal) {
+      setError("Selecciona una fecha y hora.");
+      return;
+    }
+    const whenDate = new Date(whenLocal);
+    if (Number.isNaN(whenDate.getTime())) {
+      setError("Fecha u hora inválida.");
+      return;
+    }
     setSaving(true);
     try {
-      const whenIso = new Date(whenLocal).toISOString();
+      const whenIso = whenDate.toISOString();
       await api.createAppointment({
         serviceId,
         barberId: selectedBarberId,
@@ -542,18 +599,26 @@ function Composer({
     }
   }
 
+  const ref = useModal(true, onClose);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--color-bg)]/70 p-6 backdrop-blur-sm"
+      className="bc-modal-backdrop is-center"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="w-full max-w-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8"
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="composer-title"
+        tabIndex={-1}
+        className="w-full max-w-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cerrar nueva cita"
           className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]"
         >
           Cerrar ×
@@ -561,7 +626,7 @@ function Composer({
         <p className="mt-6 text-xs uppercase tracking-[0.28em] text-[color:var(--color-fg-muted)]">
           — Nueva cita —
         </p>
-        <h2 className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
+        <h2 id="composer-title" className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
           Reservar a mano
         </h2>
         <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
@@ -578,7 +643,7 @@ function Composer({
             >
               {services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} · {s.durationMinutes} min · ${(s.priceCents / 100).toFixed(0)}
+                  {s.name} · {s.durationMinutes} min · {formatPrice(s.priceCents)}
                 </option>
               ))}
             </select>
@@ -588,7 +653,8 @@ function Composer({
               required
               value={selectedBarberId}
               onChange={(e) => setSelectedBarberId(e.target.value)}
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)]"
+              disabled={lockBarber}
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)] disabled:opacity-60"
             >
               {barbers.map((b) => (
                 <option key={b.id} value={b.id}>

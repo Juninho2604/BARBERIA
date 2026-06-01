@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
+import { BUSINESS } from "@/lib/business-info";
 import "./globals.css";
 
 // Tipografía oficial post-rebrand (design handoff v1).
@@ -22,9 +23,62 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Brothers Club Barbershop — Reserva tu cita",
-  description:
-    "Brothers Club: cortes clásicos y modernos. Reserva online en menos de un minuto.",
+  metadataBase: new URL(BUSINESS.baseUrl),
+  title: {
+    default: `${BUSINESS.name} — Reserva tu cita`,
+    template: `%s · ${BUSINESS.shortName}`,
+  },
+  description: BUSINESS.description,
+  applicationName: BUSINESS.shortName,
+  authors: [{ name: BUSINESS.name }],
+  keywords: [
+    "barbería",
+    "barbershop",
+    "brothers club",
+    "florida",
+    "reserva online",
+    "fade",
+    "barba",
+    "shave",
+  ],
+  category: "lifestyle",
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: BUSINESS.baseUrl,
+    siteName: BUSINESS.name,
+    title: `${BUSINESS.name} — Reserva tu cita`,
+    description: BUSINESS.description,
+    // /opengraph-image.tsx genera el 1200×630 con la estética editorial.
+    // Next 15 lo detecta automáticamente y añade el meta tag.
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BUSINESS.name} — Reserva tu cita`,
+    description: BUSINESS.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0b",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // respeta safe-area en iPhone con notch
 };
 
 export default function RootLayout({
@@ -32,7 +86,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${bodoni.variable} ${hanken.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/* Skip-to-content (WCAG 2.4.1) — invisible hasta focus.
+            Cada page tiene id="main-content" en su <main>. */}
+        <a href="#main-content" className="bc-skip-link">
+          Saltar al contenido
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

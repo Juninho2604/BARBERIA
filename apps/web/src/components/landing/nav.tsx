@@ -38,7 +38,10 @@ export function Nav() {
           width={1125}
           height={411}
           priority
-          className="h-7 w-auto sm:h-8"
+          // Tamaños calibrados para que el logo iguale visualmente al
+          // botón "RESERVAR →" (~50px alto). Antes h-7/h-8 (28-32px)
+          // dejaba el logo perdido a la izquierda.
+          className="bc-nav__logo h-12 w-auto sm:h-14 md:h-16"
         />
       </a>
 
