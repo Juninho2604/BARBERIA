@@ -38,10 +38,11 @@ export function Nav() {
           width={1125}
           height={411}
           priority
-          // Tamaños calibrados para que el logo iguale visualmente al
-          // botón "RESERVAR →" (~50px alto). Antes h-7/h-8 (28-32px)
-          // dejaba el logo perdido a la izquierda.
-          className="bc-nav__logo h-12 w-auto sm:h-14 md:h-16"
+          // Aspect ratio del SVG ~2.74:1. h-16 (64px) → ~175px ancho,
+          // h-20 (80px) → ~219px, h-24 (96px) → ~263px, h-28 (112px) → ~307px.
+          // Tamaños grandes para que el logo tenga peso visual real
+          // (antes h-7/h-8 dejaba el wordmark casi imperceptible).
+          className="bc-nav__logo h-16 w-auto sm:h-20 md:h-24 lg:h-28"
         />
       </a>
 
