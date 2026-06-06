@@ -1,11 +1,14 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 /**
- * Footer — bloque superior con logo (decisión del cliente: mantenemos el
- * SVG de la marca) a la izquierda y dos columnas de links a la derecha.
- * Bloque inferior con copyright y enlace a la reserva.
+ * Footer — bloque superior con logo a la izquierda y dos columnas
+ * de links a la derecha. Bloque inferior con copyright y enlace
+ * a la reserva.
  */
 export function Footer() {
+  const t = useTranslations("footer");
   const year = new Date().getFullYear();
   return (
     <footer className="bc-footer">
@@ -21,14 +24,14 @@ export function Footer() {
         </div>
         <div className="bc-footer__cols">
           <div className="bc-footer__col">
-            <h4>Navegar</h4>
-            <a href="#servicios">Servicios</a>
-            <a href="#espacio">El Espacio</a>
-            <a href="#visitanos">Visítanos</a>
-            <a href="/reservar">Reservar</a>
+            <h4>{t("navigate")}</h4>
+            <a href="#servicios">{t("links.services")}</a>
+            <a href="#espacio">{t("links.space")}</a>
+            <a href="#visitanos">{t("links.visit")}</a>
+            <Link href="/reservar">{t("links.book")}</Link>
           </div>
           <div className="bc-footer__col">
-            <h4>Síguenos</h4>
+            <h4>{t("follow")}</h4>
             <a href="#" aria-label="Instagram">Instagram</a>
             <a href="#" aria-label="TikTok">TikTok</a>
             <a href="#" aria-label="WhatsApp">WhatsApp</a>
@@ -36,10 +39,10 @@ export function Footer() {
         </div>
       </div>
       <div className="bc-footer__bot">
-        <span>© {year} Brothers Club Barbershop</span>
-        <a href="/reservar">
-          <span>Reserva online</span>
-        </a>
+        <span>{t("copyright", { year })}</span>
+        <Link href="/reservar">
+          <span>{t("bookOnline")}</span>
+        </Link>
       </div>
     </footer>
   );

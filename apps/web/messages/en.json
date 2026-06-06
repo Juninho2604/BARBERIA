@@ -1,0 +1,138 @@
+{
+  "nav": {
+    "services": "Services",
+    "space": "The Shop",
+    "visit": "Visit",
+    "book": "Book"
+  },
+  "langSwitcher": {
+    "aria": "Change language",
+    "tooltip": "Language / Idioma"
+  },
+  "hero": {
+    "eyebrow": "Barbershop · Est. 2026",
+    "titleLine1": "Your cut,",
+    "titleLine2": "on your time.",
+    "sub": "Book online in under a minute. Pick your barber, your service, the time that fits. No calls, no waiting.",
+    "bookCta": "Book now",
+    "seeServices": "See services",
+    "scroll": "Scroll"
+  },
+  "manifesto": {
+    "eyebrow": "The craft",
+    "title": "It's not just a haircut. It's the time you set aside for yourself.",
+    "body": "Razor, scissors, and time. At Brothers Club every visit is an unhurried ritual: reclined chair, hot towel, and a finish you can feel. You leave like you came in, only sharper."
+  },
+  "local": {
+    "eyebrow": "The shop",
+    "title": "A place built to linger.",
+    "lead": "Pro tools, fresh coffee, and a chair with your name on it. The detail is in every corner.",
+    "figs": {
+      "workstation": { "title": "The station", "label": "01 / Style" },
+      "coffee": { "title": "The wait", "label": "02 / Coffee" },
+      "cut": { "title": "The finish", "label": "03 / Detail" }
+    }
+  },
+  "services": {
+    "eyebrow": "Services",
+    "title": "What we do.",
+    "lead": "Set prices. No surprises. Book what you need.",
+    "loadErrorBefore": "We couldn't load the menu right now. ",
+    "loadErrorLink": "Book directly here",
+    "loadErrorAfter": " and pick your service in the flow.",
+    "empty": "We're prepping the menu. Check back in a moment.",
+    "rowCta": "Book →",
+    "footerCta": "Book now"
+  },
+  "visitanos": {
+    "eyebrow": "Visit",
+    "title": "Drop by the club.",
+    "labels": {
+      "address": "Address",
+      "hours": "Hours",
+      "bookings": "Bookings",
+      "contact": "Contact"
+    },
+    "bookingsValue": "Online, 24/7",
+    "directions": "Get directions"
+  },
+  "cta": {
+    "eyebrow": "No account needed",
+    "titleLine1": "Ready?",
+    "titleLine2": "Book your cut.",
+    "button": "Book online"
+  },
+  "footer": {
+    "navigate": "Browse",
+    "follow": "Follow",
+    "links": {
+      "services": "Services",
+      "space": "The Shop",
+      "visit": "Visit",
+      "book": "Book"
+    },
+    "copyright": "© {year} Brothers Club Barbershop",
+    "bookOnline": "Book online"
+  },
+  "intro": {
+    "loading": "Loading",
+    "turn": "Turn it to enter",
+    "dragHint": "Drag with your finger",
+    "failedTitle": "Couldn't load",
+    "failedSub": "Skipping intro…",
+    "skip": "Skip intro"
+  },
+  "skipLink": "Skip to content",
+  "booking": {
+    "back": "← Back",
+    "header": "— Booking —",
+    "title": "Book your cut",
+    "subtitle": "Pick service, barber and time. No account needed.",
+    "configEmpty": "Services or barbers aren't set up yet. Come back soon.",
+    "mockMode": "Demo mode · sample data",
+    "change": "← Change",
+    "progress": {
+      "service": "Service",
+      "barber": "Barber",
+      "datetime": "Time",
+      "contact": "Details"
+    },
+    "step": {
+      "service": { "title": "What are we doing today?", "choose": "Choose →" },
+      "barber": { "title": "With whom?", "choose": "Choose →" },
+      "datetime": {
+        "title": "When?",
+        "summary": "{service} with {barber}",
+        "loading": "Finding open slots…",
+        "empty": "No open slots that day. Try another date."
+      },
+      "contact": {
+        "title": "Your details",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "submit": "Confirm booking",
+        "submitting": "Booking…"
+      },
+      "done": {
+        "label": "— Booking confirmed —",
+        "title": "See you soon.",
+        "row": {
+          "service": "Service",
+          "barber": "Barber",
+          "when": "When"
+        },
+        "homeLink": "← Back to home"
+      }
+    },
+    "errors": {
+      "slotTaken": "That slot was just taken. Please pick another.",
+      "unexpected": "Unexpected error"
+    }
+  },
+  "metadata": {
+    "title": "Brothers Club Barbershop — Book your cut",
+    "description": "Brothers Club Barbershop in Orlando, FL. Classic and modern cuts, editorial atmosphere. Book online in under a minute.",
+    "reservarTitle": "Book — Brothers Club Barbershop"
+  }
+}

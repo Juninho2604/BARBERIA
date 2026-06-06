@@ -1,24 +1,25 @@
+import { getTranslations } from "next-intl/server";
 import { api } from "@/lib/api";
+import { Link } from "@/i18n/navigation";
 
 /**
- * Servicios — lista editorial numerada (handoff). Cada fila es un `<a>` al
- * flujo de reserva real (`/reservar`). Hover: padding-left aumenta, fondo
- * de `--bone` al 6% crece de 0→100%, "Reservar →" entra desde la izquierda.
+ * Servicios — lista editorial numerada (handoff). Cada fila es un `<Link>`
+ * al flujo de reserva real (locale-aware via @/i18n/navigation).
  *
- * Datos vienen de la API (mismos que ya muestra el sitio); soft-fail a [].
- * El precio se formatea sin decimales (los del cliente son enteros USD).
+ * Datos vienen de la API (mismos que el resto del sitio); soft-fail
+ * distingue error vs vacío.
  */
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
 }
 
-function formatDuration(min: number) {
+function formatDuration(min: number, unit: string) {
   if (min >= 60) {
     const h = Math.floor(min / 60);
     const rest = min % 60;
-    return rest === 0 ? `${h} h` : `${h} h ${rest} min`;
+    return rest === 0 ? `${h} h` : `${h} h ${rest} ${unit}`;
   }
-  return `${min} min`;
+  return `${min} ${unit}`;
 }
 
 function pad2(n: number) {
@@ -26,6 +27,7 @@ function pad2(n: number) {
 }
 
 export async function Services() {
+  const t = await getTranslations("services");
   // Distinguir error vs vacío: el catch silencioso hacía que un backend
   // caído se viera igual que "no hay servicios". Ahora trackeamos el
   // estado explícito.
@@ -42,32 +44,30 @@ export async function Services() {
       <div className="bc-wrap">
         <header className="bc-services__head">
           <p className="bc-eyebrow" data-reveal>
-            Servicios
+            {t("eyebrow")}
           </p>
           <h2 className="bc-display" data-reveal data-delay="1">
-            Lo que hacemos.
+            {t("title")}
           </h2>
           <p className="bc-lead" data-reveal data-delay="2">
-            Precios fijos. Sin sorpresas. Reserva el que necesites.
+            {t("lead")}
           </p>
         </header>
 
         {loadError ? (
           <p className="bc-lead">
-            No pudimos cargar el catálogo en este momento.{" "}
-            <a href="/reservar" className="underline-offset-4 hover:underline">
-              Reserva directo aquí
-            </a>{" "}
-            y elige tu servicio en el flujo.
+            {t("loadErrorBefore")}
+            <Link href="/reservar" className="underline-offset-4 hover:underline">
+              {t("loadErrorLink")}
+            </Link>
+            {t("loadErrorAfter")}
           </p>
         ) : services.length === 0 ? (
-          <p className="bc-lead">
-            Estamos preparando el catálogo. Vuelve en un momento.
-          </p>
+          <p className="bc-lead">{t("empty")}</p>
         ) : (
           <div className="bc-svc-list">
             {services.map((s, i) => (
-              <a
+              <Link
                 key={s.id}
                 href="/reservar"
                 className="bc-svc"
@@ -76,18 +76,18 @@ export async function Services() {
               >
                 <span className="bc-svc__no">{pad2(i + 1)}</span>
                 <span className="bc-svc__name">{s.name}</span>
-                <span className="bc-svc__meta">{formatDuration(s.durationMinutes)}</span>
+                <span className="bc-svc__meta">{formatDuration(s.durationMinutes, "min")}</span>
                 <span className="bc-svc__price">{formatPrice(s.priceCents)}</span>
-                <span className="bc-svc__go">Reservar →</span>
-              </a>
+                <span className="bc-svc__go">{t("rowCta")}</span>
+              </Link>
             ))}
           </div>
         )}
 
         <div className="bc-services__foot" data-reveal>
-          <a className="bc-btn bc-btn--solid" href="/reservar">
-            Reservar ahora <span className="arw">→</span>
-          </a>
+          <Link className="bc-btn bc-btn--solid" href="/reservar">
+            {t("footerCta")} <span className="arw">→</span>
+          </Link>
         </div>
       </div>
     </section>

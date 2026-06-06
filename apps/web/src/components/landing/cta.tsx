@@ -1,14 +1,13 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 /**
- * CTA band — centrado, full-bleed, foto `cut-detail.jpg` muy desaturada al
- * fondo con viñeta radial. Eyebrow + H2 grande + botón sólido al flujo de
- * reserva real (`/reservar`).
- *
- * El handoff lo llama "id=reservar" para anclas in-page; aquí no lo usamos
- * como ancla porque el botón va a `/reservar` directamente.
+ * CTA band — centrado, full-bleed, foto `cut-detail.jpg` muy desaturada
+ * con viñeta radial. Botón sólido al flujo de reserva real.
  */
 export function CTA() {
+  const t = useTranslations("cta");
   return (
     <section className="bc-cta">
       <div className="bc-cta__bg" data-parallax="0.1">
@@ -23,21 +22,21 @@ export function CTA() {
 
       <div className="bc-cta__inner">
         <p className="bc-eyebrow is-center" data-reveal>
-          Sin cuenta necesaria
+          {t("eyebrow")}
         </p>
         <h2 className="bc-display" data-reveal data-delay="1">
-          ¿Listo?
+          {t("titleLine1")}
           <br />
-          Reserva tu cita.
+          {t("titleLine2")}
         </h2>
-        <a
+        <Link
           className="bc-btn bc-btn--solid"
           href="/reservar"
           data-reveal
           data-delay="2"
         >
-          Reservar online <span className="arw">→</span>
-        </a>
+          {t("button")} <span className="arw">→</span>
+        </Link>
       </div>
     </section>
   );

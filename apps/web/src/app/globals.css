@@ -312,6 +312,46 @@ html[data-modal-open="true"] {
 .bc-nav__link:hover::after { width: 100%; }
 .bc-nav__cta { padding: 0.85em 1.6em !important; }
 
+/* Language switcher — diseño language-agnostic: ES | EN con activo
+   destacado. Universal: cualquier hablante entiende los codes ISO. */
+.bc-lang {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.bc-lang__item-wrap { display: inline-flex; align-items: center; }
+.bc-lang__item {
+  background: transparent;
+  border: 0;
+  padding: 0.4em 0.55em;
+  color: var(--color-bone-dim);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  transition: color 0.3s var(--ease);
+}
+.bc-lang__item:hover { color: var(--color-bone); }
+.bc-lang__item.is-active {
+  color: var(--color-bone);
+  font-weight: 600;
+}
+.bc-lang__item:disabled { opacity: 0.6; cursor: default; }
+.bc-lang__sep {
+  color: var(--color-line-2);
+  font-weight: 300;
+  pointer-events: none;
+}
+@media (max-width: 860px) {
+  /* En mobile el switcher queda visible incluso cuando los links de
+     texto del nav se ocultan — el idioma es decisión crítica. */
+  .bc-lang { font-size: 0.68rem; }
+  .bc-lang__item { padding: 0.4em 0.4em; }
+}
+
 /* En scroll el nav reduce padding 1.6→1rem. El logo también se achica
    (a ~2/3 del default) para que la barra quede compacta sin perder
    presencia. Default = bien grande (h-16/20/24/28); scrolled = h-11/13/15/18. */

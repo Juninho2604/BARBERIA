@@ -3,10 +3,18 @@ import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
 import { BUSINESS } from "@/lib/business-info";
 import "./globals.css";
 
-// Tipografía oficial post-rebrand (design handoff v1).
-// Bodoni Moda — serif display de alto contraste (titulares, nombres,
-// precios, monograma). Hanken Grotesk — sans neutra (cuerpo, etiquetas,
-// botones, nav).
+/**
+ * Root layout. Provee `<html>` + `<body>` y la metadata canónica.
+ *
+ * `lang="en"` por default (audiencia mayoritaria Orlando FL). La versión
+ * en español vive bajo `/es/...`. Google detecta el contenido en español
+ * vía `hreflang` (configurado en `[locale]/layout.tsx`) — no es ideal
+ * que `<html lang>` no cambie con la URL, pero Next 15 no permite
+ * cambiar el atributo desde un layout anidado sin re-render del root.
+ *
+ * Las rutas /admin y /login viven fuera del segmento [locale] y heredan
+ * directamente este layout — quedan en español sin traducciones.
+ */
 const bodoni = Bodoni_Moda({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -25,40 +33,27 @@ const hanken = Hanken_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(BUSINESS.baseUrl),
   title: {
-    default: `${BUSINESS.name} — Reserva tu cita`,
+    default: `${BUSINESS.name} — Book your cut`,
     template: `%s · ${BUSINESS.shortName}`,
   },
   description: BUSINESS.description,
   applicationName: BUSINESS.shortName,
   authors: [{ name: BUSINESS.name }],
   keywords: [
-    "barbería",
     "barbershop",
+    "barbería",
     "brothers club",
     "orlando",
     "orlando fl",
     "florida",
-    "reserva online",
+    "haircut",
     "fade",
-    "barba",
     "shave",
+    "beard trim",
+    "online booking",
+    "reserva online",
   ],
   category: "lifestyle",
-  openGraph: {
-    type: "website",
-    locale: "es_ES",
-    url: BUSINESS.baseUrl,
-    siteName: BUSINESS.name,
-    title: `${BUSINESS.name} — Reserva tu cita`,
-    description: BUSINESS.description,
-    // /opengraph-image.tsx genera el 1200×630 con la estética editorial.
-    // Next 15 lo detecta automáticamente y añade el meta tag.
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${BUSINESS.name} — Reserva tu cita`,
-    description: BUSINESS.description,
-  },
   robots: {
     index: true,
     follow: true,
@@ -69,9 +64,6 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-video-preview": -1,
     },
-  },
-  alternates: {
-    canonical: "/",
   },
 };
 
@@ -87,12 +79,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${bodoni.variable} ${hanken.variable}`}>
+    <html lang="en" className={`${bodoni.variable} ${hanken.variable}`}>
       <body>
-        {/* Skip-to-content (WCAG 2.4.1) — invisible hasta focus.
-            Cada page tiene id="main-content" en su <main>. */}
+        {/* Skip-to-content (WCAG 2.4.1) — invisible hasta focus. El texto
+            es estático aquí porque vive fuera del provider de i18n; en
+            español queda "Saltar al contenido" como segunda opción, pero
+            como prioridad es accesibilidad, lo dejamos en inglés
+            (idioma del root). */}
         <a href="#main-content" className="bc-skip-link">
-          Saltar al contenido
+          Skip to content
         </a>
         {children}
       </body>

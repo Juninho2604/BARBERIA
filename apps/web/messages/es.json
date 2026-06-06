@@ -1,0 +1,138 @@
+{
+  "nav": {
+    "services": "Servicios",
+    "space": "El Espacio",
+    "visit": "Visítanos",
+    "book": "Reservar"
+  },
+  "langSwitcher": {
+    "aria": "Cambiar idioma",
+    "tooltip": "Idioma / Language"
+  },
+  "hero": {
+    "eyebrow": "Barbershop · Est. 2026",
+    "titleLine1": "Tu corte,",
+    "titleLine2": "a tu hora.",
+    "sub": "Reserva online en menos de un minuto. Elige barbero, servicio y la hora que te encaje. Sin llamadas, sin esperas.",
+    "bookCta": "Reservar cita",
+    "seeServices": "Ver servicios",
+    "scroll": "Scroll"
+  },
+  "manifesto": {
+    "eyebrow": "El oficio",
+    "title": "No es solo un corte. Es la hora que reservas para ti.",
+    "body": "Cuchilla, tijera y tiempo. En Brothers Club cada visita es un ritual sin prisa: el respaldo reclinado, la toalla caliente y un acabado que se nota. Te vas como entraste, pero mejor."
+  },
+  "local": {
+    "eyebrow": "El espacio",
+    "title": "Un lugar hecho para quedarse.",
+    "lead": "Material profesional, café recién hecho y una silla con tu nombre. El detalle está en cada esquina.",
+    "figs": {
+      "workstation": { "title": "La estación", "label": "01 / Estilo" },
+      "coffee": { "title": "La espera", "label": "02 / Café" },
+      "cut": { "title": "El acabado", "label": "03 / Detalle" }
+    }
+  },
+  "services": {
+    "eyebrow": "Servicios",
+    "title": "Lo que hacemos.",
+    "lead": "Precios fijos. Sin sorpresas. Reserva el que necesites.",
+    "loadErrorBefore": "No pudimos cargar el catálogo en este momento. ",
+    "loadErrorLink": "Reserva directo aquí",
+    "loadErrorAfter": " y elige tu servicio en el flujo.",
+    "empty": "Estamos preparando el catálogo. Vuelve en un momento.",
+    "rowCta": "Reservar →",
+    "footerCta": "Reservar ahora"
+  },
+  "visitanos": {
+    "eyebrow": "Visítanos",
+    "title": "Pásate por el club.",
+    "labels": {
+      "address": "Dirección",
+      "hours": "Horario",
+      "bookings": "Reservas",
+      "contact": "Contacto"
+    },
+    "bookingsValue": "Online, 24/7",
+    "directions": "Cómo llegar"
+  },
+  "cta": {
+    "eyebrow": "Sin cuenta necesaria",
+    "titleLine1": "¿Listo?",
+    "titleLine2": "Reserva tu cita.",
+    "button": "Reservar online"
+  },
+  "footer": {
+    "navigate": "Navegar",
+    "follow": "Síguenos",
+    "links": {
+      "services": "Servicios",
+      "space": "El Espacio",
+      "visit": "Visítanos",
+      "book": "Reservar"
+    },
+    "copyright": "© {year} Brothers Club Barbershop",
+    "bookOnline": "Reserva online"
+  },
+  "intro": {
+    "loading": "Cargando",
+    "turn": "Gírala para entrar",
+    "dragHint": "Arrastra con el dedo",
+    "failedTitle": "No se pudo cargar",
+    "failedSub": "Saltando intro…",
+    "skip": "Saltar intro"
+  },
+  "skipLink": "Saltar al contenido",
+  "booking": {
+    "back": "← Volver",
+    "header": "— Reserva —",
+    "title": "Reservar cita",
+    "subtitle": "Elige servicio, barbero y horario. Sin cuenta necesaria.",
+    "configEmpty": "Aún no hay servicios o barberos configurados. Vuelve pronto.",
+    "mockMode": "Modo demo · datos de prueba",
+    "change": "← Cambiar",
+    "progress": {
+      "service": "Servicio",
+      "barber": "Barbero",
+      "datetime": "Horario",
+      "contact": "Datos"
+    },
+    "step": {
+      "service": { "title": "¿Qué te haces?", "choose": "Elegir →" },
+      "barber": { "title": "¿Con quién?", "choose": "Elegir →" },
+      "datetime": {
+        "title": "¿Cuándo?",
+        "summary": "{service} con {barber}",
+        "loading": "Buscando horarios…",
+        "empty": "No hay horarios disponibles ese día. Prueba otra fecha."
+      },
+      "contact": {
+        "title": "Tus datos",
+        "name": "Nombre",
+        "email": "Email",
+        "phone": "Teléfono",
+        "submit": "Confirmar reserva",
+        "submitting": "Reservando…"
+      },
+      "done": {
+        "label": "— Reserva confirmada —",
+        "title": "Te esperamos.",
+        "row": {
+          "service": "Servicio",
+          "barber": "Barbero",
+          "when": "Cuándo"
+        },
+        "homeLink": "← Volver al inicio"
+      }
+    },
+    "errors": {
+      "slotTaken": "Ese horario acaba de ser reservado. Elige otro.",
+      "unexpected": "Error inesperado"
+    }
+  },
+  "metadata": {
+    "title": "Brothers Club Barbershop — Reserva tu cita",
+    "description": "Brothers Club Barbershop en Orlando, FL. Cortes clásicos y modernos, ambiente editorial. Reserva online en menos de un minuto.",
+    "reservarTitle": "Reservar — Brothers Club Barbershop"
+  }
+}

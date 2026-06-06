@@ -2,19 +2,21 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { LangSwitcher } from "./lang-switcher";
 
 /**
  * Nav fija. Transparente sobre el hero; al pasar `scrollY > 40` añade
  * fondo grafito translúcido + blur + borde inferior (clase `bc-nav--scrolled`).
  *
- * Por decisión del cliente, el logo se mantiene igual (SVG combinado-inverso
- * del manual de marca). El handoff mostraba un wordmark tipográfico en este
- * lugar; lo reemplazamos por el SVG oficial.
+ * El logo es el SVG combinado-inverso del manual de marca.
  *
- * En móvil (<860px) ocultamos los links de texto (vía CSS) y dejamos solo
- * logo + botón Reservar.
+ * En móvil (<860px) ocultamos los links de texto (vía CSS) pero el
+ * LangSwitcher se queda visible — es una decisión crítica del usuario.
  */
 export function Nav() {
+  const t = useTranslations("nav");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -27,9 +29,9 @@ export function Nav() {
 
   return (
     <nav className={`bc-nav ${scrolled ? "bc-nav--scrolled" : ""}`}>
-      <a
-        href="#top"
-        aria-label="Brothers Club Barbershop — inicio"
+      <Link
+        href="/#top"
+        aria-label="Brothers Club Barbershop"
         className="bc-nav__brand"
       >
         <Image
@@ -38,27 +40,24 @@ export function Nav() {
           width={1125}
           height={411}
           priority
-          // Aspect ratio del SVG ~2.74:1. h-16 (64px) → ~175px ancho,
-          // h-20 (80px) → ~219px, h-24 (96px) → ~263px, h-28 (112px) → ~307px.
-          // Tamaños grandes para que el logo tenga peso visual real
-          // (antes h-7/h-8 dejaba el wordmark casi imperceptible).
           className="bc-nav__logo h-16 w-auto sm:h-20 md:h-24 lg:h-28"
         />
-      </a>
+      </Link>
 
       <div className="bc-nav__links">
         <a href="#servicios" className="bc-nav__link">
-          Servicios
+          {t("services")}
         </a>
         <a href="#espacio" className="bc-nav__link">
-          El Espacio
+          {t("space")}
         </a>
         <a href="#visitanos" className="bc-nav__link">
-          Visítanos
+          {t("visit")}
         </a>
-        <a href="/reservar" className="bc-btn bc-btn--solid bc-nav__cta">
-          Reservar <span className="arw">→</span>
-        </a>
+        <LangSwitcher />
+        <Link href="/reservar" className="bc-btn bc-btn--solid bc-nav__cta">
+          {t("book")} <span className="arw">→</span>
+        </Link>
       </div>
     </nav>
   );

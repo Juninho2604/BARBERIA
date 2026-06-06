@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { BUSINESS } from "@/lib/business-info";
 
 /**
@@ -6,8 +7,8 @@ import { BUSINESS } from "@/lib/business-info";
  * (0.12) y doble degradado lateral. Tarjeta a la izquierda con info-grid
  * 2×2 (Dirección · Horario · Reservas · Contacto) + botón "Cómo llegar".
  *
- * Datos vienen de `lib/business-info.ts` — actualizar ahí cuando el
- * cliente confirme dirección/horario/email reales.
+ * Datos del negocio vienen de `lib/business-info.ts` (estables entre
+ * locales). Etiquetas y CTAs vienen de los mensajes i18n.
  */
 
 function googleMapsUrl(): string {
@@ -19,6 +20,7 @@ function googleMapsUrl(): string {
 }
 
 export function Visitanos() {
+  const t = useTranslations("visitanos");
   const mapsUrl = googleMapsUrl();
   return (
     <section className="bc-visit" id="visitanos">
@@ -35,30 +37,30 @@ export function Visitanos() {
       <div className="bc-visit__inner">
         <div className="bc-visit__card">
           <p className="bc-eyebrow" data-reveal>
-            Visítanos
+            {t("eyebrow")}
           </p>
           <h2 className="bc-display" data-reveal data-delay="1">
-            Pásate por el club.
+            {t("title")}
           </h2>
           <div className="bc-info-grid">
             <div data-reveal data-delay="1">
-              <div className="k">Dirección</div>
+              <div className="k">{t("labels.address")}</div>
               <address className="v" style={{ fontStyle: "normal", whiteSpace: "pre-line" }}>
                 {BUSINESS.address.display}
               </address>
             </div>
             <div data-reveal data-delay="1">
-              <div className="k">Horario</div>
+              <div className="k">{t("labels.hours")}</div>
               <div className="v" style={{ whiteSpace: "pre-line" }}>
                 {BUSINESS.hours.display}
               </div>
             </div>
             <div data-reveal data-delay="2">
-              <div className="k">Reservas</div>
-              <div className="v">Online, 24/7</div>
+              <div className="k">{t("labels.bookings")}</div>
+              <div className="v">{t("bookingsValue")}</div>
             </div>
             <div data-reveal data-delay="2">
-              <div className="k">Contacto</div>
+              <div className="k">{t("labels.contact")}</div>
               <div className="v">
                 {BUSINESS.contact.email && (
                   <a
@@ -90,7 +92,7 @@ export function Visitanos() {
             data-reveal
             data-delay="2"
           >
-            Cómo llegar <span className="arw">→</span>
+            {t("directions")} <span className="arw">→</span>
           </a>
         </div>
       </div>

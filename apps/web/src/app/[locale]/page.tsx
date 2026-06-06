@@ -1,3 +1,4 @@
+import { setRequestLocale } from "next-intl/server";
 import { IntroGate } from "@/components/intro/IntroGate";
 import { Nav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
@@ -10,7 +11,15 @@ import { Footer } from "@/components/landing/footer";
 import { LandingEffects } from "@/components/landing/effects";
 import { LocalBusinessSchema } from "@/components/seo/local-business-schema";
 
-export default function HomePage() {
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  // setRequestLocale en cada page con `generateStaticParams` activa SSG
+  // por locale. Si no lo llamamos, el componente queda en modo dinámico.
+  setRequestLocale(locale);
   return (
     <IntroGate>
       <LocalBusinessSchema />
