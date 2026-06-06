@@ -554,88 +554,62 @@ html[data-modal-open="true"] {
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   margin-bottom: 1.2rem;
 }
-.bc-svc-list { border-top: 1px solid var(--color-line); }
-.bc-svc {
+/* Menú de servicios — agrupado por categoría, sin precios.
+   Decisión: precios viven solo en el flujo de reserva (la landing es
+   discovery, no checkout). 2 cols en desktop, 1 en mobile. */
+.bc-svc-grid {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: 1.6rem;
-  padding: clamp(1.3rem, 2.4vw, 2.1rem) 0;
-  border-bottom: 1px solid var(--color-line);
-  position: relative;
-  cursor: pointer;
-  transition: padding-left 0.5s var(--ease);
-  color: var(--color-bone);
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 4vw, 3.5rem) clamp(2.5rem, 5vw, 5rem);
+  margin-top: clamp(2rem, 5vw, 3.5rem);
 }
-.bc-svc::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  background: var(--color-bone);
-  opacity: 0.06;
-  transition: width 0.5s var(--ease);
-  z-index: 0;
-}
-.bc-svc:hover { padding-left: clamp(14px, 2vw, 32px); }
-.bc-svc:hover::before { width: 100%; }
-.bc-svc > * { position: relative; z-index: 1; }
-.bc-svc__no {
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  color: var(--color-muted);
-  font-weight: 500;
-  min-width: 2.4ch;
-}
-.bc-svc__name {
-  font-family: var(--font-serif);
-  font-size: clamp(1.3rem, 2.4vw, 2rem);
-  font-weight: 500;
-}
-.bc-svc__meta {
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
-  white-space: nowrap;
-}
-.bc-svc__price {
-  font-family: var(--font-serif);
-  font-size: clamp(1.2rem, 2vw, 1.7rem);
-  font-weight: 500;
-}
-.bc-svc__go {
-  font-size: 0.66rem;
+.bc-svc-group__title {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--color-muted);
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: 0.5s var(--ease);
-  white-space: nowrap;
+  color: var(--color-bone-dim);
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--color-line);
+  margin-bottom: 0.6rem;
 }
-.bc-svc:hover .bc-svc__go {
-  opacity: 1;
-  transform: translateX(0);
+.bc-svc-group__list { list-style: none; padding: 0; margin: 0; }
+.bc-svc-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
   color: var(--color-bone);
+  transition: padding-left 0.4s var(--ease), color 0.3s var(--ease);
+}
+.bc-svc-item:hover { padding-left: 0.5rem; color: var(--color-bone-dim); }
+.bc-svc-item__name {
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 400;
+  font-style: italic;
+  flex: 1;
+}
+.bc-svc-item__meta {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-bone-dim);
+  flex-shrink: 0;
 }
 .bc-services__foot {
   margin-top: clamp(40px, 6vh, 72px);
   display: flex;
   justify-content: center;
 }
-@media (max-width: 680px) {
-  .bc-svc {
-    grid-template-columns: auto 1fr auto;
-    gap: 0.5rem 1rem;
+@media (max-width: 760px) {
+  .bc-svc-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
-  .bc-svc__meta {
-    grid-column: 2;
-    font-size: 0.74rem;
-  }
-  .bc-svc__go { display: none; }
 }
 
 /* ---------- visítanos ---------- */

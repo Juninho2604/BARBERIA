@@ -78,6 +78,12 @@ services:
         # acepte por error la opt-in.
     container_name: barberia-web
     restart: unless-stopped
+    environment:
+      # Solo server-side. El cliente (browser) usa NEXT_PUBLIC_API_URL=/api
+      # vía Nginx. El server (Next standalone) llama al contenedor `api`
+      # por la red interna de Docker (saltea Nginx → menos latencia y
+      # evita el problema de URL relativa al hacer fetch desde Node).
+      INTERNAL_API_URL: http://api:4000
     depends_on:
       api:
         condition: service_healthy

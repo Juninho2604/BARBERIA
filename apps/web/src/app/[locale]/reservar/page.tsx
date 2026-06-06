@@ -4,6 +4,9 @@ import { api } from "@/lib/api";
 import { BookingFlow } from "@/components/booking/flow";
 import { Link } from "@/i18n/navigation";
 
+// Misma razón que la landing: fetch a API en runtime.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

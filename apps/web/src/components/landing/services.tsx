@@ -1,43 +1,62 @@
 import { getTranslations } from "next-intl/server";
 import { api } from "@/lib/api";
 import { Link } from "@/i18n/navigation";
+import type { ServiceDto } from "@/lib/types";
 
 /**
- * Servicios — lista editorial numerada (handoff). Cada fila es un `<Link>`
- * al flujo de reserva real (locale-aware via @/i18n/navigation).
+ * Servicios — menú editorial AGRUPADO POR CATEGORÍA.
  *
- * Datos vienen de la API (mismos que el resto del sitio); soft-fail
- * distingue error vs vacío.
+ * Decisiones de diseño (post feedback cliente):
+ *  - SIN precios en la landing (los precios viven en el flujo de reserva).
+ *  - Agrupado por `service.description` que actúa como categoría
+ *    (Signature treatment / Hair & beard / Spa & skin / Wax).
+ *  - 2 columnas en desktop, 1 en mobile — compacto, no hace la página
+ *    excesivamente larga.
+ *  - Cada item linkea a /reservar (locale-aware via @/i18n/navigation).
  */
-function formatPrice(cents: number) {
-  return `$${(cents / 100).toFixed(0)}`;
-}
-
-function formatDuration(min: number, unit: string) {
+function formatDuration(min: number, label: string) {
   if (min >= 60) {
     const h = Math.floor(min / 60);
     const rest = min % 60;
-    return rest === 0 ? `${h} h` : `${h} h ${rest} ${unit}`;
+    return rest === 0 ? `${h} h` : `${h} h ${rest} ${label}`;
   }
-  return `${min} ${unit}`;
+  return `${min} ${label}`;
 }
 
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : `${n}`;
+// El description del seed termina en "." — lo normalizamos antes de matchear.
+const CATEGORY_KEY: Record<string, string> = {
+  "Signature treatment": "signatureTreatment",
+  "Hair & beard": "hairAndBeard",
+  "Spa & skin boosters": "spaSkin",
+  "Wax services": "wax",
+};
+
+function categorize(services: ServiceDto[]): Array<{ key: string; raw: string; items: ServiceDto[] }> {
+  const map = new Map<string, { key: string; raw: string; items: ServiceDto[] }>();
+  // Orden estable: respeta el primer item de cada categoría que aparece.
+  for (const s of services) {
+    const raw = (s.description ?? "").replace(/\.$/, "").trim();
+    const key = CATEGORY_KEY[raw] ?? "other";
+    if (!map.has(raw || "other")) {
+      map.set(raw || "other", { key, raw, items: [] });
+    }
+    map.get(raw || "other")!.items.push(s);
+  }
+  return Array.from(map.values());
 }
 
 export async function Services() {
   const t = await getTranslations("services");
-  // Distinguir error vs vacío: el catch silencioso hacía que un backend
-  // caído se viera igual que "no hay servicios". Ahora trackeamos el
-  // estado explícito.
-  let services: Awaited<ReturnType<typeof api.listServices>> = [];
+  const tCats = await getTranslations("services.categories");
+  let services: ServiceDto[] = [];
   let loadError = false;
   try {
     services = await api.listServices();
   } catch {
     loadError = true;
   }
+
+  const groups = categorize(services);
 
   return (
     <section className="bc-section" id="servicios">
@@ -62,25 +81,35 @@ export async function Services() {
             </Link>
             {t("loadErrorAfter")}
           </p>
-        ) : services.length === 0 ? (
+        ) : groups.length === 0 ? (
           <p className="bc-lead">{t("empty")}</p>
         ) : (
-          <div className="bc-svc-list">
-            {services.map((s, i) => (
-              <Link
-                key={s.id}
-                href="/reservar"
-                className="bc-svc"
-                data-reveal
-                data-delay={Math.min(i % 3, 2) || undefined}
-              >
-                <span className="bc-svc__no">{pad2(i + 1)}</span>
-                <span className="bc-svc__name">{s.name}</span>
-                <span className="bc-svc__meta">{formatDuration(s.durationMinutes, "min")}</span>
-                <span className="bc-svc__price">{formatPrice(s.priceCents)}</span>
-                <span className="bc-svc__go">{t("rowCta")}</span>
-              </Link>
-            ))}
+          <div className="bc-svc-grid">
+            {groups.map((g, gi) => {
+              const label = g.key === "other" && g.raw ? g.raw : tCats(g.key);
+              return (
+                <div
+                  key={g.raw || g.key}
+                  className="bc-svc-group"
+                  data-reveal
+                  data-delay={Math.min(gi, 2) || undefined}
+                >
+                  <p className="bc-svc-group__title">{label}</p>
+                  <ul className="bc-svc-group__list">
+                    {g.items.map((s) => (
+                      <li key={s.id}>
+                        <Link href="/reservar" className="bc-svc-item">
+                          <span className="bc-svc-item__name">{s.name}</span>
+                          <span className="bc-svc-item__meta">
+                            {formatDuration(s.durationMinutes, "min")}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         )}
 
