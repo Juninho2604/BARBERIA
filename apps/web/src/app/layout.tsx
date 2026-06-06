@@ -35,6 +35,8 @@ export const metadata: Metadata = {
     "barbería",
     "barbershop",
     "brothers club",
+    "orlando",
+    "orlando fl",
     "florida",
     "reserva online",
     "fade",
