@@ -5,6 +5,8 @@ name: barberia
 #   docker compose --env-file .env -f infra/docker-compose.yml up -d --build
 #
 # Lee /opt/barberia/.env (no commiteado) para todas las variables sensibles.
+# El servicio `web` necesita SITE_URL como build arg (NEXT_PUBLIC_* se
+# inlina en el bundle al compilar Next).
 
 services:
   postgres:
@@ -41,21 +43,53 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
-      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/Caracas}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/New_York}
       SLOT_GRANULARITY_MINUTES: ${SLOT_GRANULARITY_MINUTES:-30}
+      # Seed inicial — solo se aplica si no existe ningún OWNER en DB.
+      INITIAL_OWNER_EMAIL: ${INITIAL_OWNER_EMAIL:-}
+      INITIAL_OWNER_PASSWORD: ${INITIAL_OWNER_PASSWORD:-}
+      INITIAL_OWNER_NAME: ${INITIAL_OWNER_NAME:-}
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      # Solo en localhost del VPS — el túnel (cloudflared) o nginx la expone al mundo.
+      # Solo en localhost del VPS — Nginx en el host hace reverse proxy /api → 4000.
       - "127.0.0.1:4000:4000"
     healthcheck:
-      # Node 20+ trae fetch nativo, así evitamos depender de curl/wget en la imagen.
       test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 30s
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        # NEXT_PUBLIC_* se inlina al build. /api porque Nginx hace reverse
+        # proxy mismo origen — sin CORS, sin coupling al dominio.
+        NEXT_PUBLIC_API_URL: /api
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:?Falta SITE_URL en .env (ej. https://brothersclubbarbers.com)}
+        # No ALLOW_MOCK en producción real: el failsafe se cierra cuando hay
+        # API URL definida. Esta línea queda comentada para que el build no
+        # acepte por error la opt-in.
+    container_name: barberia-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      # Solo en localhost del VPS — Nginx en el host hace reverse proxy / → 3000.
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - internal
 
