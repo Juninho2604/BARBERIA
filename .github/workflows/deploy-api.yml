@@ -65,19 +65,22 @@ jobs:
             done
             if [ "$API_OK" != "1" ]; then
               echo "✗ API no respondió a tiempo"
-              docker compose -f infra/docker-compose.yml logs --tail=100 api
+              docker compose --env-file .env -f infra/docker-compose.yml logs --tail=100 api
               exit 1
             fi
 
             echo "→ Healthcheck Web…"
+            # OJO: 3100 (no 3000). En este VPS multi-tenant, :3000 lo
+            # tiene capsula-erp — un curl ahi siempre devuelve 200
+            # aunque nuestro web este roto. Apuntar al binding real.
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
-                echo "✓ Web responde en :3000"
+              if curl -fsS http://127.0.0.1:3100/ > /dev/null; then
+                echo "✓ Web responde en :3100"
                 exit 0
               fi
               echo "  intento $i/10…"
               sleep 3
             done
             echo "✗ Web no respondió a tiempo"
-            docker compose -f infra/docker-compose.yml logs --tail=100 web
+            docker compose --env-file .env -f infra/docker-compose.yml logs --tail=100 web
             exit 1
