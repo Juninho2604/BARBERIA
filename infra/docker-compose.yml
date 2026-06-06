@@ -82,8 +82,12 @@ services:
       api:
         condition: service_healthy
     ports:
-      # Solo en localhost del VPS — Nginx en el host hace reverse proxy / → 3000.
-      - "127.0.0.1:3000:3000"
+      # Solo en localhost del VPS — Nginx en el host hace reverse proxy
+      # / → 3100. Usamos 3100 (no 3000) porque el VPS ya tenía
+      # capsula-erp escuchando en :3000 y demoapp en :3001 cuando este
+      # stack se desplegó. Lejos del rango ocupado para no chocar con
+      # futuras apps. Dentro del contenedor Next sigue en 3000.
+      - "127.0.0.1:3100:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
