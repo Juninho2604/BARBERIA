@@ -40,7 +40,11 @@ export function Nav() {
           width={1125}
           height={411}
           priority
-          className="bc-nav__logo h-16 w-auto sm:h-20 md:h-24 lg:h-28"
+          // Aspect ~2.74:1. h-12 (48px) → ~132px ancho, h-20 (80px) → ~219px.
+          // Un escalón menos que la iteración anterior (h-16..h-28): el logo
+          // a 112px chocaba con links + switcher + CTA en anchos intermedios
+          // y hacía la barra demasiado alta.
+          className="bc-nav__logo h-12 w-auto sm:h-14 md:h-16 lg:h-20"
         />
       </Link>
 

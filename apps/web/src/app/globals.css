@@ -265,7 +265,8 @@ html[data-modal-open="true"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.6rem var(--pad);
+  gap: 1.5rem;
+  padding: 1.1rem var(--pad);
   transition: padding 0.5s var(--ease), background 0.5s var(--ease),
     border-color 0.5s var(--ease);
   border-bottom: 1px solid transparent;
@@ -285,7 +286,9 @@ html[data-modal-open="true"] {
 .bc-nav__links {
   display: flex;
   align-items: center;
-  gap: 2.4rem;
+  /* Fluido: 2.4rem fijo apretaba en anchos intermedios (logo grande +
+     3 links + switcher + CTA). */
+  gap: clamp(1.1rem, 2.2vw, 2.2rem);
 }
 .bc-nav__link {
   font-family: var(--font-sans);
@@ -352,29 +355,32 @@ html[data-modal-open="true"] {
   .bc-lang__item { padding: 0.4em 0.4em; }
 }
 
-/* En scroll el nav reduce padding 1.6→1rem. El logo también se achica
-   (a ~2/3 del default) para que la barra quede compacta sin perder
-   presencia. Default = bien grande (h-16/20/24/28); scrolled = h-11/13/15/18. */
+/* En scroll el nav reduce padding y el logo se achica (~2/3 del
+   default) para que la barra quede compacta sin perder presencia.
+   Default = h-12/14/16/20; scrolled = h-9/10/11/13. */
 .bc-nav--scrolled .bc-nav__logo {
-  height: 2.75rem !important;       /* 44px mobile */
+  height: 2.25rem !important;       /* 36px mobile */
 }
 @media (min-width: 640px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 3.25rem !important;     /* 52px tablet */
+    height: 2.5rem !important;      /* 40px tablet */
   }
 }
 @media (min-width: 768px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 3.75rem !important;     /* 60px desktop */
+    height: 2.75rem !important;     /* 44px desktop */
   }
 }
 @media (min-width: 1024px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 4.5rem !important;      /* 72px lg */
+    height: 3.25rem !important;     /* 52px lg */
   }
 }
 
-@media (max-width: 860px) {
+/* Los links de texto se ocultan a 1000px (antes 860): con el logo +
+   switcher + CTA, en tablets landscape ya no caben sin chocar. Quedan
+   logo + ES|EN + Reservar, que es lo esencial. */
+@media (max-width: 1000px) {
   .bc-nav__link { display: none; }
   .bc-nav__links { gap: 1rem; }
 }
