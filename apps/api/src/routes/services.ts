@@ -23,7 +23,11 @@ export function servicesRoutes(guards: AuthGuards): FastifyPluginAsync {
       async (req) => {
         return prisma.service.findMany({
           where: req.query.includeInactive ? undefined : { isActive: true },
-          orderBy: { name: "asc" },
+          // createdAt-asc preserva el orden de inserción definido por el
+          // cliente (Men's haircut primero → Brothers Club Experience al
+          // final). Servicios añadidos manualmente desde /admin se
+          // posicionan al final, también ordenados por creación.
+          orderBy: { createdAt: "asc" },
         });
       },
     );

@@ -232,6 +232,7 @@ function ServiceForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [durationMinutes, setDurationMinutes] = useState(initial?.durationMinutes ?? 30);
   const [priceCents, setPriceCents] = useState(initial?.priceCents ?? 1500);
+  const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -242,16 +243,26 @@ function ServiceForm({
     setError(null);
     setSaving(true);
     try {
-      const payload = {
+      const trimmedPhoto = photoUrl.trim();
+      const base = {
         name: name.trim(),
         description: description.trim() || undefined,
         durationMinutes,
         priceCents,
       };
       if (mode === "create") {
-        await api.createService({ ...payload, isActive: true }, token);
+        // Create no acepta null en photoUrl: lo omitimos si está vacío.
+        await api.createService(
+          { ...base, photoUrl: trimmedPhoto || undefined, isActive: true },
+          token,
+        );
       } else if (initial) {
-        await api.updateService(initial.id, payload, token);
+        // Update acepta null explícito para borrar la foto guardada.
+        await api.updateService(
+          initial.id,
+          { ...base, photoUrl: trimmedPhoto || null },
+          token,
+        );
       }
       onDone();
     } catch (err) {
@@ -310,6 +321,27 @@ function ServiceForm({
           onChange={(e) => setPriceCents(Number(e.target.value))}
           className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
         />
+      </Field>
+      <Field label="Foto (URL HTTPS, opcional)" className="sm:col-span-2">
+        <input
+          type="url"
+          value={photoUrl}
+          onChange={(e) => setPhotoUrl(e.target.value)}
+          placeholder="https://…"
+          pattern="https://.*"
+          maxLength={2048}
+          className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
+        />
+        {photoUrl && (
+          <div className="mt-2">
+            <img
+              src={photoUrl}
+              alt=""
+              className="h-20 w-20 rounded-[var(--radius-md)] object-cover"
+              onError={(e) => ((e.currentTarget.style.display = "none"))}
+            />
+          </div>
+        )}
       </Field>
 
       {error && (

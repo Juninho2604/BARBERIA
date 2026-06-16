@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -29,6 +30,9 @@ export default function BarberIntro({
   onEnter?: () => void;
   unlockTurns?: number;
 }) {
+  const t = useTranslations('intro');
+  const tRef = useRef(t);
+  tRef.current = t;
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ringRef = useRef<SVGCircleElement>(null);
@@ -413,8 +417,8 @@ export default function BarberIntro({
         ready = true;
         total = 0;
         setProgress(0);
-        if (labelRef.current) labelRef.current.textContent = 'Gírala para entrar';
-        if (subRef.current) subRef.current.textContent = 'Arrastra con el dedo';
+        if (labelRef.current) labelRef.current.textContent = tRef.current('turn');
+        if (subRef.current) subRef.current.textContent = tRef.current('dragHint');
       },
       (ev) => {
         if (ev.total > 0) {
@@ -427,8 +431,8 @@ export default function BarberIntro({
         // El GLB no cargó (timeout, 404, network). Antes el usuario quedaba
         // atrapado leyendo "No se pudo cargar" sin más. Ahora saltamos
         // automáticamente la intro tras 1.5s para no bloquear el sitio.
-        if (labelRef.current) labelRef.current.textContent = 'No se pudo cargar';
-        if (subRef.current) subRef.current.textContent = 'Saltando intro…';
+        if (labelRef.current) labelRef.current.textContent = tRef.current('failedTitle');
+        if (subRef.current) subRef.current.textContent = tRef.current('failedSub');
         window.setTimeout(() => {
           if (!disposed) onEnterRef.current?.();
         }, 1500);
@@ -548,7 +552,7 @@ export default function BarberIntro({
           <span style={{ position: 'absolute', fontSize: 14, color: '#e9e2d2', animation: 'barber-spin 3.4s linear infinite' }}>↻</span>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div ref={labelRef} style={{ fontSize: 10, letterSpacing: '.26em', textTransform: 'uppercase', color: '#e9e2d2' }}>Cargando</div>
+          <div ref={labelRef} style={{ fontSize: 10, letterSpacing: '.26em', textTransform: 'uppercase', color: '#e9e2d2' }}>{t('loading')}</div>
           <div ref={subRef} style={{ marginTop: 6, fontSize: 9, letterSpacing: '.22em', textTransform: 'uppercase', color: '#9c968a' }}>0%</div>
         </div>
       </div>
@@ -571,7 +575,7 @@ export default function BarberIntro({
           borderRadius: 4,
         }}
       >
-        Saltar intro
+        {t('skip')}
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-name: Deploy API to VPS
+name: Deploy stack to VPS
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "apps/api/**"
+      - "apps/web/**"
       - "packages/shared/**"
       - "infra/**"
       - "pnpm-lock.yaml"
@@ -15,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-api-${{ github.ref }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -52,14 +53,34 @@ jobs:
             docker builder prune -f --filter "until=24h" || true
 
             echo "→ Healthcheck API…"
+            API_OK=0
             for i in 1 2 3 4 5 6 7 8 9 10; do
               if curl -fsS http://127.0.0.1:4000/health > /dev/null; then
                 echo "✓ API responde en /health"
+                API_OK=1
+                break
+              fi
+              echo "  intento $i/10…"
+              sleep 3
+            done
+            if [ "$API_OK" != "1" ]; then
+              echo "✗ API no respondió a tiempo"
+              docker compose --env-file .env -f infra/docker-compose.yml logs --tail=100 api
+              exit 1
+            fi
+
+            echo "→ Healthcheck Web…"
+            # OJO: 3100 (no 3000). En este VPS multi-tenant, :3000 lo
+            # tiene capsula-erp — un curl ahi siempre devuelve 200
+            # aunque nuestro web este roto. Apuntar al binding real.
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS http://127.0.0.1:3100/ > /dev/null; then
+                echo "✓ Web responde en :3100"
                 exit 0
               fi
               echo "  intento $i/10…"
               sleep 3
             done
-            echo "✗ API no respondió a tiempo"
-            docker compose -f infra/docker-compose.yml logs --tail=100 api
+            echo "✗ Web no respondió a tiempo"
+            docker compose --env-file .env -f infra/docker-compose.yml logs --tail=100 web
             exit 1

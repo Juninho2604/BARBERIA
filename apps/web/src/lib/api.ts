@@ -33,6 +33,23 @@ export { ApiError };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
+// Cuando renderizamos en el server (SSR/SSG) los fetch relativos como
+// "/api/services" fallan porque Node fetch exige URL absoluta. Dentro
+// del Docker compose, el contenedor web alcanza al contenedor api por
+// la red interna en http://api:4000 (service-name DNS de Docker).
+// Configurable vía INTERNAL_API_URL para tests o setups custom.
+const INTERNAL_API_URL = process.env.INTERNAL_API_URL?.replace(/\/$/, "") ?? "";
+
+function resolveUrl(path: string): string {
+  // En el browser: API_URL ya es la URL pública (vía Nginx en mismo origen).
+  if (typeof window !== "undefined") return `${API_URL}${path}`;
+  // En el server: si tenemos INTERNAL_API_URL, vamos directo al api
+  // container (saltando Nginx → menos latencia y evita el problema
+  // de URL relativa). Si no, caemos al API_URL (sirve para dev con
+  // backend en localhost absoluto).
+  return INTERNAL_API_URL ? `${INTERNAL_API_URL}${path}` : `${API_URL}${path}`;
+}
+
 // Failsafe: si el build se sube a producción sin NEXT_PUBLIC_API_URL, el
 // cliente caería al mock — donde cualquier credencial autentica como OWNER.
 // Para evitar exponer accidentalmente el panel admin (ej. olvidar la env
@@ -67,7 +84,7 @@ interface HttpOptions extends RequestInit {
 
 async function http<T>(path: string, options: HttpOptions = {}): Promise<T> {
   const { token, headers, ...rest } = options;
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(resolveUrl(path), {
     ...rest,
     headers: {
       "Content-Type": "application/json",

@@ -265,7 +265,8 @@ html[data-modal-open="true"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.6rem var(--pad);
+  gap: 1.5rem;
+  padding: 1.1rem var(--pad);
   transition: padding 0.5s var(--ease), background 0.5s var(--ease),
     border-color 0.5s var(--ease);
   border-bottom: 1px solid transparent;
@@ -285,7 +286,9 @@ html[data-modal-open="true"] {
 .bc-nav__links {
   display: flex;
   align-items: center;
-  gap: 2.4rem;
+  /* Fluido: 2.4rem fijo apretaba en anchos intermedios (logo grande +
+     3 links + switcher + CTA). */
+  gap: clamp(1.1rem, 2.2vw, 2.2rem);
 }
 .bc-nav__link {
   font-family: var(--font-sans);
@@ -312,29 +315,72 @@ html[data-modal-open="true"] {
 .bc-nav__link:hover::after { width: 100%; }
 .bc-nav__cta { padding: 0.85em 1.6em !important; }
 
-/* En scroll el nav reduce padding 1.6→1rem. El logo también se achica
-   (a ~2/3 del default) para que la barra quede compacta sin perder
-   presencia. Default = bien grande (h-16/20/24/28); scrolled = h-11/13/15/18. */
+/* Language switcher — diseño language-agnostic: ES | EN con activo
+   destacado. Universal: cualquier hablante entiende los codes ISO. */
+.bc-lang {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.bc-lang__item-wrap { display: inline-flex; align-items: center; }
+.bc-lang__item {
+  background: transparent;
+  border: 0;
+  padding: 0.4em 0.55em;
+  color: var(--color-bone-dim);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  transition: color 0.3s var(--ease);
+}
+.bc-lang__item:hover { color: var(--color-bone); }
+.bc-lang__item.is-active {
+  color: var(--color-bone);
+  font-weight: 600;
+}
+.bc-lang__item:disabled { opacity: 0.6; cursor: default; }
+.bc-lang__sep {
+  color: var(--color-line-2);
+  font-weight: 300;
+  pointer-events: none;
+}
+@media (max-width: 860px) {
+  /* En mobile el switcher queda visible incluso cuando los links de
+     texto del nav se ocultan — el idioma es decisión crítica. */
+  .bc-lang { font-size: 0.68rem; }
+  .bc-lang__item { padding: 0.4em 0.4em; }
+}
+
+/* En scroll el nav reduce padding y el logo se achica (~2/3 del
+   default) para que la barra quede compacta sin perder presencia.
+   Default = h-12/14/16/20; scrolled = h-9/10/11/13. */
 .bc-nav--scrolled .bc-nav__logo {
-  height: 2.75rem !important;       /* 44px mobile */
+  height: 2.25rem !important;       /* 36px mobile */
 }
 @media (min-width: 640px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 3.25rem !important;     /* 52px tablet */
+    height: 2.5rem !important;      /* 40px tablet */
   }
 }
 @media (min-width: 768px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 3.75rem !important;     /* 60px desktop */
+    height: 2.75rem !important;     /* 44px desktop */
   }
 }
 @media (min-width: 1024px) {
   .bc-nav--scrolled .bc-nav__logo {
-    height: 4.5rem !important;      /* 72px lg */
+    height: 3.25rem !important;     /* 52px lg */
   }
 }
 
-@media (max-width: 860px) {
+/* Los links de texto se ocultan a 1000px (antes 860): con el logo +
+   switcher + CTA, en tablets landscape ya no caben sin chocar. Quedan
+   logo + ES|EN + Reservar, que es lo esencial. */
+@media (max-width: 1000px) {
   .bc-nav__link { display: none; }
   .bc-nav__links { gap: 1rem; }
 }
@@ -419,15 +465,14 @@ html[data-modal-open="true"] {
 .bc-manifesto .bc-eyebrow { margin-bottom: 2.4rem; }
 .bc-manifesto h2 {
   font-size: clamp(2.1rem, 5.5vw, 4.6rem);
-  max-width: 18ch;
-  margin: 0 auto 2rem;
+  max-width: 20ch;
+  margin: 0 auto;
 }
 .bc-manifesto p {
-  font-size: clamp(1rem, 1.3vw, 1.18rem);
+  font-size: clamp(1rem, 1.3vw, 1.13rem);
   font-weight: 300;
   color: var(--color-bone-dim);
-  max-width: 54ch;
-  margin: 0 auto;
+  line-height: 1.75;
   text-wrap: pretty;
 }
 .bc-manifesto .bc-rule {
@@ -435,6 +480,40 @@ html[data-modal-open="true"] {
   height: 64px;
   background: var(--color-line-2);
   margin: 3.4rem auto 0;
+}
+
+/* Story — historia de origen del cliente. Layout editorial multi-pieza:
+   párrafos cuerpo + pull-quote (accent line) + cierre italic centrado. */
+.bc-story__body {
+  max-width: 640px;
+  margin: clamp(2.2rem, 4vw, 3.4rem) auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  text-align: left;
+}
+.bc-story__quote {
+  margin: 1.4rem 0;
+  padding: 0.4rem 0 0.4rem 1.6rem;
+  border-left: 1px solid var(--color-bone-dim);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.3rem, 2.3vw, 1.75rem);
+  line-height: 1.4;
+  color: var(--color-bone);
+  text-wrap: pretty;
+}
+.bc-story__closing {
+  margin-top: 1.6rem !important;
+  font-family: var(--font-serif) !important;
+  font-style: italic;
+  font-weight: 400 !important;
+  font-size: clamp(1.1rem, 1.7vw, 1.32rem) !important;
+  line-height: 1.55 !important;
+  color: var(--color-bone) !important;
+  text-align: center;
+  letter-spacing: 0.005em;
 }
 
 /* ---------- el espacio gallery ---------- */
@@ -514,88 +593,55 @@ html[data-modal-open="true"] {
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   margin-bottom: 1.2rem;
 }
-.bc-svc-list { border-top: 1px solid var(--color-line); }
-.bc-svc {
+/* Menú de servicios — lista plana en 2 columnas, sin precios ni
+   descripciones (esas viven en /reservar). Compacto: 8 items caben en
+   ~4 filas en desktop. */
+.bc-svc-flat {
+  list-style: none;
+  padding: 0;
+  margin: clamp(2rem, 5vw, 3.5rem) 0 0;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: 1.6rem;
-  padding: clamp(1.3rem, 2.4vw, 2.1rem) 0;
+  grid-template-columns: 1fr 1fr;
+  column-gap: clamp(2.5rem, 5vw, 5rem);
+  row-gap: 0;
+}
+.bc-svc-flat > li {
   border-bottom: 1px solid var(--color-line);
-  position: relative;
-  cursor: pointer;
-  transition: padding-left 0.5s var(--ease);
+}
+.bc-svc-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
   color: var(--color-bone);
+  transition: padding-left 0.4s var(--ease), color 0.3s var(--ease);
 }
-.bc-svc::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  background: var(--color-bone);
-  opacity: 0.06;
-  transition: width 0.5s var(--ease);
-  z-index: 0;
-}
-.bc-svc:hover { padding-left: clamp(14px, 2vw, 32px); }
-.bc-svc:hover::before { width: 100%; }
-.bc-svc > * { position: relative; z-index: 1; }
-.bc-svc__no {
+.bc-svc-item:hover { padding-left: 0.5rem; color: var(--color-bone-dim); }
+.bc-svc-item__name {
   font-family: var(--font-serif);
-  font-size: 1rem;
-  color: var(--color-muted);
-  font-weight: 500;
-  min-width: 2.4ch;
+  font-size: clamp(1.1rem, 1.7vw, 1.4rem);
+  font-weight: 400;
+  font-style: italic;
+  flex: 1;
 }
-.bc-svc__name {
-  font-family: var(--font-serif);
-  font-size: clamp(1.3rem, 2.4vw, 2rem);
-  font-weight: 500;
-}
-.bc-svc__meta {
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
-  white-space: nowrap;
-}
-.bc-svc__price {
-  font-family: var(--font-serif);
-  font-size: clamp(1.2rem, 2vw, 1.7rem);
-  font-weight: 500;
-}
-.bc-svc__go {
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.24em;
+.bc-svc-item__meta {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-muted);
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: 0.5s var(--ease);
-  white-space: nowrap;
-}
-.bc-svc:hover .bc-svc__go {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--color-bone);
+  color: var(--color-bone-dim);
+  flex-shrink: 0;
 }
 .bc-services__foot {
   margin-top: clamp(40px, 6vh, 72px);
   display: flex;
   justify-content: center;
 }
-@media (max-width: 680px) {
-  .bc-svc {
-    grid-template-columns: auto 1fr auto;
-    gap: 0.5rem 1rem;
+@media (max-width: 760px) {
+  .bc-svc-flat {
+    grid-template-columns: 1fr;
   }
-  .bc-svc__meta {
-    grid-column: 2;
-    font-size: 0.74rem;
-  }
-  .bc-svc__go { display: none; }
 }
 
 /* ---------- visítanos ---------- */

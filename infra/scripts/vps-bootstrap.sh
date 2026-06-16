@@ -68,14 +68,26 @@ POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=barberia
 
 # --- API ---
-# Orígenes permitidos para CORS — añade la URL de Vercel cuando la tengas.
-CORS_ORIGINS=https://localhost:3000
+# Orígenes permitidos para CORS. Con Nginx reverse proxy en mismo origen
+# basta con el dominio del sitio.
+CORS_ORIGINS=https://brothersclubbarbers.com
 JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=30d
-DEFAULT_TIMEZONE=America/Caracas
+DEFAULT_TIMEZONE=America/New_York
 SLOT_GRANULARITY_MINUTES=30
+
+# --- Web (build args para Next.js) ---
+# SITE_URL se inlina en el bundle al build → cambiarlo requiere rebuild.
+SITE_URL=https://brothersclubbarbers.com
+
+# --- Seed inicial (primer OWNER) ---
+# Borrá INITIAL_OWNER_PASSWORD después del primer arranque (el hash ya
+# queda en DB y el login sigue funcionando con la contraseña original).
+INITIAL_OWNER_EMAIL=
+INITIAL_OWNER_PASSWORD=
+INITIAL_OWNER_NAME=Owner
 EOF
   chmod 600 "${APP_DIR}/.env"
   echo "✓ .env creado con secretos aleatorios (modo 600)"
