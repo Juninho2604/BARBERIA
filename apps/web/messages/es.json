@@ -19,9 +19,12 @@
     "scroll": "Scroll"
   },
   "manifesto": {
-    "eyebrow": "El oficio",
-    "title": "No es solo un corte. Es la hora que reservas para ti.",
-    "body": "Cuchilla, tijera y tiempo. En Brothers Club cada visita es un ritual sin prisa: el respaldo reclinado, la toalla caliente y un acabado que se nota. Te vas como entraste, pero mejor."
+    "eyebrow": "Nuestra historia",
+    "opening": "Todo comienza con algo más fuerte que un negocio: la hermandad.",
+    "p1": "Hace años, un grupo de hermanos y amigos compartieron mucho más que un lugar; compartieron una visión. Cada uno con su propio estilo, su propia forma de ver la vida y el arte de la barbería, pero unidos por una misma pasión: crear algo que trascendiera el corte de cabello.",
+    "quote": "Construir un espacio donde la imagen, la actitud y la identidad personal se encuentren en un solo lugar.",
+    "p2": "Después de recorrer caminos distintos, aprender en diferentes entornos y crecer tanto personal como profesionalmente, volvieron a reunirse para darle vida a ese sueño en el corazón de Orlando, FL.",
+    "closing": "Más que técnica, más que estilo: la unión de hermanos que decidieron crear un espacio donde cada persona pueda expresarse, renovarse y proyectar su mejor versión."
   },
   "local": {
     "eyebrow": "El espacio",

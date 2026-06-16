@@ -19,9 +19,12 @@
     "scroll": "Scroll"
   },
   "manifesto": {
-    "eyebrow": "The craft",
-    "title": "It's not just a haircut. It's the time you set aside for yourself.",
-    "body": "Razor, scissors, and time. At Brothers Club every visit is an unhurried ritual: reclined chair, hot towel, and a finish you can feel. You leave like you came in, only sharper."
+    "eyebrow": "Our story",
+    "opening": "It all begins with something stronger than a business: brotherhood.",
+    "p1": "Years ago, a group of brothers and friends shared more than just a place — they shared a vision. Each with his own style, his own way of seeing life and the craft of barbering, but united by one passion: to create something that went beyond the haircut.",
+    "quote": "To build a place where image, attitude and personal identity all meet under one roof.",
+    "p2": "After walking different roads, learning in different settings, and growing both personally and professionally, they came back together to give that dream life in the heart of Orlando, FL.",
+    "closing": "More than technique, more than style: the union of brothers who set out to create a place where every person can express themselves, renew themselves, and project their best self."
   },
   "local": {
     "eyebrow": "The shop",
