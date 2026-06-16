@@ -560,40 +560,34 @@ html[data-modal-open="true"] {
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   margin-bottom: 1.2rem;
 }
-/* Menú de servicios — agrupado por categoría, sin precios.
-   Decisión: precios viven solo en el flujo de reserva (la landing es
-   discovery, no checkout). 2 cols en desktop, 1 en mobile. */
-.bc-svc-grid {
+/* Menú de servicios — lista plana en 2 columnas, sin precios ni
+   descripciones (esas viven en /reservar). Compacto: 8 items caben en
+   ~4 filas en desktop. */
+.bc-svc-flat {
+  list-style: none;
+  padding: 0;
+  margin: clamp(2rem, 5vw, 3.5rem) 0 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(2rem, 4vw, 3.5rem) clamp(2.5rem, 5vw, 5rem);
-  margin-top: clamp(2rem, 5vw, 3.5rem);
+  column-gap: clamp(2.5rem, 5vw, 5rem);
+  row-gap: 0;
 }
-.bc-svc-group__title {
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-bone-dim);
-  padding-bottom: 0.8rem;
+.bc-svc-flat > li {
   border-bottom: 1px solid var(--color-line);
-  margin-bottom: 0.6rem;
 }
-.bc-svc-group__list { list-style: none; padding: 0; margin: 0; }
 .bc-svc-item {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.55rem 0;
+  padding: 0.9rem 0;
   color: var(--color-bone);
   transition: padding-left 0.4s var(--ease), color 0.3s var(--ease);
 }
 .bc-svc-item:hover { padding-left: 0.5rem; color: var(--color-bone-dim); }
 .bc-svc-item__name {
   font-family: var(--font-serif);
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.1rem, 1.7vw, 1.4rem);
   font-weight: 400;
   font-style: italic;
   flex: 1;
@@ -612,9 +606,8 @@ html[data-modal-open="true"] {
   justify-content: center;
 }
 @media (max-width: 760px) {
-  .bc-svc-grid {
+  .bc-svc-flat {
     grid-template-columns: 1fr;
-    gap: 2rem;
   }
 }
 

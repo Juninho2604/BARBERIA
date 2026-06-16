@@ -19,17 +19,64 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Catálogo confirmado por el cliente (junio 2026). Nombres en inglés
+// (decisión de marca), descripciones en español. Orden = orden de
+// presentación en landing y flujo de reserva.
+//
+// "Eyebrows" no tenía duración en el documento; usamos 10 min para que
+// ocupe un slot razonable sin solapar con servicios largos.
 const SERVICES = [
-  { name: "Royal Package",                  description: "Signature treatment.", durationMinutes: 60, priceCents: 11500 },
-  { name: "Haircut",                        description: "Hair & beard.",        durationMinutes: 30, priceCents:  4900 },
-  { name: "King Shave",                     description: "Hair & beard.",        durationMinutes: 30, priceCents:  4500 },
-  { name: "Balding Head Shave",             description: "Hair & beard.",        durationMinutes: 30, priceCents:  5000 },
-  { name: "Beard Trim",                     description: "Hair & beard.",        durationMinutes: 30, priceCents:  2500 },
-  { name: "Black Mask",                     description: "Spa & skin boosters.", durationMinutes:  5, priceCents:  2000 },
-  { name: "Nourishing / Purifying Detox Mask", description: "Spa & skin boosters.", durationMinutes: 15, priceCents: 2000 },
-  { name: "Ear Wax",                        description: "Wax services.",        durationMinutes:  5, priceCents:  1500 },
-  { name: "Nose Wax",                       description: "Wax services.",        durationMinutes:  5, priceCents:  1500 },
-  { name: "Eyebrow Wax",                    description: "Wax services.",        durationMinutes:  5, priceCents:  1500 },
+  {
+    name: "Men's haircut",
+    description: "Corte de cabello para hombres y niños, clásico o desvanecido.",
+    durationMinutes: 45,
+    priceCents: 3500,
+  },
+  {
+    name: "Regular beard",
+    description: "Alineado y trim de barba.",
+    durationMinutes: 20,
+    priceCents: 2000,
+  },
+  {
+    name: "Men's haircut & regular beard",
+    description: "Corte de cabello clásico o desvanecido y trim de barba.",
+    durationMinutes: 60,
+    priceCents: 5000,
+  },
+  {
+    name: "Hot towel shave",
+    description:
+      "Afeitado o estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
+    durationMinutes: 30,
+    priceCents: 3000,
+  },
+  {
+    name: "Men's haircut & hot towel shave",
+    description:
+      "Corte de cabello clásico o desvanecido más afeitado/estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
+    durationMinutes: 60,
+    priceCents: 6000,
+  },
+  {
+    name: "Eyebrows",
+    description: "Limpieza de cejas.",
+    durationMinutes: 10,
+    priceCents: 1000,
+  },
+  {
+    name: "Nose & ear wax",
+    description: "Depilación con cera caliente para nariz y orejas.",
+    durationMinutes: 10,
+    priceCents: 1000,
+  },
+  {
+    name: "Brothers Club Experience",
+    description:
+      "Incluye haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask y bebida especial.",
+    durationMinutes: 75,
+    priceCents: 9000,
+  },
 ];
 
 const BARBERS = [
@@ -64,7 +111,28 @@ const BARBERS = [
 async function seedServices() {
   for (const svc of SERVICES) {
     const existing = await prisma.service.findFirst({ where: { name: svc.name } });
-    if (existing) continue;
+    if (existing) {
+      // Sync precio/duración/descripción al catálogo del seed (que es la
+      // fuente de verdad). Sin esto, cambios en este archivo nunca se
+      // reflejaban en deploys donde el servicio ya estaba creado.
+      // isActive se respeta — si admin desactivó algo, no lo reactivamos.
+      const needsUpdate =
+        existing.description !== svc.description ||
+        existing.durationMinutes !== svc.durationMinutes ||
+        existing.priceCents !== svc.priceCents;
+      if (needsUpdate) {
+        await prisma.service.update({
+          where: { id: existing.id },
+          data: {
+            description: svc.description,
+            durationMinutes: svc.durationMinutes,
+            priceCents: svc.priceCents,
+          },
+        });
+        console.log(`[seed] ~service ${svc.name} (sync)`);
+      }
+      continue;
+    }
     await prisma.service.create({ data: { ...svc, isActive: true } });
     console.log(`[seed] +service ${svc.name}`);
   }

@@ -36,19 +36,12 @@
   "services": {
     "eyebrow": "Services",
     "title": "What we do.",
-    "lead": "A short, focused menu. No surprises. Pick what you need and we'll handle the rest.",
+    "lead": "A short, focused menu. Pick what you need and we'll handle the rest.",
     "loadErrorBefore": "We couldn't load the menu right now. ",
     "loadErrorLink": "Book directly here",
     "loadErrorAfter": " and pick your service in the flow.",
     "empty": "We're prepping the menu. Check back in a moment.",
-    "footerCta": "Book now",
-    "categories": {
-      "signatureTreatment": "Signature treatment",
-      "hairAndBeard": "Hair & beard",
-      "spaSkin": "Spa & skin boosters",
-      "wax": "Wax services",
-      "other": "Other"
-    }
+    "footerCta": "Book now"
   },
   "visitanos": {
     "eyebrow": "Visit",
@@ -104,7 +97,11 @@
       "contact": "Details"
     },
     "step": {
-      "service": { "title": "What are we doing today?", "choose": "Choose →" },
+      "service": {
+        "title": "Select your service",
+        "intro": "Brothers Club Barbershop offers a complimentary consultation, hair wash and styling. Plus, a drink on us with every service.",
+        "choose": "Choose →"
+      },
       "barber": { "title": "With whom?", "choose": "Choose →" },
       "datetime": {
         "title": "When?",

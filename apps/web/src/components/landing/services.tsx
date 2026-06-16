@@ -4,15 +4,16 @@ import { Link } from "@/i18n/navigation";
 import type { ServiceDto } from "@/lib/types";
 
 /**
- * Servicios — menú editorial AGRUPADO POR CATEGORÍA.
+ * Servicios — menú editorial flat en 2 columnas (desktop), 1 col mobile.
  *
- * Decisiones de diseño (post feedback cliente):
- *  - SIN precios en la landing (los precios viven en el flujo de reserva).
- *  - Agrupado por `service.description` que actúa como categoría
- *    (Signature treatment / Hair & beard / Spa & skin / Wax).
- *  - 2 columnas en desktop, 1 en mobile — compacto, no hace la página
- *    excesivamente larga.
- *  - Cada item linkea a /reservar (locale-aware via @/i18n/navigation).
+ * Decisiones de diseño:
+ *  - SIN precios en la landing (los precios viven solo en /reservar).
+ *    La landing es discovery, no checkout.
+ *  - SIN descripciones (también solo en /reservar, donde ayudan a
+ *    decidir). En landing van solo nombre + duración → compacto.
+ *  - Sin grouping por categoría: el catálogo nuevo del cliente tiene
+ *    descripciones únicas por servicio (no actúan como categoría).
+ *  - Cada item linkea a /reservar (locale-aware).
  */
 function formatDuration(min: number, label: string) {
   if (min >= 60) {
@@ -23,31 +24,8 @@ function formatDuration(min: number, label: string) {
   return `${min} ${label}`;
 }
 
-// El description del seed termina en "." — lo normalizamos antes de matchear.
-const CATEGORY_KEY: Record<string, string> = {
-  "Signature treatment": "signatureTreatment",
-  "Hair & beard": "hairAndBeard",
-  "Spa & skin boosters": "spaSkin",
-  "Wax services": "wax",
-};
-
-function categorize(services: ServiceDto[]): Array<{ key: string; raw: string; items: ServiceDto[] }> {
-  const map = new Map<string, { key: string; raw: string; items: ServiceDto[] }>();
-  // Orden estable: respeta el primer item de cada categoría que aparece.
-  for (const s of services) {
-    const raw = (s.description ?? "").replace(/\.$/, "").trim();
-    const key = CATEGORY_KEY[raw] ?? "other";
-    if (!map.has(raw || "other")) {
-      map.set(raw || "other", { key, raw, items: [] });
-    }
-    map.get(raw || "other")!.items.push(s);
-  }
-  return Array.from(map.values());
-}
-
 export async function Services() {
   const t = await getTranslations("services");
-  const tCats = await getTranslations("services.categories");
   let services: ServiceDto[] = [];
   let loadError = false;
   try {
@@ -55,8 +33,6 @@ export async function Services() {
   } catch {
     loadError = true;
   }
-
-  const groups = categorize(services);
 
   return (
     <section className="bc-section" id="servicios">
@@ -81,36 +57,25 @@ export async function Services() {
             </Link>
             {t("loadErrorAfter")}
           </p>
-        ) : groups.length === 0 ? (
+        ) : services.length === 0 ? (
           <p className="bc-lead">{t("empty")}</p>
         ) : (
-          <div className="bc-svc-grid">
-            {groups.map((g, gi) => {
-              const label = g.key === "other" && g.raw ? g.raw : tCats(g.key);
-              return (
-                <div
-                  key={g.raw || g.key}
-                  className="bc-svc-group"
-                  data-reveal
-                  data-delay={Math.min(gi, 2) || undefined}
-                >
-                  <p className="bc-svc-group__title">{label}</p>
-                  <ul className="bc-svc-group__list">
-                    {g.items.map((s) => (
-                      <li key={s.id}>
-                        <Link href="/reservar" className="bc-svc-item">
-                          <span className="bc-svc-item__name">{s.name}</span>
-                          <span className="bc-svc-item__meta">
-                            {formatDuration(s.durationMinutes, "min")}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+          <ul className="bc-svc-flat">
+            {services.map((s, i) => (
+              <li
+                key={s.id}
+                data-reveal
+                data-delay={Math.min(i % 4, 3) || undefined}
+              >
+                <Link href="/reservar" className="bc-svc-item">
+                  <span className="bc-svc-item__name">{s.name}</span>
+                  <span className="bc-svc-item__meta">
+                    {formatDuration(s.durationMinutes, "min")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
 
         <div className="bc-services__foot" data-reveal>

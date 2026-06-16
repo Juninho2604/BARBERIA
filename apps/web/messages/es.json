@@ -36,19 +36,12 @@
   "services": {
     "eyebrow": "Servicios",
     "title": "Lo que hacemos.",
-    "lead": "Un menú breve y enfocado. Sin sorpresas. Elige lo que necesites y nosotros nos encargamos.",
+    "lead": "Un menú breve y enfocado. Elige lo que necesites y nosotros nos encargamos.",
     "loadErrorBefore": "No pudimos cargar el catálogo en este momento. ",
     "loadErrorLink": "Reserva directo aquí",
     "loadErrorAfter": " y elige tu servicio en el flujo.",
     "empty": "Estamos preparando el catálogo. Vuelve en un momento.",
-    "footerCta": "Reservar ahora",
-    "categories": {
-      "signatureTreatment": "Tratamiento exclusivo",
-      "hairAndBeard": "Cabello y barba",
-      "spaSkin": "Spa y cuidado de piel",
-      "wax": "Depilación con cera",
-      "other": "Otros"
-    }
+    "footerCta": "Reservar ahora"
   },
   "visitanos": {
     "eyebrow": "Visítanos",
@@ -104,7 +97,11 @@
       "contact": "Datos"
     },
     "step": {
-      "service": { "title": "¿Qué te haces?", "choose": "Elegir →" },
+      "service": {
+        "title": "Selecciona tu servicio",
+        "intro": "Brothers Club Barbershop te ofrece una asesoría, lavado de cabello y peinado gratis. Además, una bebida cortesía en todos nuestros servicios.",
+        "choose": "Elegir →"
+      },
       "barber": { "title": "¿Con quién?", "choose": "Elegir →" },
       "datetime": {
         "title": "¿Cuándo?",

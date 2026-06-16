@@ -132,6 +132,12 @@ export function BookingFlow({ services, barbers }: Props) {
 
       {step === "service" && (
         <StepShell title={t("step.service.title")} changeLabel={t("change")}>
+          {/* Cortesías de la casa (asesoría, lavado, peinado, bebida) —
+              copy provisto por el cliente. Se muestra arriba del listado
+              para que quede claro antes de elegir servicio. */}
+          <p className="mb-8 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
+            {t("step.service.intro")}
+          </p>
           <ul className="divide-y divide-[color:var(--color-border)] border-y border-[color:var(--color-border)]">
             {services.map((s) => (
               <li key={s.id}>
@@ -141,15 +147,20 @@ export function BookingFlow({ services, barbers }: Props) {
                     setService(s);
                     setStep("barber");
                   }}
-                  className="group flex w-full items-baseline justify-between gap-6 py-5 text-left transition hover:opacity-80"
+                  className="group flex w-full items-start justify-between gap-6 py-5 text-left transition hover:opacity-80"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-lg font-normal text-[color:var(--color-fg)]">{s.name}</p>
                     <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
                       {formatPrice(s.priceCents)} · {formatDuration(s.durationMinutes)}
                     </p>
+                    {s.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
+                        {s.description}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] group-hover:text-[color:var(--color-fg)]">
+                  <span className="mt-1 flex-shrink-0 text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] group-hover:text-[color:var(--color-fg)]">
                     {t("step.service.choose")}
                   </span>
                 </button>
