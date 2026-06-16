@@ -125,6 +125,7 @@
           "barber": "Barber",
           "when": "When"
         },
+        "advice": "We're looking forward to seeing you at your scheduled time. Please plan ahead and arrive 5–10 minutes early. If you arrive more than 10 minutes late, your appointment may be released.",
         "homeLink": "← Back to home"
       }
     },

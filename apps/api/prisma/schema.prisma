@@ -73,6 +73,9 @@ model Service {
   description     String?
   durationMinutes Int
   priceCents      Int
+  /// URL pública de la foto del servicio. Opcional: si null, la UI
+  /// cae al layout sin imagen. El cliente la administra desde /admin.
+  photoUrl        String?
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

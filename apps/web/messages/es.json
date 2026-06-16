@@ -125,6 +125,7 @@
           "barber": "Barbero",
           "when": "Cuándo"
         },
+        "advice": "Te esperamos a tu hora establecida. Por favor toma tus prevenciones: te recomendamos llegar entre 5 y 10 minutos antes. Si llegas más de 10 minutos tarde, podrías perder tu cita.",
         "homeLink": "← Volver al inicio"
       }
     },

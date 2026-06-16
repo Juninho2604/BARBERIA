@@ -147,8 +147,19 @@ export function BookingFlow({ services, barbers }: Props) {
                     setService(s);
                     setStep("barber");
                   }}
-                  className="group flex w-full items-start justify-between gap-6 py-5 text-left transition hover:opacity-80"
+                  className="group flex w-full items-start gap-4 py-5 text-left transition hover:opacity-80"
                 >
+                  {/* Thumbnail opcional. Si no hay photoUrl (estado actual
+                      mientras el cliente prepara material), el slot
+                      colapsa y la fila se ve como antes. */}
+                  {s.photoUrl && (
+                    <img
+                      src={s.photoUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-16 w-16 flex-shrink-0 rounded-[var(--radius-md)] object-cover sm:h-20 sm:w-20"
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="text-lg font-normal text-[color:var(--color-fg)]">{s.name}</p>
                     <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
@@ -336,6 +347,11 @@ export function BookingFlow({ services, barbers }: Props) {
               value={`${formatDayLabel(confirmed.startsAt)} · ${formatTime(confirmed.startsAt)}`}
             />
           </dl>
+          {/* Recordatorio de puntualidad (provisto por el cliente).
+              Destacado con borde y fondo para que no se pase por alto. */}
+          <p className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-surface)] px-5 py-4 text-sm leading-relaxed text-[color:var(--color-fg)]">
+            {t("step.done.advice")}
+          </p>
           <a
             href="/"
             className="mt-10 inline-block text-xs uppercase tracking-[0.22em] text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"

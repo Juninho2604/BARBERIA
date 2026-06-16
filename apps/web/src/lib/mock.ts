@@ -40,6 +40,7 @@ const services: ServiceDto[] = [
     description: "Corte de cabello para hombres y niños, clásico o desvanecido.",
     durationMinutes: 45,
     priceCents: 3500,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -48,6 +49,7 @@ const services: ServiceDto[] = [
     description: "Alineado y trim de barba.",
     durationMinutes: 20,
     priceCents: 2000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -56,6 +58,7 @@ const services: ServiceDto[] = [
     description: "Corte de cabello clásico o desvanecido y trim de barba.",
     durationMinutes: 60,
     priceCents: 5000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -65,6 +68,7 @@ const services: ServiceDto[] = [
       "Afeitado o estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
     durationMinutes: 30,
     priceCents: 3000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -74,6 +78,7 @@ const services: ServiceDto[] = [
       "Corte de cabello clásico o desvanecido más afeitado/estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
     durationMinutes: 60,
     priceCents: 6000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -82,6 +87,7 @@ const services: ServiceDto[] = [
     description: "Limpieza de cejas.",
     durationMinutes: 10,
     priceCents: 1000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -90,6 +96,7 @@ const services: ServiceDto[] = [
     description: "Depilación con cera caliente para nariz y orejas.",
     durationMinutes: 10,
     priceCents: 1000,
+    photoUrl: null,
     isActive: true,
   },
   {
@@ -99,6 +106,7 @@ const services: ServiceDto[] = [
       "Incluye haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask y bebida especial.",
     durationMinutes: 75,
     priceCents: 9000,
+    photoUrl: null,
     isActive: true,
   },
 ];
@@ -545,6 +553,7 @@ export const mockApi = {
       description: input.description ?? null,
       durationMinutes: input.durationMinutes,
       priceCents: input.priceCents,
+      photoUrl: input.photoUrl ?? null,
       isActive: input.isActive ?? true,
     };
     services.push(created);
@@ -565,6 +574,8 @@ export const mockApi = {
       description: input.description ?? cur.description,
       durationMinutes: input.durationMinutes ?? cur.durationMinutes,
       priceCents: input.priceCents ?? cur.priceCents,
+      // null explícito borra la foto; undefined deja la actual.
+      photoUrl: input.photoUrl === undefined ? cur.photoUrl : input.photoUrl,
       isActive: input.isActive ?? cur.isActive,
     };
     return services[idx]!;
