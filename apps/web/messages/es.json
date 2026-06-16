@@ -44,7 +44,17 @@
     "loadErrorLink": "Reserva directo aquí",
     "loadErrorAfter": " y elige tu servicio en el flujo.",
     "empty": "Estamos preparando el catálogo. Vuelve en un momento.",
-    "footerCta": "Reservar ahora"
+    "footerCta": "Reservar ahora",
+    "descriptions": {
+      "mensHaircut": "Corte de cabello para hombres y niños, clásico o desvanecido.",
+      "regularBeard": "Alineado y trim de barba.",
+      "mensHaircutBeard": "Corte de cabello clásico o desvanecido y trim de barba.",
+      "hotTowelShave": "Afeitado o estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
+      "mensHaircutShave": "Corte de cabello clásico o desvanecido más afeitado/estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
+      "eyebrows": "Limpieza de cejas.",
+      "noseEarWax": "Depilación con cera caliente para nariz y orejas.",
+      "experience": "Incluye haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask y bebida especial."
+    }
   },
   "visitanos": {
     "eyebrow": "Visítanos",

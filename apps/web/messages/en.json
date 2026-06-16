@@ -44,7 +44,17 @@
     "loadErrorLink": "Book directly here",
     "loadErrorAfter": " and pick your service in the flow.",
     "empty": "We're prepping the menu. Check back in a moment.",
-    "footerCta": "Book now"
+    "footerCta": "Book now",
+    "descriptions": {
+      "mensHaircut": "Haircut for men and kids — classic style or fade.",
+      "regularBeard": "Beard line-up and trim.",
+      "mensHaircutBeard": "Classic or fade haircut paired with a beard trim.",
+      "hotTowelShave": "Shave or beard styling with hot towel, steam, lather, beard oil, and a cold towel finish.",
+      "mensHaircutShave": "Classic or fade haircut with shave or beard styling — hot towel, steam, lather, beard oil, and a cold towel finish.",
+      "eyebrows": "Eyebrow grooming.",
+      "noseEarWax": "Hot wax hair removal for the nose and ears.",
+      "experience": "Includes haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask, and a special drink."
+    }
   },
   "visitanos": {
     "eyebrow": "Visit",

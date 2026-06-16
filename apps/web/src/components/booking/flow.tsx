@@ -48,9 +48,30 @@ function addDays(dateIso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+// Overlay de traducciones de descripciones, keyed por service.name (estable
+// por seed). Si el admin agrega un servicio nuevo via /admin no estará en
+// este mapa y la UI cae al `s.description` de la DB (estado pre-overlay).
+const DESCRIPTION_KEY: Record<string, string> = {
+  "Men's haircut": "mensHaircut",
+  "Regular beard": "regularBeard",
+  "Men's haircut & regular beard": "mensHaircutBeard",
+  "Hot towel shave": "hotTowelShave",
+  "Men's haircut & hot towel shave": "mensHaircutShave",
+  "Eyebrows": "eyebrows",
+  "Nose & ear wax": "noseEarWax",
+  "Brothers Club Experience": "experience",
+};
+
 export function BookingFlow({ services, barbers }: Props) {
   const t = useTranslations("booking");
+  const tDesc = useTranslations("services.descriptions");
   const locale = useLocale();
+
+  function describe(s: ServiceDto): string {
+    const slug = DESCRIPTION_KEY[s.name];
+    if (slug && tDesc.has(slug)) return tDesc(slug);
+    return s.description ?? "";
+  }
   // BCP-47 tag para Intl: "en" → "en-US", "es" → "es-ES" (defaults
   // razonables para el mercado del cliente).
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
@@ -165,9 +186,9 @@ export function BookingFlow({ services, barbers }: Props) {
                     <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">
                       {formatPrice(s.priceCents)} · {formatDuration(s.durationMinutes)}
                     </p>
-                    {s.description && (
+                    {describe(s) && (
                       <p className="mt-2 text-sm leading-relaxed text-[color:var(--color-fg-muted)]">
-                        {s.description}
+                        {describe(s)}
                       </p>
                     )}
                   </div>
