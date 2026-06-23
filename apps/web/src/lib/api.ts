@@ -83,11 +83,16 @@ interface HttpOptions extends RequestInit {
 }
 
 async function http<T>(path: string, options: HttpOptions = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, body, ...rest } = options;
+  // Solo enviamos Content-Type cuando hay body. Fastify rechaza con
+  // FST_ERR_CTP_EMPTY_JSON_BODY si el content-type es application/json
+  // y el body viene vacío (DELETE / PATCH sin payload).
+  const hasBody = body !== undefined && body !== null;
   const res = await fetch(resolveUrl(path), {
     ...rest,
+    body,
     headers: {
-      "Content-Type": "application/json",
+      ...(hasBody ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers ?? {}),
     },
