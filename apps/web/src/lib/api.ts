@@ -13,6 +13,7 @@ import type {
   BarberDto,
   CreateAppointmentInputDto,
   CreateBarberInputDto,
+  UpdateBarberInputDto,
   CreateServiceInputDto,
   CreateTimeOffInputDto,
   ClientDetailDto,
@@ -201,9 +202,26 @@ export const api = {
       token,
     });
   },
-  async deleteBarber(id: string, token: string): Promise<void> {
-    if (useMock()) return mockApi.deleteBarber(id, token);
-    return http<void>(`/barbers/${id}`, { method: "DELETE", token });
+  async updateBarber(
+    id: string,
+    input: UpdateBarberInputDto,
+    token: string,
+  ): Promise<BarberDto> {
+    if (useMock()) return mockApi.updateBarber(id, input, token);
+    return http<BarberDto>(`/barbers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async deleteBarber(
+    id: string,
+    token: string,
+    opts?: { purge?: boolean },
+  ): Promise<void> {
+    if (useMock()) return mockApi.deleteBarber(id, token, opts);
+    const qs = opts?.purge ? "?purge=true" : "";
+    return http<void>(`/barbers/${id}${qs}`, { method: "DELETE", token });
   },
   async getBarber(id: string): Promise<BarberDto | null> {
     if (useMock()) return mockApi.getBarber(id);

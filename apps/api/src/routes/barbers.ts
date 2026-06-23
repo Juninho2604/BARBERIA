@@ -171,20 +171,74 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
       "/:id",
       {
         preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
-        schema: { params: IdParam },
+        schema: {
+          params: IdParam,
+          querystring: z.object({
+            // purge=true → borrado real (elimina el perfil de Barber, no solo
+            // lo desactiva). Útil para limpiar barberos de prueba/duplicados.
+            // Sin purge → soft-delete (isActive=false), preserva el historial.
+            purge: z.coerce.boolean().optional().default(false),
+          }),
+        },
       },
       async (req, reply) => {
-        try {
-          await prisma.barber.update({
-            where: { id: req.params.id },
-            data: { isActive: false },
-          });
-          return reply.status(204).send();
-        } catch {
+        const barber = await prisma.barber.findUnique({
+          where: { id: req.params.id },
+          include: { user: true },
+        });
+        if (!barber) {
           return reply.status(404).send({
             error: { code: "NOT_FOUND", message: "Barbero no encontrado" },
           });
         }
+
+        // Soft-delete: solo desactiva, conserva todo.
+        if (!req.query.purge) {
+          await prisma.barber.update({
+            where: { id: barber.id },
+            data: { isActive: false },
+          });
+          return reply.status(204).send();
+        }
+
+        // Borrado real. Si tiene citas como barbero no podemos borrar el
+        // perfil sin romper el historial (FK Restrict en Appointment.barber).
+        const apptCount = await prisma.appointment.count({
+          where: { barberId: barber.id },
+        });
+        if (apptCount > 0) {
+          return reply.status(409).send({
+            error: {
+              code: "BARBER_HAS_APPOINTMENTS",
+              message:
+                `Este barbero tiene ${apptCount} cita(s) en su historial. ` +
+                "Desactívalo en lugar de eliminarlo para no perder el registro.",
+            },
+          });
+        }
+
+        // Sin citas → podemos borrar el perfil de Barber (cascade a
+        // workingHours + timeOff). El User se conserva si es OWNER/staff
+        // (estos barberos son dueños a la vez); solo se borra el User cuando
+        // es un BARBER puro sin citas como cliente (duplicado/seed de prueba).
+        const clientApptCount = await prisma.appointment.count({
+          where: { clientId: barber.userId },
+        });
+        const userIsPureBarber =
+          barber.user.role === "BARBER" && clientApptCount === 0;
+
+        await prisma.$transaction(async (tx) => {
+          if (userIsPureBarber) {
+            // onDelete:Cascade en Barber.user → borrar el User arrastra el
+            // Barber, sus workingHours y timeOff de una.
+            await tx.user.delete({ where: { id: barber.userId } });
+          } else {
+            // Conservar el User (es owner/staff o tiene citas como cliente);
+            // borrar solo el perfil de Barber (cascade workingHours/timeOff).
+            await tx.barber.delete({ where: { id: barber.id } });
+          }
+        });
+        return reply.status(204).send();
       },
     );
 
