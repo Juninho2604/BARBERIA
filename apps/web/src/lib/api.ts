@@ -11,8 +11,10 @@ import type {
   AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
+  ChangePasswordInputDto,
   CreateAppointmentInputDto,
   CreateBarberInputDto,
+  UpdateBarberInputDto,
   CreateServiceInputDto,
   CreateTimeOffInputDto,
   ClientDetailDto,
@@ -83,11 +85,16 @@ interface HttpOptions extends RequestInit {
 }
 
 async function http<T>(path: string, options: HttpOptions = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, body, ...rest } = options;
+  // Solo enviamos Content-Type cuando hay body. Fastify rechaza con
+  // FST_ERR_CTP_EMPTY_JSON_BODY si el content-type es application/json
+  // y el body viene vacío (DELETE / PATCH sin payload).
+  const hasBody = body !== undefined && body !== null;
   const res = await fetch(resolveUrl(path), {
     ...rest,
+    body,
     headers: {
-      "Content-Type": "application/json",
+      ...(hasBody ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers ?? {}),
     },
@@ -153,6 +160,17 @@ export const api = {
     if (useMock()) return mockApi.me(token);
     return http<AuthUserDto>("/auth/me", { token });
   },
+  async changePassword(
+    input: ChangePasswordInputDto,
+    token: string,
+  ): Promise<void> {
+    if (useMock()) return mockApi.changePassword(input, token);
+    return http<void>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
 
   // --- admin ---
   async adminListServices(token: string): Promise<ServiceDto[]> {
@@ -196,9 +214,26 @@ export const api = {
       token,
     });
   },
-  async deleteBarber(id: string, token: string): Promise<void> {
-    if (useMock()) return mockApi.deleteBarber(id, token);
-    return http<void>(`/barbers/${id}`, { method: "DELETE", token });
+  async updateBarber(
+    id: string,
+    input: UpdateBarberInputDto,
+    token: string,
+  ): Promise<BarberDto> {
+    if (useMock()) return mockApi.updateBarber(id, input, token);
+    return http<BarberDto>(`/barbers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+      token,
+    });
+  },
+  async deleteBarber(
+    id: string,
+    token: string,
+    opts?: { purge?: boolean },
+  ): Promise<void> {
+    if (useMock()) return mockApi.deleteBarber(id, token, opts);
+    const qs = opts?.purge ? "?purge=true" : "";
+    return http<void>(`/barbers/${id}${qs}`, { method: "DELETE", token });
   },
   async getBarber(id: string): Promise<BarberDto | null> {
     if (useMock()) return mockApi.getBarber(id);

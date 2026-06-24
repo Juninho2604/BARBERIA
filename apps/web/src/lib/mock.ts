@@ -13,6 +13,7 @@ import type {
   AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
+  ChangePasswordInputDto,
   ClientDetailDto,
   ClientSummaryDto,
   CreateAppointmentInputDto,
@@ -450,6 +451,13 @@ export const mockApi = {
     assertAdminToken(token);
     return MOCK_OWNER;
   },
+  async changePassword(input: ChangePasswordInputDto, token: string): Promise<void> {
+    assertAdminToken(token);
+    // En demo no hay password real; simulamos validación mínima.
+    if (input.currentPassword === input.newPassword) {
+      throw new ApiError(400, "La nueva contraseña debe ser distinta a la actual.");
+    }
+  },
 
   // --- admin: staff ---
   async adminListStaff(token: string): Promise<StaffMemberDto[]> {
@@ -617,11 +625,34 @@ export const mockApi = {
     barbers.push(created);
     return created;
   },
-  async deleteBarber(id: string, token: string): Promise<void> {
+  async updateBarber(
+    id: string,
+    input: { name?: string; phone?: string | null; bio?: string | null; photoUrl?: string | null; isActive?: boolean },
+    token: string,
+  ): Promise<BarberDto> {
     assertAdminToken(token);
     const b = barbers.find((x) => x.id === id);
     if (!b) throw new ApiError(404, "Barbero no encontrado");
-    b.isActive = false;
+    if (input.name !== undefined) b.name = input.name;
+    if (input.phone !== undefined) b.phone = input.phone;
+    if (input.bio !== undefined) b.bio = input.bio;
+    if (input.photoUrl !== undefined) b.photoUrl = input.photoUrl;
+    if (input.isActive !== undefined) b.isActive = input.isActive;
+    return b;
+  },
+  async deleteBarber(
+    id: string,
+    token: string,
+    opts?: { purge?: boolean },
+  ): Promise<void> {
+    assertAdminToken(token);
+    const idx = barbers.findIndex((x) => x.id === id);
+    if (idx === -1) throw new ApiError(404, "Barbero no encontrado");
+    if (opts?.purge) {
+      barbers.splice(idx, 1);
+    } else {
+      barbers[idx].isActive = false;
+    }
   },
   async getBarber(id: string): Promise<BarberDto | null> {
     return barbers.find((b) => b.id === id) ?? null;

@@ -6,10 +6,12 @@ import type {
   AuthUser,
   AvailabilityResponse,
   Barber,
+  ChangePasswordInput,
   ClientDetail,
   ClientSummary,
   CreateAppointmentInput,
   CreateBarberInput,
+  UpdateBarberInput,
   CreateServiceInput,
   CreateTimeOffInput,
   InviteStaffInput,
@@ -29,6 +31,7 @@ export type CreateServiceInputDto = CreateServiceInput;
 export type UpdateServiceInputDto = UpdateServiceInput;
 export type BarberDto = Barber;
 export type CreateBarberInputDto = CreateBarberInput;
+export type UpdateBarberInputDto = UpdateBarberInput;
 export type TimeOffDto = TimeOff;
 export type CreateTimeOffInputDto = CreateTimeOffInput;
 export type AvailabilityResponseDto = AvailabilityResponse;
@@ -45,3 +48,4 @@ export type UpdateStaffInputDto = UpdateStaffInput;
 export type ClientSummaryDto = ClientSummary;
 export type ClientDetailDto = ClientDetail;
 export type UpdateClientNotesInputDto = UpdateClientNotesInput;
+export type ChangePasswordInputDto = ChangePasswordInput;

@@ -41,7 +41,7 @@ export default function AdminBarbers() {
     refresh();
   }, []);
 
-  async function onDelete(id: string) {
+  async function onDeactivate(id: string) {
     const ok = await confirm({
       title: "¿Desactivar este barbero?",
       description: "Dejará de aparecer en el flujo público. Citas existentes se mantienen.",
@@ -57,6 +57,40 @@ export default function AdminBarbers() {
       await refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al desactivar");
+    }
+  }
+
+  async function onReactivate(id: string) {
+    const token = readAccessToken();
+    if (!token) return;
+    try {
+      await api.updateBarber(id, { isActive: true }, token);
+      toast.success("Barbero reactivado");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al reactivar");
+    }
+  }
+
+  async function onPurge(b: BarberDto) {
+    const ok = await confirm({
+      title: `¿Eliminar a ${b.name} definitivamente?`,
+      description:
+        "Borra el perfil de barbero y su disponibilidad de forma permanente. " +
+        "Si la persona también es dueño/staff, su cuenta de acceso se conserva. " +
+        "No se puede deshacer. (Si tiene citas en el historial, no podrá eliminarse: desactívalo.)",
+      confirmLabel: "Eliminar definitivamente",
+      destructive: true,
+    });
+    if (!ok) return;
+    const token = readAccessToken();
+    if (!token) return;
+    try {
+      await api.deleteBarber(b.id, token, { purge: true });
+      toast.success("Barbero eliminado");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar");
     }
   }
 
@@ -127,15 +161,30 @@ export default function AdminBarbers() {
                   >
                     Editar
                   </a>
-                  {b.isActive && (
+                  {b.isActive ? (
                     <button
                       type="button"
-                      onClick={() => onDelete(b.id)}
+                      onClick={() => onDeactivate(b.id)}
                       className="text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
                     >
                       Desactivar
                     </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onReactivate(b.id)}
+                      className="text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
+                    >
+                      Reactivar
+                    </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => onPurge(b)}
+                    className="text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
+                  >
+                    Eliminar
+                  </button>
                 </div>
               </div>
               {b.workingHours && b.workingHours.length > 0 && (
