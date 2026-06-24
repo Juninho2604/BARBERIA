@@ -45,9 +45,10 @@ export const BUSINESS = {
   },
 
   /** Horario de atención. Formato Schema.org openingHoursSpecification.
-      Lun – Sáb · 9:00 – 20:00 · Dom · 10:00 – 18:00 */
+      Lun – Sáb · 9:00 – 20:00 · Dom · 10:00 – 18:00
+      No se incluye `display` hardcodeado: el render bilingüe se hace en
+      `visitanos.tsx` traduciendo días desde el spec por locale. */
   hours: {
-    display: "Lun – Sáb · 9:00 – 20:00\nDom · 10:00 – 18:00",
     spec: [
       {
         dayOfWeek: [

@@ -72,7 +72,16 @@
       "contact": "Contact"
     },
     "bookingsValue": "Online, 24/7",
-    "directions": "Get directions"
+    "directions": "Get directions",
+    "days": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    }
   },
   "cta": {
     "eyebrow": "No account needed",

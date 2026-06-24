@@ -72,7 +72,16 @@
       "contact": "Contacto"
     },
     "bookingsValue": "Online, 24/7",
-    "directions": "Cómo llegar"
+    "directions": "Cómo llegar",
+    "days": {
+      "Monday": "Lun",
+      "Tuesday": "Mar",
+      "Wednesday": "Mié",
+      "Thursday": "Jue",
+      "Friday": "Vie",
+      "Saturday": "Sáb",
+      "Sunday": "Dom"
+    }
   },
   "cta": {
     "eyebrow": "Sin cuenta necesaria",
