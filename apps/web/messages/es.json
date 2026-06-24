@@ -36,9 +36,15 @@
       "cut": { "title": "El acabado", "label": "03 / Detalle" }
     }
   },
+  "heroes": {
+    "eyebrow": "Descuento Héroes",
+    "badge": "15% OFF",
+    "text": "Como agradecimiento por tu servicio, ofrecemos con orgullo precios especiales para Militares, Veteranos, Fuerzas del Orden, Bomberos y Personal de Emergencias (EMS).",
+    "note": "Aplica a todos nuestros servicios"
+  },
   "services": {
     "eyebrow": "Servicios",
-    "title": "Lo que hacemos.",
+    "title": "Nuestros servicios.",
     "lead": "Un menú breve y enfocado. Elige lo que necesites y nosotros nos encargamos.",
     "loadErrorBefore": "No pudimos cargar el catálogo en este momento. ",
     "loadErrorLink": "Reserva directo aquí",

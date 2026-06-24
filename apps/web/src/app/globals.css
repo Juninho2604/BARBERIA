@@ -327,6 +327,9 @@ html[data-modal-open="true"] {
 }
 .bc-lang__item-wrap { display: inline-flex; align-items: center; }
 .bc-lang__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
   background: transparent;
   border: 0;
   padding: 0.4em 0.55em;
@@ -336,6 +339,21 @@ html[data-modal-open="true"] {
   letter-spacing: inherit;
   text-transform: inherit;
   transition: color 0.3s var(--ease);
+}
+.bc-lang__flag {
+  width: 1.35em;
+  height: auto;
+  display: block;
+  border-radius: 1px;
+  /* Las banderas inactivas se atenúan junto al código; al activarse o
+     hover recuperan opacidad plena. */
+  opacity: 0.55;
+  transition: opacity 0.3s var(--ease);
+  flex-shrink: 0;
+}
+.bc-lang__item:hover .bc-lang__flag,
+.bc-lang__item.is-active .bc-lang__flag {
+  opacity: 1;
 }
 .bc-lang__item:hover { color: var(--color-bone); }
 .bc-lang__item.is-active {
@@ -593,6 +611,68 @@ html[data-modal-open="true"] {
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   margin-bottom: 1.2rem;
 }
+/* Heroes Discount — banda destacada (15% off para militares, veteranos,
+   fuerzas del orden, bomberos, EMS). Aplica a todos los servicios. Para
+   destacar dentro de la paleta monocromática se invierte: fondo bone +
+   texto ink. Es el único bloque invertido de la sección → llama la vista
+   sin romper la regla de "sin acentos de color". */
+.bc-heroes {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.4rem, 4vw, 3rem);
+  margin: clamp(1rem, 3vw, 2rem) 0 0;
+  padding: clamp(1.6rem, 3.5vw, 2.6rem);
+  background: var(--color-bone);
+  color: var(--color-ink);
+}
+.bc-heroes__badge {
+  flex-shrink: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  padding-right: clamp(1.4rem, 4vw, 3rem);
+  border-right: 1px solid color-mix(in srgb, var(--color-ink) 22%, transparent);
+}
+.bc-heroes__eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-bottom: 0.7rem;
+  opacity: 0.65;
+}
+.bc-heroes__text {
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 1.7vw, 1.3rem);
+  line-height: 1.45;
+}
+.bc-heroes__note {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 0.9rem;
+  opacity: 0.6;
+}
+@media (max-width: 640px) {
+  .bc-heroes {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(1rem, 4vw, 1.6rem);
+  }
+  .bc-heroes__badge {
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 22%, transparent);
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+}
+
 /* Menú de servicios — lista plana en 2 columnas, sin precios ni
    descripciones (esas viven en /reservar). Compacto: 8 items caben en
    ~4 filas en desktop. */

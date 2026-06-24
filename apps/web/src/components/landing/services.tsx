@@ -26,6 +26,7 @@ function formatDuration(min: number, label: string) {
 
 export async function Services() {
   const t = await getTranslations("services");
+  const th = await getTranslations("heroes");
   let services: ServiceDto[] = [];
   let loadError = false;
   try {
@@ -48,6 +49,15 @@ export async function Services() {
             {t("lead")}
           </p>
         </header>
+
+        <aside className="bc-heroes" data-reveal aria-label={th("eyebrow")}>
+          <div className="bc-heroes__badge">{th("badge")}</div>
+          <div className="bc-heroes__body">
+            <p className="bc-heroes__eyebrow">{th("eyebrow")}</p>
+            <p className="bc-heroes__text">{th("text")}</p>
+            <p className="bc-heroes__note">{th("note")}</p>
+          </div>
+        </aside>
 
         {loadError ? (
           <p className="bc-lead">
