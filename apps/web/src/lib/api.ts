@@ -11,6 +11,7 @@ import type {
   AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
+  ChangePasswordInputDto,
   CreateAppointmentInputDto,
   CreateBarberInputDto,
   UpdateBarberInputDto,
@@ -158,6 +159,17 @@ export const api = {
   async me(token: string): Promise<AuthUserDto> {
     if (useMock()) return mockApi.me(token);
     return http<AuthUserDto>("/auth/me", { token });
+  },
+  async changePassword(
+    input: ChangePasswordInputDto,
+    token: string,
+  ): Promise<void> {
+    if (useMock()) return mockApi.changePassword(input, token);
+    return http<void>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(input),
+      token,
+    });
   },
 
   // --- admin ---

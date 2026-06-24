@@ -19,6 +19,12 @@ export const RefreshSchema = z.object({
 });
 export type RefreshInput = z.infer<typeof RefreshSchema>;
 
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(200),
+});
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
 /**
  * Roles del sistema.
  *

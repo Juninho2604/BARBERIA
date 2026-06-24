@@ -6,6 +6,7 @@ import type {
   AuthUser,
   AvailabilityResponse,
   Barber,
+  ChangePasswordInput,
   ClientDetail,
   ClientSummary,
   CreateAppointmentInput,
@@ -47,3 +48,4 @@ export type UpdateStaffInputDto = UpdateStaffInput;
 export type ClientSummaryDto = ClientSummary;
 export type ClientDetailDto = ClientDetail;
 export type UpdateClientNotesInputDto = UpdateClientNotesInput;
+export type ChangePasswordInputDto = ChangePasswordInput;

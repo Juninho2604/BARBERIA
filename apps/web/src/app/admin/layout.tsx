@@ -24,6 +24,7 @@ const NAV: NavItem[] = [
   { href: "/admin/services",     label: "Servicios",  requires: "services.manage" },
   { href: "/admin/barbers",      label: "Barberos",   requires: "barbers.manage" },
   { href: "/admin/staff",        label: "Staff",      requires: "staff.manage" },
+  { href: "/admin/account",      label: "Mi cuenta",  requires: "panel.access" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

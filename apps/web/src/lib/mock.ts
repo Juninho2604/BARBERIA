@@ -13,6 +13,7 @@ import type {
   AuthUserDto,
   AvailabilityResponseDto,
   BarberDto,
+  ChangePasswordInputDto,
   ClientDetailDto,
   ClientSummaryDto,
   CreateAppointmentInputDto,
@@ -449,6 +450,13 @@ export const mockApi = {
   async me(token: string): Promise<AuthUserDto> {
     assertAdminToken(token);
     return MOCK_OWNER;
+  },
+  async changePassword(input: ChangePasswordInputDto, token: string): Promise<void> {
+    assertAdminToken(token);
+    // En demo no hay password real; simulamos validación mínima.
+    if (input.currentPassword === input.newPassword) {
+      throw new ApiError(400, "La nueva contraseña debe ser distinta a la actual.");
+    }
   },
 
   // --- admin: staff ---

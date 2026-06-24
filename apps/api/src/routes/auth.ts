@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
+  ChangePasswordSchema,
   LoginSchema,
   RefreshSchema,
   RegisterSchema,
@@ -167,6 +168,66 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
         });
       return reply.status(204).send();
     });
+
+    // POST /change-password — el usuario autenticado cambia su propia
+    // contraseña. Exige la contraseña actual (re-auth) para evitar que un
+    // token robado/sesión abierta cambie la clave sin conocerla. Cuentas
+    // sin passwordHash (creadas por reserva sin registro) no aplican aquí.
+    r.post(
+      "/change-password",
+      {
+        preHandler: guards.requireAuth,
+        schema: { body: ChangePasswordSchema },
+        // Anti brute-force sobre la contraseña actual.
+        config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
+      },
+      async (req, reply) => {
+        const { currentPassword, newPassword } = req.body;
+        const user = await prisma.user.findUnique({
+          where: { id: req.auth!.userId },
+        });
+        if (!user) {
+          return reply.status(404).send({
+            error: { code: "USER_NOT_FOUND", message: "Usuario no encontrado" },
+          });
+        }
+        if (!user.isActive) {
+          return reply.status(403).send({
+            error: { code: "ACCOUNT_DISABLED", message: "Cuenta desactivada" },
+          });
+        }
+        if (!user.passwordHash) {
+          return reply.status(409).send({
+            error: {
+              code: "NO_PASSWORD_SET",
+              message: "Esta cuenta aún no tiene contraseña configurada.",
+            },
+          });
+        }
+        if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+          return reply.status(401).send({
+            error: {
+              code: "INVALID_CURRENT_PASSWORD",
+              message: "La contraseña actual es incorrecta.",
+            },
+          });
+        }
+        if (await verifyPassword(newPassword, user.passwordHash)) {
+          return reply.status(400).send({
+            error: {
+              code: "SAME_PASSWORD",
+              message: "La nueva contraseña debe ser distinta a la actual.",
+            },
+          });
+        }
+        const passwordHash = await hashPassword(newPassword);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash },
+        });
+        return reply.status(204).send();
+      },
+    );
 
     r.get("/me", { preHandler: guards.requireAuth }, async (req, reply) => {
       const user = await prisma.user.findUnique({ where: { id: req.auth!.userId } });
