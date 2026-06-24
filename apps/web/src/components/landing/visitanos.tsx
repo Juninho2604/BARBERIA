@@ -19,9 +19,53 @@ function googleMapsUrl(): string {
   return `https://www.google.com/maps/search/?api=1&query=${q}&query_place_id=&query=${latitude},${longitude}`;
 }
 
+type Day =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
+
+/** Pliega un array de días en un rango corto si son consecutivos
+ *  (["Monday","Tuesday","Wednesday"] → "Lun – Mié"), si no devuelve la
+ *  lista con separadores ("Mon, Wed, Fri"). Mantiene el orden de la semana
+ *  empezando en lunes. */
+function formatDaysRange(days: readonly string[], tDay: (k: string) => string) {
+  const ORDER: Day[] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+  const indexes = days
+    .map((d) => ORDER.indexOf(d as Day))
+    .filter((i) => i >= 0)
+    .sort((a, b) => a - b);
+  if (indexes.length === 0) return "";
+  if (indexes.length === 1) return tDay(ORDER[indexes[0]]);
+  const consecutive = indexes.every((v, i) => i === 0 || v === indexes[i - 1] + 1);
+  if (consecutive) {
+    return `${tDay(ORDER[indexes[0]])} – ${tDay(ORDER[indexes[indexes.length - 1]])}`;
+  }
+  return indexes.map((i) => tDay(ORDER[i])).join(", ");
+}
+
 export function Visitanos() {
   const t = useTranslations("visitanos");
+  const tDay = useTranslations("visitanos.days");
   const mapsUrl = googleMapsUrl();
+  // Render bilingüe del horario: traduce días desde el spec y pliega
+  // rangos consecutivos (Lun – Sáb · 9:00 – 20:00). El display estático
+  // en business-info quedaba siempre en español.
+  const hoursLines = BUSINESS.hours.spec.map((s) => {
+    const days = formatDaysRange(s.dayOfWeek, tDay);
+    return `${days} · ${s.opens} – ${s.closes}`;
+  });
   return (
     <section className="bc-visit" id="visitanos">
       <div className="bc-visit__bg" data-parallax="0.12">
@@ -51,8 +95,10 @@ export function Visitanos() {
             </div>
             <div data-reveal data-delay="1">
               <div className="k">{t("labels.hours")}</div>
-              <div className="v" style={{ whiteSpace: "pre-line" }}>
-                {BUSINESS.hours.display}
+              <div className="v">
+                {hoursLines.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
               </div>
             </div>
             <div data-reveal data-delay="2">

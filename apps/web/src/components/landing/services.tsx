@@ -50,15 +50,6 @@ export async function Services() {
           </p>
         </header>
 
-        <aside className="bc-heroes" data-reveal aria-label={th("eyebrow")}>
-          <div className="bc-heroes__badge">{th("badge")}</div>
-          <div className="bc-heroes__body">
-            <p className="bc-heroes__eyebrow">{th("eyebrow")}</p>
-            <p className="bc-heroes__text">{th("text")}</p>
-            <p className="bc-heroes__note">{th("note")}</p>
-          </div>
-        </aside>
-
         {loadError ? (
           <p className="bc-lead">
             {t("loadErrorBefore")}
@@ -87,6 +78,15 @@ export async function Services() {
             ))}
           </ul>
         )}
+
+        <aside className="bc-heroes" data-reveal aria-label={th("eyebrow")}>
+          <div className="bc-heroes__badge">{th("badge")}</div>
+          <div className="bc-heroes__body">
+            <p className="bc-heroes__eyebrow">{th("eyebrow")}</p>
+            <p className="bc-heroes__text">{th("text")}</p>
+            <p className="bc-heroes__note">{th("note")}</p>
+          </div>
+        </aside>
 
         <div className="bc-services__foot" data-reveal>
           <Link className="bc-btn bc-btn--solid" href="/reservar">

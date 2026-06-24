@@ -620,7 +620,10 @@ html[data-modal-open="true"] {
   display: flex;
   align-items: center;
   gap: clamp(1.4rem, 4vw, 3rem);
-  margin: clamp(1rem, 3vw, 2rem) 0 0;
+  /* Margen superior generoso: tras la lista de servicios necesita una
+     separación clara para que el bloque destacado se lea como aparte y
+     no confunda con un item más. */
+  margin: clamp(2.4rem, 6vw, 4rem) 0 0;
   padding: clamp(1.6rem, 3.5vw, 2.6rem);
   background: var(--color-bone);
   color: var(--color-ink);
