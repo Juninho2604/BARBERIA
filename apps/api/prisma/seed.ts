@@ -11,8 +11,9 @@
  *                            de .env (la cuenta queda en DB con su hash).
  *   INITIAL_OWNER_NAME     — nombre legible (default "Owner")
  *
- * Si no hay INITIAL_OWNER_*, el seed crea servicios y barberos sin tocar
- * usuarios — útil para reseedear catálogo sin tocar cuentas existentes.
+ * Si no hay INITIAL_OWNER_*, el seed solo sincroniza servicios (catálogo)
+ * sin tocar usuarios. Los barberos NO se siembran: se gestionan desde el
+ * panel /admin/barbers (sembrarlos los resucitaba en cada deploy).
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -79,34 +80,12 @@ const SERVICES = [
   },
 ];
 
-const BARBERS = [
-  {
-    email: "juan@brothersclubbarbers.com",
-    name: "Juan",
-    bio: "10 años cortando. Especialista en fade.",
-    // L-V 9-18, S 10-14
-    hours: [
-      { weekday: 1, startMin: 540, endMin: 1080 },
-      { weekday: 2, startMin: 540, endMin: 1080 },
-      { weekday: 3, startMin: 540, endMin: 1080 },
-      { weekday: 4, startMin: 540, endMin: 1080 },
-      { weekday: 5, startMin: 540, endMin: 1080 },
-      { weekday: 6, startMin: 600,  endMin: 840  },
-    ],
-  },
-  {
-    email: "luis@brothersclubbarbers.com",
-    name: "Luis",
-    bio: "Estilo clásico, barbas y afeitado.",
-    hours: [
-      { weekday: 2, startMin: 660, endMin: 1200 },
-      { weekday: 3, startMin: 660, endMin: 1200 },
-      { weekday: 4, startMin: 660, endMin: 1200 },
-      { weekday: 5, startMin: 660, endMin: 1200 },
-      { weekday: 6, startMin: 600, endMin: 1080 },
-    ],
-  },
-];
+// NOTA: ya NO sembramos barberos demo (Juan/Luis). Los barberos reales
+// (Roman/Edgar/Francesco/Victor — dueños a la vez) se crean y gestionan
+// desde el panel /admin/barbers. Sembrarlos aquí los RESUCITABA en cada
+// arranque del contenedor (el seed corre en cada deploy): tras borrarlos
+// desde el panel, el siguiente deploy los recreaba. Mantener esta lista
+// vacía evita ese zombie.
 
 async function seedServices() {
   for (const svc of SERVICES) {
@@ -135,34 +114,6 @@ async function seedServices() {
     }
     await prisma.service.create({ data: { ...svc, isActive: true } });
     console.log(`[seed] +service ${svc.name}`);
-  }
-}
-
-async function seedBarbers() {
-  for (const b of BARBERS) {
-    const existingUser = await prisma.user.findUnique({ where: { email: b.email } });
-    if (existingUser) {
-      console.log(`[seed] = barber ${b.email} ya existe`);
-      continue;
-    }
-    const user = await prisma.user.create({
-      data: {
-        email: b.email,
-        name: b.name,
-        role: "BARBER",
-        passwordHash: null,    // reclamable luego con /auth/register
-        isActive: true,
-      },
-    });
-    await prisma.barber.create({
-      data: {
-        userId: user.id,
-        bio: b.bio,
-        isActive: true,
-        workingHours: { create: b.hours },
-      },
-    });
-    console.log(`[seed] +barber ${b.name}`);
   }
 }
 
@@ -207,7 +158,6 @@ async function seedOwner() {
 async function main() {
   console.log("[seed] arrancando…");
   await seedServices();
-  await seedBarbers();
   await seedOwner();
   console.log("[seed] listo.");
 }
