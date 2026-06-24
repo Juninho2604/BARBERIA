@@ -36,9 +36,15 @@
       "cut": { "title": "The finish", "label": "03 / Detail" }
     }
   },
+  "heroes": {
+    "eyebrow": "Heroes Discount",
+    "badge": "15% OFF",
+    "text": "As a thank you for your service, we proudly offer special pricing for Military, Veterans, Law Enforcement, Firefighters, and EMS Personnel.",
+    "note": "Applies to all our services"
+  },
   "services": {
     "eyebrow": "Services",
-    "title": "What we do.",
+    "title": "Our services.",
     "lead": "A short, focused menu. Pick what you need and we'll handle the rest.",
     "loadErrorBefore": "We couldn't load the menu right now. ",
     "loadErrorLink": "Book directly here",

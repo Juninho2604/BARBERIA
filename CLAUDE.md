@@ -34,7 +34,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-06-06
+- **Fecha última actualización:** 2026-06-24
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` sirviendo web + API desde el VPS con Nginx + Let's Encrypt (cert válido hasta 2026-09-04, renovación automática vía `certbot.timer`). El VPS es multi-tenant: además de Barbería aloja capsula-erp, tablepongve, omia-n8n, mail-tenari, pokepok-menu, demoapp. Barbería convive sin chocar: web en `127.0.0.1:3100`, API en `127.0.0.1:4000`, vhost propio sin tocar configs ajenos.
 - **Pendiente Fase C:** desactivar/borrar el proyecto Vercel (ya no recibe tráfico).
@@ -142,6 +142,14 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 8. Log de cambios
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
+
+- **2026-06-24** — **Gestión de barberos reales + cambiar contraseña + fix DELETE.** Sesión operativa con el usuario sobre el equipo real y credenciales. Mergeado a `main` (`35011da`):
+  - **fix `FST_ERR_CTP_EMPTY_JSON_BODY`** (`a986f81`): `api.ts http()` enviaba `Content-Type: application/json` aunque no hubiera body → Fastify rechazaba DELETE/PATCH sin payload (desactivar barbero/servicio, borrar TimeOff, cancelar cita). Ahora solo añade el header cuando hay body.
+  - **Borrado real de barberos** (`b9c2e1b`): `DELETE /barbers/:id?purge=true`. Sin purge = soft-delete (isActive=false). Con purge: si tiene citas → 409 `BARBER_HAS_APPOINTMENTS` (desactivar, preserva historial); si no, borra el perfil Barber (cascade workingHours/timeOff). El User se conserva si es OWNER/staff (estos barberos son **dueños a la vez**) o tiene citas como cliente; solo se borra el User si es BARBER puro sin historial (limpia duplicados/seed). Panel: botón **Eliminar** (confirm fuerte) + **Reactivar** para inactivos. Nuevo `api.updateBarber` (el PUT existía sin cliente).
+  - **Cambiar contraseña propia** (`73a43e0`): `POST /auth/change-password` (requireAuth + rate-limit 10/15min), exige contraseña actual (re-auth), rechaza si es igual a la nueva o si la cuenta no tiene password. Schema `ChangePassword` en shared. Nueva página `/admin/account` "Mi cuenta" (datos del perfil + form de cambio con validación cliente). Item de nav para todos los roles con `panel.access`.
+  - **Equipo real cargado vía SSH (no en repo, son datos):** los **4 barberos = OWNER + perfil de barber** a la vez. Creados con script base64 idempotente (`docker exec barberia-api node`): Roman J. `roman@`, Edgar J. `edgar@`, Francesco P. `francesco@`, Victor P. `victor@brothersclubbarbers.com`, todos rol OWNER, horario L–V 9:00–17:00, **contraseña temporal compartida `barberia2026`** (bcrypt 12). Borrados los seed viejos (juan@barberia.com, juan@/luis@brothersclubbarbers.com). **Gotcha documentado:** una cuenta OWNER sin password NO se puede reclamar vía `/auth/register` (guard `STAFF_CLAIM_REQUIRES_INVITE` de la auditoría) → los barberos-owner DEBEN crearse con password, no son autoreclamables. **Limpieza pendiente de ejecutar por el usuario:** quedaron 3 duplicados rol BARBER (`romanj@`, `edgarj@`, `francescop@`) creados antes por el panel; se les pasó comando base64 para borrarlos y dejar 4.
+  - **Técnica de ejecución en VPS:** los comandos largos `node -e "..."` se corrompían al pegar sobre SSH (líneas reordenadas). Solución: script → base64 en **una sola línea** → `echo 'B64' | base64 -d | docker exec -i barberia-api node`. Sin comillas/espacios/saltos que el terminal mezcle. Verificado round-trip + `node --check` antes de entregar.
+  - **Pendiente datos del cliente:** que cada barbero cambie su `barberia2026` desde /admin/account; rellenar bio/foto por barbero; teléfono y social links reales en `business-info.ts`.
 
 - **2026-06-06** — **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` en producción desde el VPS. Pasos ejecutados con el usuario en SSH:
   - **Descubrimiento del entorno**: el VPS resultó ser multi-tenant (capsula-erp en :3000, demoapp en :3001, omia-n8n, mail-tenari/tenari, pokepok-menu, tablepongve.com, kpsula.app — todos con vhosts Nginx + cert LE propios). Eso obligó a reescribir el plan para ser estrictamente NO-destructivo.

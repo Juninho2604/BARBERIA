@@ -37,9 +37,9 @@ export const BUSINESS = {
     phone: null as string | null,
   },
 
-  /** TODO(cliente): links reales de redes. */
+  /** Links reales de redes. TODO(cliente): TikTok y WhatsApp cuando los tengan. */
   social: {
-    instagram: null as string | null,
+    instagram: "https://www.instagram.com/brothersclubbarbers" as string | null,
     tiktok: null as string | null,
     whatsapp: null as string | null,
   },

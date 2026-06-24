@@ -1,6 +1,15 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { BUSINESS } from "@/lib/business-info";
+
+/** Redes configuradas en business-info. Solo se renderizan las que tienen
+ *  URL real (evita links muertos a "#"). */
+const SOCIALS: { key: keyof typeof BUSINESS.social; label: string }[] = [
+  { key: "instagram", label: "Instagram" },
+  { key: "tiktok", label: "TikTok" },
+  { key: "whatsapp", label: "WhatsApp" },
+];
 
 /**
  * Footer — bloque superior con logo a la izquierda y dos columnas
@@ -32,9 +41,21 @@ export function Footer() {
           </div>
           <div className="bc-footer__col">
             <h4>{t("follow")}</h4>
-            <a href="#" aria-label="Instagram">Instagram</a>
-            <a href="#" aria-label="TikTok">TikTok</a>
-            <a href="#" aria-label="WhatsApp">WhatsApp</a>
+            {SOCIALS.map(({ key, label }) => {
+              const url = BUSINESS.social[key];
+              if (!url) return null;
+              return (
+                <a
+                  key={key}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                >
+                  {label}
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>
