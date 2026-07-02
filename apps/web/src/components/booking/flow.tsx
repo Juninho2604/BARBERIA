@@ -218,9 +218,19 @@ export function BookingFlow({ services, barbers }: Props) {
                     setBarber(b);
                     setStep("datetime");
                   }}
-                  className="group flex w-full items-baseline justify-between gap-6 py-5 text-left transition hover:opacity-80"
+                  className="group flex w-full items-center gap-4 py-5 text-left transition hover:opacity-80"
                 >
-                  <div>
+                  {/* Avatar circular opcional. Si el barbero no tiene
+                      photoUrl configurado desde /admin, el slot colapsa. */}
+                  {b.photoUrl && (
+                    <img
+                      src={b.photoUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-14 w-14 flex-shrink-0 rounded-full object-cover sm:h-16 sm:w-16"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
                     <p className="text-lg font-normal text-[color:var(--color-fg)]">{b.name}</p>
                     {b.bio && (
                       <p className="mt-1 text-sm text-[color:var(--color-fg-muted)]">{b.bio}</p>

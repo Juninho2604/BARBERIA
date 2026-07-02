@@ -120,9 +120,86 @@ export default function BarberDetailPage({
         {barber.bio && <p className="mt-4 max-w-2xl text-sm text-[color:var(--color-fg-muted)]">{barber.bio}</p>}
       </header>
 
+      <PhotoEditor barber={barber} onSaved={refresh} />
       <WorkingHoursEditor barber={barber} onSaved={refresh} />
       <TimeOffSection barberId={barber.id} />
     </section>
+  );
+}
+
+function PhotoEditor({
+  barber,
+  onSaved,
+}: {
+  barber: BarberDto;
+  onSaved: () => Promise<void>;
+}) {
+  const [photoUrl, setPhotoUrl] = useState(barber.photoUrl ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    const token = readAccessToken();
+    if (!token) return;
+    const trimmed = photoUrl.trim();
+    setError(null);
+    setSaving(true);
+    try {
+      await api.updateBarber(barber.id, { photoUrl: trimmed || null }, token);
+      await onSaved();
+      toast.success(trimmed ? "Foto actualizada" : "Foto eliminada");
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <article className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6">
+      <h2 className="text-2xl font-light tracking-tight">Foto</h2>
+      <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
+        URL HTTPS de la foto. Aparece en el flujo de reserva junto al nombre.
+      </p>
+
+      <div className="mt-6 flex flex-wrap items-start gap-6">
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt=""
+            className="h-24 w-24 flex-shrink-0 rounded-full border border-[color:var(--color-border)] object-cover"
+            onError={(e) => ((e.currentTarget.style.display = "none"))}
+          />
+        )}
+        <div className="min-w-[240px] flex-1">
+          <input
+            type="url"
+            value={photoUrl}
+            onChange={(e) => setPhotoUrl(e.target.value)}
+            placeholder="https://…"
+            pattern="https://.*"
+            maxLength={2048}
+            className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-2 text-[color:var(--color-fg)] outline-none transition focus:border-[color:var(--color-fg)]"
+          />
+          {error && (
+            <p className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--color-fg-muted)] bg-[color:var(--color-bg)] px-4 py-3 text-sm">
+              {error}
+            </p>
+          )}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="inline-flex items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-fg)] px-5 py-2 text-xs font-medium uppercase tracking-[0.18em] text-[color:var(--color-bg)] transition hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? "Guardando…" : "Guardar foto"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
