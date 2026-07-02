@@ -601,6 +601,59 @@ html[data-modal-open="true"] {
   }
 }
 
+/* ---------- nuestro equipo ---------- */
+.bc-team__head {
+  max-width: 44rem;
+  margin: 0 auto clamp(44px, 6vh, 76px);
+  text-align: center;
+}
+.bc-team__head .bc-lead { margin: 0 auto; }
+.bc-team__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: clamp(2rem, 4vw, 3.5rem);
+  text-align: center;
+}
+.bc-team__photo-wrap {
+  width: clamp(140px, 16vw, 208px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 1.4rem;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.bc-team__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.25) contrast(1.02) brightness(0.95);
+  transition: filter 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.bc-team__card:hover .bc-team__photo {
+  filter: grayscale(0) brightness(1);
+  transform: scale(1.04);
+}
+.bc-team__name {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  font-weight: 400;
+}
+.bc-team__bio {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-bone-dim);
+}
+@media (max-width: 560px) {
+  .bc-team__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.2rem 1.2rem;
+  }
+}
+
 /* ---------- servicios ---------- */
 .bc-services__head {
   margin-bottom: clamp(36px, 5vh, 64px);

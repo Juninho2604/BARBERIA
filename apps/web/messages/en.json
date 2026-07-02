@@ -36,6 +36,11 @@
       "cut": { "title": "The finish", "label": "03 / Detail" }
     }
   },
+  "team": {
+    "eyebrow": "Meet the team",
+    "title": "The brothers.",
+    "lead": "Four barbers, one club. Pick your favorite when you book."
+  },
   "heroes": {
     "eyebrow": "Heroes Discount",
     "badge": "15% OFF",

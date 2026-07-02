@@ -9,6 +9,7 @@ import { IntroGate } from "@/components/intro/IntroGate";
 import { Nav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
 import { Manifiesto } from "@/components/landing/manifiesto";
+import { Team } from "@/components/landing/team";
 import { Local } from "@/components/landing/local";
 import { Services } from "@/components/landing/services";
 import { Visitanos } from "@/components/landing/visitanos";
@@ -33,6 +34,7 @@ export default async function HomePage({
       <main id="main-content" tabIndex={-1}>
         <Hero />
         <Manifiesto />
+        <Team />
         <Local />
         <Services />
         <Visitanos />

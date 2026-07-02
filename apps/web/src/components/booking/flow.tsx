@@ -227,7 +227,7 @@ export function BookingFlow({ services, barbers }: Props) {
                       src={b.photoUrl}
                       alt=""
                       loading="lazy"
-                      className="h-14 w-14 flex-shrink-0 rounded-full object-cover sm:h-16 sm:w-16"
+                      className="h-20 w-20 flex-shrink-0 rounded-full object-cover sm:h-24 sm:w-24"
                     />
                   )}
                   <div className="min-w-0 flex-1">
