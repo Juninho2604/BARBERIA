@@ -36,6 +36,11 @@
       "cut": { "title": "El acabado", "label": "03 / Detalle" }
     }
   },
+  "team": {
+    "eyebrow": "Conoce al equipo",
+    "title": "Los hermanos.",
+    "lead": "Cuatro barberos, un solo club. Elige tu favorito al reservar."
+  },
   "heroes": {
     "eyebrow": "Descuento Héroes",
     "badge": "15% OFF",
