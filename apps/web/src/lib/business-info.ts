@@ -45,7 +45,9 @@ export const BUSINESS = {
   },
 
   /** Horario de atención. Formato Schema.org openingHoursSpecification.
-      Lun – Sáb · 9:00 – 20:00 · Dom · 10:00 – 18:00
+      Lun – Sáb · 9:00 – 20:00 · Dom · 10:00 – 17:00
+      Confirmado por el cliente (WhatsApp, junio 2026): L-S última cita
+      7:15pm para terminar a las 8; domingo última cita 3:15pm, cierre 5pm.
       No se incluye `display` hardcodeado: el render bilingüe se hace en
       `visitanos.tsx` traduciendo días desde el spec por locale. */
   hours: {
@@ -65,7 +67,7 @@ export const BUSINESS = {
       {
         dayOfWeek: ["Sunday"],
         opens: "10:00",
-        closes: "18:00",
+        closes: "17:00",
       },
     ],
   },
