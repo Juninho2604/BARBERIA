@@ -55,17 +55,8 @@
     "loadErrorLink": "Reserva directo aquí",
     "loadErrorAfter": " y elige tu servicio en el flujo.",
     "empty": "Estamos preparando el catálogo. Vuelve en un momento.",
-    "footerCta": "Reservar ahora",
-    "descriptions": {
-      "mensHaircut": "Corte de cabello para hombres y niños, clásico o desvanecido.",
-      "regularBeard": "Alineado y trim de barba.",
-      "mensHaircutBeard": "Corte de cabello clásico o desvanecido y trim de barba.",
-      "hotTowelShave": "Afeitado o estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
-      "mensHaircutShave": "Corte de cabello clásico o desvanecido más afeitado/estilo de barba con toalla caliente, vapor, espuma, aceite para la barba y toalla fría al finalizar.",
-      "eyebrows": "Limpieza de cejas.",
-      "noseEarWax": "Depilación con cera caliente para nariz y orejas.",
-      "experience": "Incluye haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask y bebida especial."
-    }
+    "complimentary": "Brothers Club Barbershop te ofrece una asesoría, lavado de cabello y peinado gratis. Además, una bebida cortesía en todos nuestros servicios.",
+    "footerCta": "Reservar ahora"
   },
   "visitanos": {
     "eyebrow": "Visítanos",
@@ -89,7 +80,7 @@
     }
   },
   "cta": {
-    "eyebrow": "Sin cuenta necesaria",
+    "eyebrow": "Reserva online, 24/7",
     "titleLine1": "¿Listo?",
     "titleLine2": "Reserva tu cita.",
     "button": "Reservar online"
@@ -119,53 +110,11 @@
     "back": "← Volver",
     "header": "— Reserva —",
     "title": "Reservar cita",
-    "subtitle": "Elige servicio, barbero y horario. Sin cuenta necesaria.",
-    "configEmpty": "Aún no hay servicios o barberos configurados. Vuelve pronto.",
-    "mockMode": "Modo demo · datos de prueba",
-    "change": "← Cambiar",
-    "progress": {
-      "service": "Servicio",
-      "barber": "Barbero",
-      "datetime": "Horario",
-      "contact": "Datos"
-    },
-    "step": {
-      "service": {
-        "title": "Selecciona tu servicio",
-        "intro": "Brothers Club Barbershop te ofrece una asesoría, lavado de cabello y peinado gratis. Además, una bebida cortesía en todos nuestros servicios.",
-        "choose": "Elegir →"
-      },
-      "barber": { "title": "¿Con quién?", "choose": "Elegir →" },
-      "datetime": {
-        "title": "¿Cuándo?",
-        "summary": "{service} con {barber}",
-        "loading": "Buscando horarios…",
-        "empty": "No hay horarios disponibles ese día. Prueba otra fecha."
-      },
-      "contact": {
-        "title": "Tus datos",
-        "name": "Nombre",
-        "email": "Email",
-        "phone": "Teléfono",
-        "submit": "Confirmar reserva",
-        "submitting": "Reservando…"
-      },
-      "done": {
-        "label": "— Reserva confirmada —",
-        "title": "Te esperamos.",
-        "row": {
-          "service": "Servicio",
-          "barber": "Barbero",
-          "when": "Cuándo"
-        },
-        "advice": "Te esperamos a tu hora establecida. Por favor toma tus prevenciones: te recomendamos llegar entre 5 y 10 minutos antes. Si llegas más de 10 minutos tarde, podrías perder tu cita.",
-        "homeLink": "← Volver al inicio"
-      }
-    },
-    "errors": {
-      "slotTaken": "Ese horario acaba de ser reservado. Elige otro.",
-      "unexpected": "Error inesperado"
-    }
+    "subtitle": "Las reservas se hacen a través de Booksy. Elige servicio, barbero y horario en la ventana que se abre.",
+    "open": "Abrir reservas",
+    "loading": "Cargando reservas…",
+    "failed": "La ventana de reservas no cargó. Si usas un bloqueador de anuncios, desactívalo para este sitio y recarga la página.",
+    "profile": "Reservar en Booksy"
   },
   "metadata": {
     "title": "Brothers Club Barbershop — Reserva tu cita",

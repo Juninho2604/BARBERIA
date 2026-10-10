@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { api } from "@/lib/api";
-import { BookingFlow } from "@/components/booking/flow";
+import { BooksyLauncher } from "@/components/booksy/booksy";
 import { Link } from "@/i18n/navigation";
-
-// Misma razón que la landing: fetch a API en runtime.
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -17,6 +13,11 @@ export async function generateMetadata({
   return { title: t("reservarTitle") };
 }
 
+/**
+ * Las reservas públicas se hacen en Booksy. Esta página cubre los accesos
+ * directos (Google, links compartidos) y los clicks que llegan antes de que
+ * el widget termine de cargar: abre Booksy en cuanto está listo.
+ */
 export default async function ReservarPage({
   params,
 }: {
@@ -25,11 +26,6 @@ export default async function ReservarPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("booking");
-
-  const [services, barbers] = await Promise.all([
-    api.listServices().catch(() => []),
-    api.listBarbers().catch(() => []),
-  ]);
 
   return (
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-[color:var(--color-bg)]">
@@ -50,13 +46,12 @@ export default async function ReservarPage({
           {t("subtitle")}
         </p>
 
-        {services.length === 0 || barbers.length === 0 ? (
-          <p className="mt-12 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 text-[color:var(--color-fg-muted)]">
-            {t("configEmpty")}
-          </p>
-        ) : (
-          <BookingFlow services={services} barbers={barbers} />
-        )}
+        <BooksyLauncher
+          openLabel={t("open")}
+          loadingLabel={t("loading")}
+          failedText={t("failed")}
+          profileLabel={t("profile")}
+        />
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { BookLink } from "@/components/booksy/booksy";
 import { LangSwitcher } from "./lang-switcher";
 
 /**
@@ -59,9 +60,9 @@ export function Nav() {
           {t("visit")}
         </a>
         <LangSwitcher />
-        <Link href="/reservar" className="bc-btn bc-btn--solid bc-nav__cta">
+        <BookLink className="bc-btn bc-btn--solid bc-nav__cta">
           {t("book")} <span className="arw">→</span>
-        </Link>
+        </BookLink>
       </div>
     </nav>
   );

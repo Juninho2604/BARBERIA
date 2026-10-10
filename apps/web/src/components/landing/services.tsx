@@ -1,19 +1,17 @@
 import { getTranslations } from "next-intl/server";
 import { api } from "@/lib/api";
-import { Link } from "@/i18n/navigation";
+import { BookLink } from "@/components/booksy/booksy";
 import type { ServiceDto } from "@/lib/types";
 
 /**
  * Servicios — menú editorial flat en 2 columnas (desktop), 1 col mobile.
  *
  * Decisiones de diseño:
- *  - SIN precios en la landing (los precios viven solo en /reservar).
- *    La landing es discovery, no checkout.
- *  - SIN descripciones (también solo en /reservar, donde ayudan a
- *    decidir). En landing van solo nombre + duración → compacto.
+ *  - SIN precios ni descripciones: viven en Booksy, donde se reserva.
+ *    En landing van solo nombre + duración → compacto.
  *  - Sin grouping por categoría: el catálogo nuevo del cliente tiene
  *    descripciones únicas por servicio (no actúan como categoría).
- *  - Cada item linkea a /reservar (locale-aware).
+ *  - Cada item abre la ventana de reserva de Booksy.
  */
 function formatDuration(min: number, label: string) {
   if (min >= 60) {
@@ -53,9 +51,9 @@ export async function Services() {
         {loadError ? (
           <p className="bc-lead">
             {t("loadErrorBefore")}
-            <Link href="/reservar" className="underline-offset-4 hover:underline">
+            <BookLink className="underline-offset-4 hover:underline">
               {t("loadErrorLink")}
-            </Link>
+            </BookLink>
             {t("loadErrorAfter")}
           </p>
         ) : services.length === 0 ? (
@@ -68,16 +66,20 @@ export async function Services() {
                 data-reveal
                 data-delay={Math.min(i % 4, 3) || undefined}
               >
-                <Link href="/reservar" className="bc-svc-item">
+                <BookLink className="bc-svc-item">
                   <span className="bc-svc-item__name">{s.name}</span>
                   <span className="bc-svc-item__meta">
                     {formatDuration(s.durationMinutes, "min")}
                   </span>
-                </Link>
+                </BookLink>
               </li>
             ))}
           </ul>
         )}
+
+        <p className="bc-services__note" data-reveal>
+          {t("complimentary")}
+        </p>
 
         <aside className="bc-heroes" data-reveal aria-label={th("eyebrow")}>
           <div className="bc-heroes__badge">{th("badge")}</div>
@@ -89,9 +91,9 @@ export async function Services() {
         </aside>
 
         <div className="bc-services__foot" data-reveal>
-          <Link className="bc-btn bc-btn--solid" href="/reservar">
+          <BookLink className="bc-btn bc-btn--solid">
             {t("footerCta")} <span className="arw">→</span>
-          </Link>
+          </BookLink>
         </div>
       </div>
     </section>

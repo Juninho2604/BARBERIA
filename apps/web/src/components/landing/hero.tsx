@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { BookLink } from "@/components/booksy/booksy";
 import { Seal } from "./seal";
 
 /**
@@ -41,9 +41,9 @@ export function Hero() {
           {t("sub")}
         </p>
         <div className="bc-hero__cta" data-reveal data-delay="3">
-          <Link className="bc-btn bc-btn--solid" href="/reservar">
+          <BookLink className="bc-btn bc-btn--solid">
             {t("bookCta")} <span className="arw">→</span>
-          </Link>
+          </BookLink>
           <a className="bc-btn bc-btn--ghost" href="#servicios">
             {t("seeServices")}
           </a>

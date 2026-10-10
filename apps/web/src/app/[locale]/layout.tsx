@@ -4,6 +4,7 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import type { Metadata } from "next";
 import { BUSINESS } from "@/lib/business-info";
 import { routing } from "@/i18n/routing";
+import { BooksyLoader } from "@/components/booksy/booksy";
 
 /**
  * Layout localizado. Sólo cubre las rutas públicas (landing + booking).
@@ -72,6 +73,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <BooksyLoader />
       {children}
     </NextIntlClientProvider>
   );
