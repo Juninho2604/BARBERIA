@@ -10,7 +10,6 @@ import {
 } from "@barberia/shared";
 import { prisma } from "../db.js";
 import type { AuthGuards } from "../auth/middleware.js";
-import { verifyAccessToken } from "../auth/tokens.js";
 import type { Env } from "../env.js";
 
 const IdParam = z.object({ id: z.string().min(1) });
@@ -73,28 +72,27 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
   return async (app) => {
     const r = app.withTypeProvider<ZodTypeProvider>();
 
-    // POST / — crear reserva. Auth opcional: si no hay token, guest es obligatorio.
-    // Rate limit: 10/hora por IP para evitar que un bot reserve todos los
-    // slots futuros como denegación de servicio del negocio.
+    // POST / — cita creada por el staff desde el calendario del panel (las
+    // reservas públicas se hacen en Booksy). `guest` identifica al cliente:
+    // se busca por email o se crea como CLIENT. Un BARBER solo puede
+    // crear citas en su propia agenda.
     r.post(
       "/",
       {
+        preHandler: guards.requireAuth,
         schema: { body: CreateAppointmentSchema },
-        config: { rateLimit: { max: 10, timeWindow: "1 hour" } },
+        config: { rateLimit: { max: 60, timeWindow: "1 hour" } },
       },
       async (req, reply) => {
         const { serviceId, barberId, startsAt, guest, notes } = req.body;
+        const { userId, role } = req.auth!;
 
-        // Auth opcional: si llega un Bearer válido, lo usamos; si no, seguimos sin.
-        const header = req.headers.authorization;
-        if (header?.startsWith("Bearer ")) {
-          try {
-            const payload = await verifyAccessToken(env, header.slice(7).trim());
-            req.auth = { userId: payload.sub, role: payload.role };
-          } catch {
-            // Token presente pero inválido → 401, no procesamos como guest.
-            return reply.status(401).send({
-              error: { code: "INVALID_TOKEN", message: "Token inválido o expirado" },
+        if (!can(role, "appointments.create")) {
+          const own =
+            role === "BARBER" ? await prisma.barber.findUnique({ where: { userId } }) : null;
+          if (own?.id !== barberId) {
+            return reply.status(403).send({
+              error: { code: "FORBIDDEN", message: "Permiso appointments.create requerido" },
             });
           }
         }
@@ -117,27 +115,17 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         // Política de tiempos:
         //  - Bound máximo: 90 días en el futuro. Evita basura en DB
         //    (cita para año 2099). Política mover a settings cuando exista.
-        //  - Bound mínimo: futuro estricto, EXCEPTO si el usuario es staff
-        //    (OWNER/MANAGER/RECEPTIONIST/ADMIN). En ese caso se permite
-        //    registrar walk-ins de hasta 12h hacia atrás (cliente que entró
-        //    sin reserva, se le registra a posteriori para que cuente en
-        //    métricas e historial).
+        //  - Bound mínimo: hasta 12h hacia atrás, para registrar walk-ins
+        //    (cliente que entró sin reserva) y que cuenten en el historial.
         const MAX_DAYS_AHEAD = 90;
         const WALKIN_WINDOW_HOURS = 12;
         const maxAhead = new Date(now.getTime() + MAX_DAYS_AHEAD * 86400_000);
-        const isStaff = req.auth
-          ? ["OWNER", "MANAGER", "RECEPTIONIST", "ADMIN"].includes(req.auth.role)
-          : false;
-        const minPast = isStaff
-          ? new Date(now.getTime() - WALKIN_WINDOW_HOURS * 3600_000)
-          : now;
+        const minPast = new Date(now.getTime() - WALKIN_WINDOW_HOURS * 3600_000);
         if (Number.isNaN(startsAtDate.getTime()) || startsAtDate <= minPast) {
           return reply.status(400).send({
             error: {
               code: "INVALID_TIME",
-              message: isStaff
-                ? `startsAt debe ser dentro de las últimas ${WALKIN_WINDOW_HOURS}h o en el futuro`
-                : "startsAt debe ser un instante futuro",
+              message: `startsAt debe ser dentro de las últimas ${WALKIN_WINDOW_HOURS}h o en el futuro`,
             },
           });
         }
@@ -151,53 +139,46 @@ export function appointmentsRoutes(env: Env, guards: AuthGuards): FastifyPluginA
         }
         const endsAtDate = new Date(startsAtDate.getTime() + service.durationMinutes * 60_000);
 
-        // Determinar el clientId: sesión o guest.
+        if (!guest) {
+          return reply.status(400).send({
+            error: {
+              code: "GUEST_REQUIRED",
+              message: "Los datos del cliente (guest) son obligatorios",
+            },
+          });
+        }
         let clientId: string;
-        if (req.auth) {
-          clientId = req.auth.userId;
-        } else {
-          if (!guest) {
-            return reply.status(400).send({
+        const normalizedEmail = guest.email.toLowerCase().trim();
+        const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+        if (existing) {
+          // Un miembro del staff no figura como cliente de una cita:
+          // evita ensuciar su historial y tocar sus datos.
+          if (existing.role !== "CLIENT") {
+            return reply.status(409).send({
               error: {
-                code: "GUEST_REQUIRED",
-                message: "Sin sesión, los datos de cliente (guest) son obligatorios",
+                code: "EMAIL_BELONGS_TO_STAFF",
+                message: "Ese email pertenece a un miembro del equipo.",
               },
             });
           }
-          const normalizedEmail = guest.email.toLowerCase().trim();
-          const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-          if (existing) {
-            // Bloqueamos: un usuario anónimo no puede usar el email de
-            // un miembro del staff (sería vector para manipular su PII y
-            // ensuciar su historial con citas falsas).
-            if (existing.role !== "CLIENT") {
-              return reply.status(409).send({
-                error: {
-                  code: "EMAIL_BELONGS_TO_STAFF",
-                  message: "Ese email pertenece a un miembro del equipo. Si eres tú, inicia sesión.",
-                },
-              });
-            }
-            clientId = existing.id;
-            // Si el guest llega con un teléfono y el User no lo tenía, lo guardamos sin tocar nada más.
-            if (!existing.phone && guest.phone) {
-              await prisma.user.update({
-                where: { id: existing.id },
-                data: { phone: guest.phone },
-              });
-            }
-          } else {
-            const created = await prisma.user.create({
-              data: {
-                email: normalizedEmail,
-                name: guest.name,
-                phone: guest.phone,
-                role: "CLIENT",
-                // passwordHash null: se reclama luego con /auth/register.
-              },
+          clientId = existing.id;
+          // Si el guest llega con un teléfono y el User no lo tenía, lo guardamos sin tocar nada más.
+          if (!existing.phone && guest.phone) {
+            await prisma.user.update({
+              where: { id: existing.id },
+              data: { phone: guest.phone },
             });
-            clientId = created.id;
           }
+        } else {
+          const created = await prisma.user.create({
+            data: {
+              email: normalizedEmail,
+              name: guest.name,
+              phone: guest.phone,
+              role: "CLIENT",
+            },
+          });
+          clientId = created.id;
         }
 
         // Crear en transacción con re-chequeo de solapamiento + isolation

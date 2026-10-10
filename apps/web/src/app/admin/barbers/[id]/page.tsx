@@ -66,7 +66,7 @@ export default function BarberDetailPage({
   async function refresh() {
     setLoading(true);
     try {
-      const b = await api.getBarber(id);
+      const b = await api.getBarber(id, readAccessToken() ?? undefined);
       if (!b) {
         setError("Barbero no encontrado");
         return;
@@ -332,7 +332,9 @@ function TimeOffSection({ barberId }: { barberId: string }) {
   async function refresh() {
     setLoading(true);
     try {
-      const all = await api.listTimeOff(barberId);
+      const token = readAccessToken();
+      if (!token) return;
+      const all = await api.listTimeOff(barberId, token);
       // Sólo los futuros, ordenados ascendente.
       const now = Date.now();
       const upcoming = all

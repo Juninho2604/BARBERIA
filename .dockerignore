@@ -1,0 +1,18 @@
+# El contexto de build es la raíz del repo; en el VPS ahí viven .env y los
+# backups de la DB. Nada de eso debe entrar en las capas de la imagen.
+**/node_modules
+**/.next
+**/dist
+.git
+.github
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+# Solo en la raíz: apps/api/prisma/migrations/**/migration.sql SÍ debe entrar.
+backups
+*.sql
+*.sql.gz
+docs
+design_handoff_brothers_club_rebrand

@@ -11,6 +11,8 @@
 #   ( crontab -l 2>/dev/null; echo "30 3 * * * /opt/barberia/infra/scripts/backup.sh >> /var/log/barberia-backup.log 2>&1" ) | crontab -
 
 set -euo pipefail
+# Los dumps llevan datos de clientes y hashes de contraseñas: solo root.
+umask 077
 
 REPO_ROOT="${REPO_ROOT:-/opt/barberia}"
 BACKUP_DIR="${BACKUP_DIR:-${REPO_ROOT}/backups}"
@@ -18,6 +20,7 @@ RETENTION_DAYS="${REPO_BACKUP_DAYS:-14}"
 CONTAINER="${POSTGRES_CONTAINER:-barberia-postgres}"
 
 mkdir -p "${BACKUP_DIR}"
+chmod 700 "${BACKUP_DIR}"
 
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 OUT="${BACKUP_DIR}/barberia-${STAMP}.sql.gz"

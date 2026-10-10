@@ -138,7 +138,7 @@ export const api = {
   },
   async createAppointment(
     input: CreateAppointmentInputDto,
-    token?: string,
+    token: string,
   ): Promise<AppointmentDto> {
     if (useMock()) return mockApi.createAppointment(input);
     return http<AppointmentDto>("/appointments", {
@@ -160,12 +160,13 @@ export const api = {
     if (useMock()) return mockApi.me(token);
     return http<AuthUserDto>("/auth/me", { token });
   },
+  /** Devuelve una sesión nueva: el cambio invalida los tokens anteriores. */
   async changePassword(
     input: ChangePasswordInputDto,
     token: string,
-  ): Promise<void> {
+  ): Promise<AuthSessionDto> {
     if (useMock()) return mockApi.changePassword(input, token);
-    return http<void>("/auth/change-password", {
+    return http<AuthSessionDto>("/auth/change-password", {
       method: "POST",
       body: JSON.stringify(input),
       token,
@@ -235,10 +236,10 @@ export const api = {
     const qs = opts?.purge ? "?purge=true" : "";
     return http<void>(`/barbers/${id}${qs}`, { method: "DELETE", token });
   },
-  async getBarber(id: string): Promise<BarberDto | null> {
+  async getBarber(id: string, token?: string): Promise<BarberDto | null> {
     if (useMock()) return mockApi.getBarber(id);
     try {
-      return await http<BarberDto>(`/barbers/${id}`);
+      return await http<BarberDto>(`/barbers/${id}`, { token });
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) return null;
       throw err;
@@ -289,9 +290,9 @@ export const api = {
     });
   },
 
-  async listTimeOff(barberId: string): Promise<TimeOffDto[]> {
+  async listTimeOff(barberId: string, token: string): Promise<TimeOffDto[]> {
     if (useMock()) return mockApi.listTimeOff(barberId);
-    return http<TimeOffDto[]>(`/barbers/${barberId}/time-off`);
+    return http<TimeOffDto[]>(`/barbers/${barberId}/time-off`, { token });
   },
   async createTimeOff(
     barberId: string,

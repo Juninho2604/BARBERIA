@@ -65,7 +65,7 @@ export function LocalBusinessSchema() {
       // JSON-LD necesita JSON crudo. React lo escapa por defecto si
       // ponemos children, lo que rompe el parsing de Google. Usamos
       // dangerouslySetInnerHTML con valor controlado (no input de usuario).
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
     />
   );
 }

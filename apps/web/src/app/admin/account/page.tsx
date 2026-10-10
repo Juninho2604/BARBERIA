@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
-import { readAccessToken, readUser } from "@/lib/auth-client";
+import { readAccessToken, readUser, writeSession } from "@/lib/auth-client";
 import { ROLE_LABEL } from "@/lib/permissions";
 import { Field } from "@/components/admin/ui";
 import type { AuthUserDto } from "@/lib/types";
@@ -95,7 +95,11 @@ function ChangePasswordForm() {
 
     setSaving(true);
     try {
-      await api.changePassword({ currentPassword: current, newPassword: next }, token);
+      const session = await api.changePassword(
+        { currentPassword: current, newPassword: next },
+        token,
+      );
+      writeSession(session);
       toast.success("Contraseña actualizada");
       setCurrent("");
       setNext("");

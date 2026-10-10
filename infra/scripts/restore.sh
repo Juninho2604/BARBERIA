@@ -27,14 +27,21 @@ echo "    contenedor: ${CONTAINER}"
 read -r -p "Escribe 'restaurar' para continuar: " confirm
 [ "${confirm}" = "restaurar" ] || { echo "Cancelado."; exit 1; }
 
-echo "→ Limpiando esquema actual…"
-docker exec "${CONTAINER}" sh -c \
-  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+echo "→ Backup de seguridad del estado actual antes de sobrescribir…"
+"$(dirname "$0")/backup.sh"
 
+echo "→ Deteniendo la API durante la restauración…"
+docker stop barberia-api
+# Pase lo que pase (también si la restauración falla), la API vuelve a arrancar.
+trap 'echo "Arrancando la API…"; docker start barberia-api >/dev/null' EXIT
+
+# Todo en una sola transacción: si el dump falla a mitad, se revierte el
+# DROP y la base queda como estaba.
 echo "→ Restaurando desde ${BACKUP}…"
-gunzip -c "${BACKUP}" | docker exec -i "${CONTAINER}" sh -c \
-  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+{
+  echo "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+  gunzip -c "${BACKUP}"
+} | docker exec -i "${CONTAINER}" sh -c \
+  'psql -v ON_ERROR_STOP=1 --single-transaction -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
 echo "✓ Restauración completada."
-echo "Reiniciando API para refrescar Prisma…"
-docker restart barberia-api

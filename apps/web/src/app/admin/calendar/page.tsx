@@ -576,20 +576,25 @@ function Composer({
       setError("Fecha u hora inválida.");
       return;
     }
+    const token = readAccessToken();
+    if (!token) return;
     setSaving(true);
     try {
       const whenIso = whenDate.toISOString();
-      await api.createAppointment({
-        serviceId,
-        barberId: selectedBarberId,
-        startsAt: whenIso,
-        guest: {
-          name: clientName.trim(),
-          email: clientEmail.trim().toLowerCase(),
-          phone: clientPhone.trim(),
+      await api.createAppointment(
+        {
+          serviceId,
+          barberId: selectedBarberId,
+          startsAt: whenIso,
+          guest: {
+            name: clientName.trim(),
+            email: clientEmail.trim().toLowerCase(),
+            phone: clientPhone.trim(),
+          },
+          notes: notes.trim() || undefined,
         },
-        notes: notes.trim() || undefined,
-      });
+        token,
+      );
       onCreated();
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);

@@ -1,7 +1,7 @@
 # Multi-stage build para reducir tamaño de imagen.
 # Se ejecuta desde la raíz del monorepo: docker build -f apps/api/Dockerfile .
 
-FROM node:20-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 # openssl + ca-certificates: Prisma necesita libssl3 explícita en bookworm-slim.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
@@ -40,4 +40,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /app/apps/api
 EXPOSE 4000
+# Sin root: el código queda de root (solo lectura para `node`).
+USER node
 CMD ["docker-entrypoint.sh"]
