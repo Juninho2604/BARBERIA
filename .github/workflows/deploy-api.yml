@@ -1,9 +1,10 @@
 name: Deploy stack to VPS
 
+# Solo `main` despliega: el VPS hace `git reset --hard` a la rama que
+# dispara, y la rama de trabajo no debe poder reemplazar producción.
 on:
   push:
     branches:
-      - claude/quirky-ride-pD2AK
       - main
     paths:
       - "apps/api/**"
@@ -15,6 +16,9 @@ on:
       - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
@@ -24,21 +28,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: SSH al VPS y desplegar
-        uses: appleboy/ssh-action@v1.2.0
+        # Fijado por SHA (v1.2.0): un tag se puede mover y esta acción recibe
+        # la llave SSH del VPS.
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          # Huella del host (opcional hasta que exista el secret): evita un
+          # man-in-the-middle en la conexión SSH.
+          fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}
           script_stop: true
-          command_timeout: "10m"
+          command_timeout: "25m"
           script: |
             set -euo pipefail
             cd /opt/barberia
 
             echo "→ Sincronizando código desde GitHub…"
             git fetch origin
-            git reset --hard "origin/${GITHUB_REF_NAME:-${{ github.ref_name }}}"
+            git reset --hard origin/main
 
             echo "→ Reconstruyendo y reiniciando contenedores…"
             docker compose --env-file .env -f infra/docker-compose.yml up -d --build --remove-orphans

@@ -4,7 +4,7 @@
 # NEXT_PUBLIC_* env vars se inlinan en el bundle al `next build`, por eso
 # llegan vía ARG (build time) y no como env runtime.
 
-FROM node:20-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 RUN corepack enable
 WORKDIR /app
 
@@ -34,7 +34,7 @@ RUN pnpm --filter @barberia/shared build
 RUN pnpm --filter @barberia/web build
 
 # ---- runtime: imagen minimal con .next/standalone + .next/static + public ----
-FROM node:20-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
@@ -47,6 +47,9 @@ COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 # Public assets (logo, photos, GLB, robots.txt, etc.)
 COPY --from=build /app/apps/web/public ./apps/web/public
+# Sin root. Next escribe la caché de imágenes optimizadas en .next/cache.
+RUN mkdir -p apps/web/.next/cache && chown -R node:node apps/web/.next/cache
+USER node
 
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]

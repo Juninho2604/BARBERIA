@@ -18,6 +18,7 @@ import { appointmentsRoutes } from "./routes/appointments.js";
 import { timeOffRoutes } from "./routes/timeoff.js";
 import { staffRoutes } from "./routes/staff.js";
 import { clientsRoutes } from "./routes/clients.js";
+import { cspRoutes } from "./routes/csp.js";
 import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
@@ -61,16 +62,43 @@ export async function buildServer(env: Env) {
     max: 200,
     timeWindow: "1 minute",
     keyGenerator: (req: FastifyRequest) => {
-      // IP del cliente, respetando X-Forwarded-For que Nginx en el VPS
-      // enviará tras el reverse proxy (cuando llegue el dominio).
-      return (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip;
+      // Nginx pisa X-Real-IP con $remote_addr, así que el cliente no puede
+      // falsificarlo. X-Forwarded-For NO sirve: Nginx añade al valor que
+      // manda el cliente y el primer elemento es controlable por él.
+      const realIp = req.headers["x-real-ip"];
+      return (typeof realIp === "string" && realIp) || req.ip;
     },
-    errorResponseBuilder: () => ({
-      error: {
+    // El plugin lanza lo que devuelve esto; sin statusCode el error handler
+    // lo trataba como 500.
+    errorResponseBuilder: (_req, ctx) =>
+      Object.assign(new Error(`Demasiadas peticiones, intenta de nuevo en ${ctx.after}`), {
+        statusCode: ctx.statusCode,
         code: "RATE_LIMITED",
-        message: "Demasiadas peticiones, intenta en un minuto",
-      },
-    }),
+      }),
+  });
+
+  // Debe registrarse ANTES que las rutas: los plugins de rutas heredan el
+  // error handler vigente al registrarse; si va después, aplica el de
+  // Fastify por defecto, que devuelve el mensaje interno en los 500.
+  app.setErrorHandler((err: FastifyError, _req, reply) => {
+    if (hasZodFastifySchemaValidationErrors(err)) {
+      return reply.status(400).send({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Datos inválidos",
+          details: err.validation,
+        },
+      });
+    }
+    app.log.error(err);
+    const statusCode = err.statusCode ?? 500;
+    // En 5xx no se exponen mensajes ni códigos internos (p. ej. P2002 de Prisma).
+    return reply.status(statusCode).send({
+      error:
+        statusCode >= 500
+          ? { code: "INTERNAL_ERROR", message: "Error interno" }
+          : { code: err.code ?? "ERROR", message: err.message },
+    });
   });
 
   const guards = makeAuthGuards(env);
@@ -84,26 +112,7 @@ export async function buildServer(env: Env) {
   await app.register(timeOffRoutes(guards));
   await app.register(staffRoutes(guards), { prefix: "/staff" });
   await app.register(clientsRoutes(guards), { prefix: "/clients" });
-
-  app.setErrorHandler((err: FastifyError, _req, reply) => {
-    if (hasZodFastifySchemaValidationErrors(err)) {
-      return reply.status(400).send({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Datos inválidos",
-          details: err.validation,
-        },
-      });
-    }
-    app.log.error(err);
-    const statusCode = err.statusCode ?? 500;
-    reply.status(statusCode).send({
-      error: {
-        code: err.code ?? "INTERNAL_ERROR",
-        message: statusCode >= 500 ? "Error interno" : err.message,
-      },
-    });
-  });
+  await app.register(cspRoutes, { prefix: "/csp-report" });
 
   return app;
 }

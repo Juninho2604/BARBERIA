@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
-import { readAccessToken } from "@/lib/auth-client";
+import { readAccessToken, readUser } from "@/lib/auth-client";
+import { can } from "@/lib/permissions";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { Field } from "@/components/admin/ui";
 import type { BarberDto } from "@/lib/types";
@@ -22,6 +23,7 @@ export default function AdminBarbers() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canPurge, setCanPurge] = useState(false);
 
   async function refresh() {
     const token = readAccessToken();
@@ -38,6 +40,7 @@ export default function AdminBarbers() {
   }
 
   useEffect(() => {
+    setCanPurge(can(readUser()?.role, "staff.manage"));
     refresh();
   }, []);
 
@@ -178,13 +181,15 @@ export default function AdminBarbers() {
                       Reactivar
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => onPurge(b)}
-                    className="text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
-                  >
-                    Eliminar
-                  </button>
+                  {canPurge && (
+                    <button
+                      type="button"
+                      onClick={() => onPurge(b)}
+                      className="text-[color:var(--color-fg-muted)] underline-offset-4 transition hover:text-[color:var(--color-fg)] hover:underline"
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
               {b.workingHours && b.workingHours.length > 0 && (

@@ -5,8 +5,10 @@ import {
   CreateBarberSchema,
   SetWorkingHoursSchema,
   UpdateBarberSchema,
+  can,
   type Barber as BarberDto,
 } from "@barberia/shared";
+import type { FastifyRequest } from "fastify";
 import { prisma } from "../db.js";
 import type { AuthGuards } from "../auth/middleware.js";
 
@@ -41,6 +43,16 @@ function toDto(b: NonNullable<BarberWithUser>): BarberDto {
   };
 }
 
+/** Ficha pública: sin email, teléfono ni userId (son cuentas de login). */
+function toPublicDto(b: NonNullable<BarberWithUser>): BarberDto {
+  const { userId: _userId, email: _email, phone: _phone, ...rest } = toDto(b);
+  return rest;
+}
+
+function canManage(req: FastifyRequest) {
+  return !!req.auth && can(req.auth.role, "barbers.manage");
+}
+
 export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
   return async (app) => {
     const r = app.withTypeProvider<ZodTypeProvider>();
@@ -48,6 +60,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
     r.get(
       "/",
       {
+        preHandler: guards.optionalAuth,
         schema: {
           querystring: z.object({
             includeInactive: z.coerce.boolean().optional().default(false),
@@ -55,27 +68,33 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
         },
       },
       async (req) => {
+        const manager = canManage(req);
         const barbers = await prisma.barber.findMany({
-          where: req.query.includeInactive ? undefined : { isActive: true },
+          where: manager && req.query.includeInactive ? undefined : { isActive: true },
           include: {
             user: true,
             workingHours: { orderBy: [{ weekday: "asc" }, { startMin: "asc" }] },
           },
           orderBy: { user: { name: "asc" } },
         });
-        return barbers.map(toDto);
+        return barbers.map(manager ? toDto : toPublicDto);
       },
     );
 
-    r.get("/:id", { schema: { params: IdParam } }, async (req, reply) => {
-      const barber = await loadBarber(req.params.id);
-      if (!barber) {
-        return reply.status(404).send({
-          error: { code: "NOT_FOUND", message: "Barbero no encontrado" },
-        });
-      }
-      return toDto(barber);
-    });
+    r.get(
+      "/:id",
+      { preHandler: guards.optionalAuth, schema: { params: IdParam } },
+      async (req, reply) => {
+        const manager = canManage(req);
+        const barber = await loadBarber(req.params.id);
+        if (!barber || (!manager && !barber.isActive)) {
+          return reply.status(404).send({
+            error: { code: "NOT_FOUND", message: "Barbero no encontrado" },
+          });
+        }
+        return manager ? toDto(barber) : toPublicDto(barber);
+      },
+    );
 
     r.post(
       "/",
@@ -104,7 +123,7 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
               name,
               phone,
               role: "BARBER",
-              // passwordHash null: el barbero puede reclamar la cuenta luego con /auth/register.
+              // Sin contraseña: no puede entrar al panel.
             },
           });
           const barber = await tx.barber.create({
@@ -140,6 +159,19 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
         }
 
         const { name, phone, bio, photoUrl, isActive } = req.body;
+        // Nombre y teléfono viven en la cuenta de login: si el barbero es
+        // además dueño/staff, editarlos es gestión de staff.
+        if ((name !== undefined || phone !== undefined) && !can(req.auth!.role, "staff.manage")) {
+          const user = await prisma.user.findUnique({
+            where: { id: barber.userId },
+            select: { role: true },
+          });
+          if (user?.role !== "BARBER") {
+            return reply.status(403).send({
+              error: { code: "FORBIDDEN", message: "Permiso staff.manage requerido" },
+            });
+          }
+        }
         await prisma.$transaction(async (tx) => {
           if (name !== undefined || phone !== undefined) {
             await tx.user.update({
@@ -199,6 +231,13 @@ export function barbersRoutes(guards: AuthGuards): FastifyPluginAsync {
             data: { isActive: false },
           });
           return reply.status(204).send();
+        }
+
+        // El borrado real puede eliminar cuentas de login: solo OWNER.
+        if (!can(req.auth!.role, "staff.manage")) {
+          return reply.status(403).send({
+            error: { code: "FORBIDDEN", message: "Solo un OWNER puede eliminar barberos" },
+          });
         }
 
         // Borrado real. Si tiene citas como barbero no podemos borrar el

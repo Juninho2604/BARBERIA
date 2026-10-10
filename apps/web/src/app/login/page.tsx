@@ -25,7 +25,9 @@ function LoginShell() {
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/admin";
+  // Solo rutas internas del panel: `?next=//evil.com` sería un open redirect.
+  const rawNext = params.get("next") ?? "";
+  const next = /^\/admin(\/[\w\-/]*)?$/.test(rawNext) ? rawNext : "/admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

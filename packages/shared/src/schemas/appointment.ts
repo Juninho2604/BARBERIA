@@ -72,7 +72,13 @@ export type UpdateAppointmentInput = z.infer<typeof UpdateAppointmentSchema>;
 
 export const AvailabilityQuerySchema = z.object({
   serviceId: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD"),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD")
+    .refine(
+      (d) => new Date(`${d}T00:00:00Z`).toISOString().startsWith(d),
+      "Fecha inexistente",
+    ),
 });
 export type AvailabilityQuery = z.infer<typeof AvailabilityQuerySchema>;
 

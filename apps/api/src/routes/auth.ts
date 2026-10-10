@@ -4,7 +4,6 @@ import {
   ChangePasswordSchema,
   LoginSchema,
   RefreshSchema,
-  RegisterSchema,
   type AuthUser,
 } from "@barberia/shared";
 import type { User } from "@prisma/client";
@@ -28,10 +27,14 @@ function toAuthUser(user: User): AuthUser {
   };
 }
 
+// Hash de relleno: el login lo compara cuando el email no existe, para
+// que la respuesta tarde lo mismo y no revele qué emails tienen cuenta.
+const DUMMY_HASH = "$2a$12$ke8k9LBqVX7kgW6/NHMGu..1BzRc5P8zH7qyzj/gpyGxpLbFOWDpG";
+
 async function issueSession(env: Env, user: User) {
   const [accessToken, refreshToken] = await Promise.all([
-    signAccessToken(env, user.id, user.role),
-    signRefreshToken(env, user.id),
+    signAccessToken(env, user.id, user.role, user.tokenVersion),
+    signRefreshToken(env, user.id, user.tokenVersion),
   ]);
   return {
     user: toAuthUser(user),
@@ -43,60 +46,8 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
   return async (app) => {
     const r = app.withTypeProvider<ZodTypeProvider>();
 
-    r.post(
-      "/register",
-      {
-        schema: { body: RegisterSchema },
-        // Anti spam: 3 cuentas por IP por hora.
-        config: { rateLimit: { max: 3, timeWindow: "1 hour" } },
-      },
-      async (req, reply) => {
-      const { email, password, name, phone } = req.body;
-      const normalizedEmail = email.toLowerCase().trim();
-
-      const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-      if (existing?.passwordHash) {
-        return reply.status(409).send({
-          error: { code: "EMAIL_TAKEN", message: "Ese email ya tiene una cuenta" },
-        });
-      }
-
-      // CRITICAL: si existe pero NO es CLIENT, alguien intenta reclamar una
-      // cuenta staff sin token de invitación. Bloqueamos. Tokens de invite
-      // formales irán en M9.4 (cuando enchufemos Resend); por ahora un
-      // OWNER comparte la URL fuera de banda y el flow de claim debería
-      // ir por un endpoint dedicado, no por /register.
-      if (existing && existing.role !== "CLIENT") {
-        return reply.status(409).send({
-          error: {
-            code: "STAFF_CLAIM_REQUIRES_INVITE",
-            message: "Esta cuenta es de staff y requiere un token de invitación. Contacta al owner.",
-          },
-        });
-      }
-
-      const passwordHash = await hashPassword(password);
-
-      // Si existe sin password (cuenta creada por reserva sin registro)
-      // y es CLIENT, la reclamamos.
-      const user = existing
-        ? await prisma.user.update({
-            where: { id: existing.id },
-            data: { passwordHash, name: name.trim(), phone: phone ?? existing.phone },
-          })
-        : await prisma.user.create({
-            data: {
-              email: normalizedEmail,
-              passwordHash,
-              name: name.trim(),
-              phone,
-              role: "CLIENT",
-            },
-          });
-
-      return reply.status(201).send(await issueSession(env, user));
-      },
-    );
+    // Sin registro público: las reservas se hacen en Booksy y el panel solo
+    // lo usa el staff, que se crea desde /admin/staff.
 
     r.post(
       "/login",
@@ -111,7 +62,8 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
       const user = await prisma.user.findUnique({
         where: { email: email.toLowerCase().trim() },
       });
-      if (!user?.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
+      const valid = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
+      if (!user?.passwordHash || !valid) {
         return reply.status(401).send({
           error: { code: "INVALID_CREDENTIALS", message: "Email o contraseña inválidos" },
         });
@@ -131,13 +83,19 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
       },
     );
 
-    r.post("/refresh", { schema: { body: RefreshSchema } }, async (req, reply) => {
+    r.post(
+      "/refresh",
+      {
+        schema: { body: RefreshSchema },
+        config: { rateLimit: { max: 30, timeWindow: "15 minutes" } },
+      },
+      async (req, reply) => {
       try {
         const payload = await verifyRefreshToken(env, req.body.refreshToken);
         const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-        if (!user) {
+        if (!user || user.tokenVersion !== payload.tv) {
           return reply.status(401).send({
-            error: { code: "INVALID_TOKEN", message: "Usuario no encontrado" },
+            error: { code: "INVALID_TOKEN", message: "Sesión expirada, vuelve a entrar" },
           });
         }
         if (!user.isActive) {
@@ -151,17 +109,16 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
           error: { code: "INVALID_TOKEN", message: "Refresh token inválido o expirado" },
         });
       }
-    });
+      },
+    );
 
-    // POST /logout — invalidación logística + cliente borra localStorage.
-    // Una rotación verdadera con tabla RefreshToken queda para v2 (requiere
-    // schema change). Hoy registramos el evento (último acceso) para
-    // auditoría y devolvemos 204.
+    // POST /logout — invalida todas las sesiones del usuario (también las
+    // de otros dispositivos): sube `tokenVersion`.
     r.post("/logout", { preHandler: guards.requireAuth }, async (req, reply) => {
       await prisma.user
         .update({
           where: { id: req.auth!.userId },
-          data: { lastLoginAt: new Date() },
+          data: { tokenVersion: { increment: 1 } },
         })
         .catch(() => {
           // Si el user no existe (ya borrado), igual devolvemos 204.
@@ -171,8 +128,7 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
 
     // POST /change-password — el usuario autenticado cambia su propia
     // contraseña. Exige la contraseña actual (re-auth) para evitar que un
-    // token robado/sesión abierta cambie la clave sin conocerla. Cuentas
-    // sin passwordHash (creadas por reserva sin registro) no aplican aquí.
+    // token robado/sesión abierta cambie la clave sin conocerla.
     r.post(
       "/change-password",
       {
@@ -220,12 +176,14 @@ export function authRoutes(env: Env, guards: AuthGuards): FastifyPluginAsync {
             },
           });
         }
+        // Sube `tokenVersion` para cerrar cualquier otra sesión abierta (p. ej.
+        // un token robado) y devuelve una sesión nueva para este dispositivo.
         const passwordHash = await hashPassword(newPassword);
-        await prisma.user.update({
+        const updated = await prisma.user.update({
           where: { id: user.id },
-          data: { passwordHash },
+          data: { passwordHash, tokenVersion: { increment: 1 } },
         });
-        return reply.status(204).send();
+        return issueSession(env, updated);
       },
     );
 

@@ -8,11 +8,31 @@ name: barberia
 # El servicio `web` necesita SITE_URL como build arg (NEXT_PUBLIC_* se
 # inlina en el bundle al compilar Next).
 
+# Logs con tope: sin rotación, json-file crece sin límite y puede llenar
+# el disco que comparten las demás apps del VPS.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# web/api no necesitan ninguna capability de Linux (escuchan en >1024 y
+# corren como `node`).
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  pids_limit: 512
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: barberia-postgres
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
@@ -33,6 +53,8 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: barberia-api
     restart: unless-stopped
+    logging: *logging
+    <<: *hardening
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
@@ -42,10 +64,11 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
-      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/New_York}
       SLOT_GRANULARITY_MINUTES: ${SLOT_GRANULARITY_MINUTES:-30}
-      # Seed inicial — solo se aplica si no existe ningún OWNER en DB.
+      # Seed inicial: crea ese OWNER si su email no existe. Vaciar
+      # INITIAL_OWNER_PASSWORD en .env tras el primer arranque.
       INITIAL_OWNER_EMAIL: ${INITIAL_OWNER_EMAIL:-}
       INITIAL_OWNER_PASSWORD: ${INITIAL_OWNER_PASSWORD:-}
       INITIAL_OWNER_NAME: ${INITIAL_OWNER_NAME:-}
@@ -78,6 +101,8 @@ services:
         # acepte por error la opt-in.
     container_name: barberia-web
     restart: unless-stopped
+    logging: *logging
+    <<: *hardening
     environment:
       # Solo server-side. El cliente (browser) usa NEXT_PUBLIC_API_URL=/api
       # vía Nginx. El server (Next standalone) llama al contenedor `api`

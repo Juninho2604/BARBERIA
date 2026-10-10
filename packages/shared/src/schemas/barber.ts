@@ -14,10 +14,11 @@ export type WorkingHourInput = z.infer<typeof WorkingHourSchema>;
 
 export const BarberSchema = z.object({
   id: z.string(),
-  userId: z.string(),
+  // Solo en respuestas a staff con barbers.manage; la ficha pública los omite.
+  userId: z.string().optional(),
   name: z.string(),
-  email: z.string().email(),
-  phone: z.string().nullable(),
+  email: z.string().email().optional(),
+  phone: z.string().nullable().optional(),
   bio: z.string().nullable(),
   photoUrl: z.string().nullable(),
   isActive: z.boolean(),

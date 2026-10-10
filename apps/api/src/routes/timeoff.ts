@@ -19,7 +19,10 @@ export function timeOffRoutes(guards: AuthGuards): FastifyPluginAsync {
 
     r.get(
       "/barbers/:id/time-off",
-      { schema: { params: BarberIdParam, querystring: ListQuery } },
+      {
+        preHandler: [guards.requireAuth, guards.requireAction("barbers.manage")],
+        schema: { params: BarberIdParam, querystring: ListQuery },
+      },
       async (req) => {
         const { from, to } = req.query;
         return prisma.timeOff.findMany({

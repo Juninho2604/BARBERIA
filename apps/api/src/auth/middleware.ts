@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type { Role } from "@prisma/client";
 import { can, type Action } from "@barberia/shared";
 import { verifyAccessToken } from "./tokens.js";
+import { prisma } from "../db.js";
 import type { Env } from "../env.js";
 
 declare module "fastify" {
@@ -14,22 +15,46 @@ declare module "fastify" {
 }
 
 export function makeAuthGuards(env: Env) {
-  async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
+  /**
+   * Valida el Bearer y lo contrasta con la DB: el rol sale de la DB (no
+   * del JWT), y la cuenta debe seguir activa con el mismo `tokenVersion`.
+   * Así desactivar, degradar o cambiar la contraseña corta el acceso al
+   * instante en vez de esperar a que expire el access token.
+   */
+  async function resolveAuth(req: FastifyRequest): Promise<"none" | "ok" | "invalid"> {
     const header = req.headers.authorization;
-    if (!header?.startsWith("Bearer ")) {
+    if (!header?.startsWith("Bearer ")) return "none";
+    try {
+      const payload = await verifyAccessToken(env, header.slice("Bearer ".length).trim());
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { role: true, isActive: true, tokenVersion: true },
+      });
+      if (!user?.isActive || user.tokenVersion !== payload.tv) return "invalid";
+      req.auth = { userId: payload.sub, role: user.role };
+      return "ok";
+    } catch {
+      return "invalid";
+    }
+  }
+
+  async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
+    const result = await resolveAuth(req);
+    if (result === "none") {
       return reply.status(401).send({
         error: { code: "UNAUTHORIZED", message: "Token requerido" },
       });
     }
-    const token = header.slice("Bearer ".length).trim();
-    try {
-      const payload = await verifyAccessToken(env, token);
-      req.auth = { userId: payload.sub, role: payload.role };
-    } catch {
+    if (result === "invalid") {
       return reply.status(401).send({
         error: { code: "INVALID_TOKEN", message: "Token inválido o expirado" },
       });
     }
+  }
+
+  /** Rellena `req.auth` si llega un token válido; nunca rechaza. */
+  async function optionalAuth(req: FastifyRequest) {
+    await resolveAuth(req);
   }
 
   /**
@@ -73,7 +98,7 @@ export function makeAuthGuards(env: Env) {
     };
   }
 
-  return { requireAuth, requireRole, requireAction };
+  return { requireAuth, optionalAuth, requireRole, requireAction };
 }
 
 export type AuthGuards = ReturnType<typeof makeAuthGuards>;

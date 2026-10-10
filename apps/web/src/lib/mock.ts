@@ -451,12 +451,16 @@ export const mockApi = {
     assertAdminToken(token);
     return MOCK_OWNER;
   },
-  async changePassword(input: ChangePasswordInputDto, token: string): Promise<void> {
+  async changePassword(input: ChangePasswordInputDto, token: string): Promise<AuthSessionDto> {
     assertAdminToken(token);
     // En demo no hay password real; simulamos validación mínima.
     if (input.currentPassword === input.newPassword) {
       throw new ApiError(400, "La nueva contraseña debe ser distinta a la actual.");
     }
+    return {
+      user: MOCK_OWNER,
+      tokens: { accessToken: fakeToken(), refreshToken: fakeToken() },
+    };
   },
 
   // --- admin: staff ---

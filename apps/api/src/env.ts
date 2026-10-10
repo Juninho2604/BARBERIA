@@ -33,7 +33,7 @@ const EnvSchema = z.object({
   JWT_ACCESS_SECRET: strongSecret,
   JWT_REFRESH_SECRET: strongSecret,
   JWT_ACCESS_TTL: z.string().default("15m"),
-  JWT_REFRESH_TTL: z.string().default("30d"),
+  JWT_REFRESH_TTL: z.string().default("7d"),
   DEFAULT_TIMEZONE: z.string().default("America/Caracas"),
   SLOT_GRANULARITY_MINUTES: z.coerce.number().int().positive().default(30),
 });
