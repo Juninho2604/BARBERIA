@@ -55,17 +55,8 @@
     "loadErrorLink": "Book directly here",
     "loadErrorAfter": " and pick your service in the flow.",
     "empty": "We're prepping the menu. Check back in a moment.",
-    "footerCta": "Book now",
-    "descriptions": {
-      "mensHaircut": "Haircut for men and kids — classic style or fade.",
-      "regularBeard": "Beard line-up and trim.",
-      "mensHaircutBeard": "Classic or fade haircut paired with a beard trim.",
-      "hotTowelShave": "Shave or beard styling with hot towel, steam, lather, beard oil, and a cold towel finish.",
-      "mensHaircutShave": "Classic or fade haircut with shave or beard styling — hot towel, steam, lather, beard oil, and a cold towel finish.",
-      "eyebrows": "Eyebrow grooming.",
-      "noseEarWax": "Hot wax hair removal for the nose and ears.",
-      "experience": "Includes haircut, hot towel shave, nose & ear wax, eyebrows, collagen mask, and a special drink."
-    }
+    "complimentary": "Brothers Club Barbershop offers a complimentary consultation, hair wash and styling. Plus, a drink on us with every service.",
+    "footerCta": "Book now"
   },
   "visitanos": {
     "eyebrow": "Visit",
@@ -89,7 +80,7 @@
     }
   },
   "cta": {
-    "eyebrow": "No account needed",
+    "eyebrow": "Online booking, 24/7",
     "titleLine1": "Ready?",
     "titleLine2": "Book your cut.",
     "button": "Book online"
@@ -119,53 +110,11 @@
     "back": "← Back",
     "header": "— Booking —",
     "title": "Book your cut",
-    "subtitle": "Pick service, barber and time. No account needed.",
-    "configEmpty": "Services or barbers aren't set up yet. Come back soon.",
-    "mockMode": "Demo mode · sample data",
-    "change": "← Change",
-    "progress": {
-      "service": "Service",
-      "barber": "Barber",
-      "datetime": "Time",
-      "contact": "Details"
-    },
-    "step": {
-      "service": {
-        "title": "Select your service",
-        "intro": "Brothers Club Barbershop offers a complimentary consultation, hair wash and styling. Plus, a drink on us with every service.",
-        "choose": "Choose →"
-      },
-      "barber": { "title": "With whom?", "choose": "Choose →" },
-      "datetime": {
-        "title": "When?",
-        "summary": "{service} with {barber}",
-        "loading": "Finding open slots…",
-        "empty": "No open slots that day. Try another date."
-      },
-      "contact": {
-        "title": "Your details",
-        "name": "Name",
-        "email": "Email",
-        "phone": "Phone",
-        "submit": "Confirm booking",
-        "submitting": "Booking…"
-      },
-      "done": {
-        "label": "— Booking confirmed —",
-        "title": "See you soon.",
-        "row": {
-          "service": "Service",
-          "barber": "Barber",
-          "when": "When"
-        },
-        "advice": "We're looking forward to seeing you at your scheduled time. Please plan ahead and arrive 5–10 minutes early. If you arrive more than 10 minutes late, your appointment may be released.",
-        "homeLink": "← Back to home"
-      }
-    },
-    "errors": {
-      "slotTaken": "That slot was just taken. Please pick another.",
-      "unexpected": "Unexpected error"
-    }
+    "subtitle": "We take bookings through Booksy. Pick your service, barber and time in the window that opens.",
+    "open": "Open booking",
+    "loading": "Loading booking…",
+    "failed": "The booking window didn't load. If you use an ad blocker, disable it for this site and reload the page.",
+    "profile": "Book on Booksy"
   },
   "metadata": {
     "title": "Brothers Club Barbershop — Book your cut",

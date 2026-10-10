@@ -34,7 +34,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-06-24
+- **Fecha última actualización:** 2026-10-10
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` sirviendo web + API desde el VPS con Nginx + Let's Encrypt (cert válido hasta 2026-09-04, renovación automática vía `certbot.timer`). El VPS es multi-tenant: además de Barbería aloja capsula-erp, tablepongve, omia-n8n, mail-tenari, pokepok-menu, demoapp. Barbería convive sin chocar: web en `127.0.0.1:3100`, API en `127.0.0.1:4000`, vhost propio sin tocar configs ajenos.
 - **Pendiente Fase C:** desactivar/borrar el proyecto Vercel (ya no recibe tráfico).
@@ -43,6 +43,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 - **Exposición de la API:** dominio `brothersclubbarbers.com` (Cloudflare DNS only, modo gris). Frontend + API en el VPS detrás de Nginx (`/api/*` → 127.0.0.1:4000, `/*` → 127.0.0.1:3100) con HTTPS de Let's Encrypt. Sin CORS cross-domain, sin tunnel. Cert obtenido vía `certbot certonly --nginx`, renueva automático.
 - **Siguiente acción:** Fase C — el usuario desactiva/borra el proyecto en Vercel. Después: rellenar datos reales en `lib/business-info.ts` (dirección, horario, email del salón, teléfono, social links). M1 hardening (UFW, password auth off, usuario non-root) puede retomarse cuando el usuario tenga ventana.
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
+- **Reservas públicas = Booksy (desde 2026-10-10).** Todos los botones de reserva abren el widget de Booksy (negocio `1882195`, `country=us`, `lang` según locale) con el estilo de la marca; `/reservar` ya no tiene flujo propio, solo abre Booksy. El catálogo de la landing se mantiene. Las citas hechas en Booksy **no** llegan al calendario del panel admin. Integración en `apps/web/src/components/booksy/booksy.tsx`, config en `BUSINESS.booksy`. Pendiente del cliente: link público del perfil en Booksy (`BUSINESS.booksy.profileUrl`, salida si el widget no carga).
 - **Bloqueadores:** ninguno.
 - **Intro 3D:** `BarberIntro` ahora carga un modelo real `apps/web/public/models/barber-chair.glb` (3.7 MB, export Sketchfab OBJ→glTF, materiales PBR Leather/Metal/Plastic con baseColor+metallic-roughness+normal, sin Draco) en lugar de la silla procedural. El modelo ya viene Y-up (no se reorienta el eje), se recentra y escala a altura objetivo, y el anillo muestra primero la descarga del .glb y luego el giro. **Modelo comprado por el usuario** → sin obligación de atribución (licencia de pago, no CC-BY).
 
@@ -142,6 +143,14 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 8. Log de cambios
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
+
+- **2026-10-10** — **Reservas públicas migradas a Booksy.** El cliente pidió que el flujo de reserva redirija a Booksy y sea el único visible al público, manteniendo el catálogo. Script recibido: `booksy.com/widget/code.js?id=1882195&country=us&lang=es`.
+  - `components/booksy/booksy.tsx`: `BooksyLoader` (en `[locale]/layout.tsx`) inyecta el script una vez por idioma (`lang=en|es`) dentro de un contenedor fijo fuera de pantalla con z-index máximo; `BookLink` (un `<a href="/reservar">`) hace `.click()` sobre el botón que genera Booksy y abre su ventana sin salir de la página; si el widget aún no cargó (o ctrl/cmd+click), sigue a `/reservar`. No depende de clases internas de Booksy: toma el primer `a`/`button` del contenedor y adopta nodos con "booksy" que el script inserte en `<body>`. `BooksyLauncher` en `/reservar` abre Booksy al cargar y, si en 10 s no hay widget (bloqueador de anuncios), muestra un aviso y el link de `BUSINESS.booksy.profileUrl` si existe.
+  - Reemplazados los 8 links a `/reservar` (nav, hero, catálogo y su error, botón del catálogo, CTA, footer ×2). Eliminado `components/booking/flow.tsx` y sus textos; el texto de cortesías (asesoría, lavado, peinado, bebida) pasó al catálogo de la landing (`services.complimentary`). CTA: "No account needed" → "Online booking, 24/7" (Booksy pide datos/cuenta).
+  - **Verificación:** booksy.com está bloqueado desde el entorno de desarrollo, así que se probó con Playwright y un `code.js` falso (botón junto al script y variante en `<body>`): la ventana abre encima de todo en EN/ES, `/reservar` la abre sola, y con Booksy bloqueado el click cae a `/reservar` con el aviso. La prueba destapó que la ventana quedaba bajo el nav (el contenedor `fixed` crea stacking context) → z-index máximo. **Falta probar con el Booksy real en producción.**
+  - El API sigue aceptando `POST /appointments` (lo usa el calendario del panel para citas manuales).
+
+- **2026-07-07** — **Equipo con fotos + horarios reales.** Fotos de los 4 barberos en `public/team/` (Roman, Edgar, Francesco, Victor), sección "Nuestro equipo" en la landing (entre Manifiesto y El espacio, solo barberos con `photoUrl`), editor de foto en `/admin/barbers/[id]`. Horario confirmado por el cliente: L–S 9:00–20:00, domingo 10:00–17:00 (`business-info.ts`); se entregó script base64 para poner ese horario en los `WorkingHour` de los 4 barberos y para asignar sus `photoUrl` (datos, no repo). Seed ya no siembra barberos demo (Juan/Luis resucitaban en cada deploy). Horario de Visítanos bilingüe desde el spec. Heroes Discount al final del catálogo. — `cdcce81`
 
 - **2026-06-24** — **Gestión de barberos reales + cambiar contraseña + fix DELETE.** Sesión operativa con el usuario sobre el equipo real y credenciales. Mergeado a `main` (`35011da`):
   - **fix `FST_ERR_CTP_EMPTY_JSON_BODY`** (`a986f81`): `api.ts http()` enviaba `Content-Type: application/json` aunque no hubiera body → Fastify rechazaba DELETE/PATCH sin payload (desactivar barbero/servicio, borrar TimeOff, cancelar cita). Ahora solo añade el header cuando hay body.

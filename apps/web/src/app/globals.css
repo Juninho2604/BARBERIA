@@ -664,6 +664,13 @@ html[data-modal-open="true"] {
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   margin-bottom: 1.2rem;
 }
+.bc-services__note {
+  margin-top: clamp(2rem, 4vw, 2.8rem);
+  max-width: 44rem;
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  line-height: 1.6;
+  color: var(--color-bone-dim);
+}
 /* Heroes Discount — banda destacada (15% off para militares, veteranos,
    fuerzas del orden, bomberos, EMS). Aplica a todos los servicios. Para
    destacar dentro de la paleta monocromática se invierte: fondo bone +

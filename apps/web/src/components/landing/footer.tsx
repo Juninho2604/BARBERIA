@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { BookLink } from "@/components/booksy/booksy";
 import { BUSINESS } from "@/lib/business-info";
 
 /** Redes configuradas en business-info. Solo se renderizan las que tienen
@@ -37,7 +37,7 @@ export function Footer() {
             <a href="#servicios">{t("links.services")}</a>
             <a href="#espacio">{t("links.space")}</a>
             <a href="#visitanos">{t("links.visit")}</a>
-            <Link href="/reservar">{t("links.book")}</Link>
+            <BookLink>{t("links.book")}</BookLink>
           </div>
           <div className="bc-footer__col">
             <h4>{t("follow")}</h4>
@@ -61,9 +61,9 @@ export function Footer() {
       </div>
       <div className="bc-footer__bot">
         <span>{t("copyright", { year })}</span>
-        <Link href="/reservar">
+        <BookLink>
           <span>{t("bookOnline")}</span>
-        </Link>
+        </BookLink>
       </div>
     </footer>
   );

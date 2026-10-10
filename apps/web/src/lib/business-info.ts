@@ -72,6 +72,17 @@ export const BUSINESS = {
     ],
   },
 
+  /** Reservas públicas vía widget de Booksy (decisión del cliente, oct
+      2026): el flujo propio de /reservar ya no se muestra al público.
+      `profileUrl` es el link público del negocio en Booksy; si está
+      definido, se ofrece como salida cuando el widget no carga (p. ej.
+      bloqueadores de anuncios). TODO(cliente): pasar ese link. */
+  booksy: {
+    id: "1882195",
+    country: "us",
+    profileUrl: null as string | null,
+  },
+
   priceRange: "$$",
 
   /** Zona horaria IANA del negocio. CRÍTICA: todos los formateos de

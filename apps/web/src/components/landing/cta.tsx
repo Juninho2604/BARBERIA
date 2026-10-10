@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { BookLink } from "@/components/booksy/booksy";
 
 /**
  * CTA band — centrado, full-bleed, foto `cut-detail.jpg` muy desaturada
@@ -29,14 +29,9 @@ export function CTA() {
           <br />
           {t("titleLine2")}
         </h2>
-        <Link
-          className="bc-btn bc-btn--solid"
-          href="/reservar"
-          data-reveal
-          data-delay="2"
-        >
+        <BookLink className="bc-btn bc-btn--solid" data-reveal data-delay="2">
           {t("button")} <span className="arw">→</span>
-        </Link>
+        </BookLink>
       </div>
     </section>
   );
