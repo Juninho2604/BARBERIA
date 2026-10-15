@@ -33,8 +33,7 @@ export const BUSINESS = {
 
   contact: {
     email: "brothersclub2025@gmail.com",
-    /** TODO(cliente): teléfono cuando lo tengan disponible. */
-    phone: null as string | null,
+    phone: "+1 (407) 577-1610" as string | null,
   },
 
   /** Links reales de redes. TODO(cliente): TikTok y WhatsApp cuando los tengan. */

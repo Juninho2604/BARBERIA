@@ -34,7 +34,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-10-10
+- **Fecha última actualización:** 2026-10-15
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` sirviendo web + API desde el VPS con Nginx + Let's Encrypt (cert válido hasta 2026-09-04, renovación automática vía `certbot.timer`). El VPS es multi-tenant: además de Barbería aloja capsula-erp, tablepongve, omia-n8n, mail-tenari, pokepok-menu, demoapp. Barbería convive sin chocar: web en `127.0.0.1:3100`, API en `127.0.0.1:4000`, vhost propio sin tocar configs ajenos.
 - **Pendiente Fase C:** desactivar/borrar el proyecto Vercel (ya no recibe tráfico).
@@ -144,6 +144,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 8. Log de cambios
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
+
+- **2026-10-15** — **Teléfono de contacto del salón.** `BUSINESS.contact.phone = "+1 (407) 577-1610"`: aparece en Visítanos → Contacto (bajo el email, enlace `tel:+14075771610`, ahora normalizado a dígitos) y en el JSON-LD (`telephone`) para Google. Quedan pendientes TikTok/WhatsApp.
 
 - **2026-10-10** — **Auditoría de seguridad + endurecimiento.** Dos agentes revisaron API y web/infra; `pnpm audit` encontró Next 15.5.18 con RCE crítica en el optimizador de imágenes.
   - **Filtración:** la contraseña temporal compartida de los 4 OWNER estaba escrita en este archivo (commit `ce043f6`) y el repo es público. Retirada del archivo (sigue en el historial de git) → se entregó un script base64 que genera contraseñas nuevas individuales (solo se imprimen en la terminal del VPS), sube `tokenVersion` y borra/desactiva `prueba@barberia.com`. Recomendado: repo privado + rotar `JWT_*_SECRET`.
