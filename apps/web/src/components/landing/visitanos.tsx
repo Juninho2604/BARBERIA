@@ -120,7 +120,7 @@ export function Visitanos() {
                   <>
                     <br />
                     <a
-                      href={`tel:${BUSINESS.contact.phone}`}
+                      href={`tel:${BUSINESS.contact.phone.replace(/[^\d+]/g, "")}`}
                       className="underline-offset-4 hover:underline"
                     >
                       {BUSINESS.contact.phone}
