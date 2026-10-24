@@ -34,7 +34,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-10-15
+- **Fecha última actualización:** 2026-10-24
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` sirviendo web + API desde el VPS con Nginx + Let's Encrypt (cert válido hasta 2026-09-04, renovación automática vía `certbot.timer`). El VPS es multi-tenant: además de Barbería aloja capsula-erp, tablepongve, omia-n8n, mail-tenari, pokepok-menu, demoapp. Barbería convive sin chocar: web en `127.0.0.1:3100`, API en `127.0.0.1:4000`, vhost propio sin tocar configs ajenos.
 - **Pendiente Fase C:** desactivar/borrar el proyecto Vercel (ya no recibe tráfico).
@@ -113,7 +113,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 6. Convenciones técnicas
 
 ### Comandos / flujos
-- **Deploy backend en VPS:** automático vía GitHub Actions (`.github/workflows/deploy-api.yml`) en cada push a `claude/quirky-ride-pD2AK` o `main` que toque `apps/api/**`, `packages/shared/**`, `infra/**`, `pnpm-lock.yaml` o el propio workflow. SSH al VPS → `git reset --hard origin/<branch>` → `docker compose up -d --build` → healthcheck `/health`.
+- **Deploy en VPS:** automático vía GitHub Actions (`.github/workflows/deploy-api.yml`) solo en push a `main` que toque `apps/**`, `packages/shared/**`, `infra/**`, `pnpm-lock.yaml`, `package.json` o el propio workflow. SSH al VPS → `git reset --hard origin/main` → `docker compose up -d --build` → healthchecks API `:4000/health` y web `:3100`.
+- **Revisión de seguridad del VPS (solo lectura):** `bash /opt/barberia/infra/scripts/security-check.sh` → reporta rotación de contraseñas, `.env`, vhost de Nginx, backups, SSH/UFW, reinicio pendiente y violaciones de CSP, sin imprimir secretos.
 - **Bootstrap inicial del VPS:** `bash infra/scripts/vps-bootstrap.sh` (idempotente). Instala Docker, clona repo en `/opt/barberia`, genera `.env` con secretos aleatorios (`openssl rand`), crea clave SSH dedicada `~/.ssh/barberia_deploy` y la añade a `authorized_keys`. Al final imprime los valores que hay que pegar en GitHub Secrets.
 - **Migraciones:** automáticas. Se aplican al arrancar el contenedor API vía `docker-entrypoint.sh` (`npx prisma migrate deploy` → `node dist/index.js`).
 - **Deploy manual (emergencia):** desde el VPS, `cd /opt/barberia && git pull && docker compose --env-file .env -f infra/docker-compose.yml up -d --build`.
@@ -144,6 +145,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 8. Log de cambios
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
+
+- **2026-10-24** — **Revisión de seguridad de seguimiento.** `pnpm audit` volvió a encontrar avisos nuevos desde el 10-oct: Next 15.5.27 con RCE crítica en el optimizador de imágenes vía `sharp` (ya mitigada en producción porque el override fuerza `sharp` 0.35.5), DoS de Server Actions (no aplica: el sitio no usa ninguna), fastify 5.12.5 y fast-uri 3.1.8. Actualizados: next 15.5.28, fastify 5.12.7, override fast-uri ^3.1.9. **Zod 3.25.76** (agotamiento de memoria con arrays enormes) no tiene parche en la rama 3 → mitigado sin migrar a Zod 4: `bodyLimit` de Fastify a 64 KB (antes 1 MB) y `max(21)` en los arrays de horario (`workingHours`, únicos arrays de entrada, y solo para staff con `barbers.manage`). Queda 1 aviso "high" de Zod en el audit, mitigado; migrar a Zod 4 (+ fastify-type-provider-zod 6/7) cuando haya ventana. Nuevo `infra/scripts/security-check.sh`. Verificado en el stack local Docker + nginx 1.24: 53/53 API (incluye 413 por body > 64 KB y 400 por > 21 bloques), 9/9 panel. **Nota:** el build de la web falla a veces en el sandbox en `next/font` (descarga de Google Fonts cortada por el proxy del entorno); el código de next/font es idéntico entre 15.5.27 y 15.5.28 y en el VPS nunca ha fallado. **Estado conocido:** el repo sigue público y `main` sin protección; los pasos manuales del 10-oct en el VPS no se han confirmado.
 
 - **2026-10-15** — **Teléfono de contacto del salón.** `BUSINESS.contact.phone = "+1 (407) 577-1610"`: aparece en Visítanos → Contacto (bajo el email, enlace `tel:+14075771610`, ahora normalizado a dígitos) y en el JSON-LD (`telephone`) para Google. Quedan pendientes TikTok/WhatsApp.
 

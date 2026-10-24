@@ -6,6 +6,10 @@ const WorkingHourBase = z.object({
   endMin: z.number().int().min(0).max(1440),
 });
 
+// Tope de bloques por semana (7 días × 3 turnos sobra). Junto con el
+// bodyLimit de la API evita que un array enorme agote la memoria al validar.
+const MAX_WORKING_BLOCKS = 21;
+
 export const WorkingHourSchema = WorkingHourBase.refine(
   (wh) => wh.endMin > wh.startMin,
   { message: "endMin debe ser mayor que startMin" },
@@ -41,7 +45,7 @@ export const CreateBarberSchema = z.object({
   phone: z.string().min(6).max(20).optional(),
   bio: z.string().max(500).optional(),
   photoUrl: httpsUrl.optional(),
-  workingHours: z.array(WorkingHourSchema).optional(),
+  workingHours: z.array(WorkingHourSchema).max(MAX_WORKING_BLOCKS).optional(),
 });
 export type CreateBarberInput = z.infer<typeof CreateBarberSchema>;
 
@@ -55,6 +59,6 @@ export const UpdateBarberSchema = z.object({
 export type UpdateBarberInput = z.infer<typeof UpdateBarberSchema>;
 
 export const SetWorkingHoursSchema = z.object({
-  workingHours: z.array(WorkingHourSchema),
+  workingHours: z.array(WorkingHourSchema).max(MAX_WORKING_BLOCKS),
 });
 export type SetWorkingHoursInput = z.infer<typeof SetWorkingHoursSchema>;
