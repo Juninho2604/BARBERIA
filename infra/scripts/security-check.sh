@@ -72,8 +72,9 @@ fail2ban-client status sshd 2>/dev/null | grep -E 'Currently banned|Total banned
 [ -f /var/run/reboot-required ] && bad "reinicio pendiente (kernel actual $(uname -r))" || ok "sin reinicio pendiente (kernel $(uname -r))"
 info "llaves en /root/.ssh/authorized_keys: $(grep -c . /root/.ssh/authorized_keys 2>/dev/null)"
 
-sec "CSP (últimos 14 días)"
+sec "CSP (reportes de violación)"
 n=$(docker logs --since 336h barberia-api 2>&1 | grep -c csp-violation)
-info "$n reportes de violación"
+since=$(docker inspect -f '{{.State.StartedAt}}' barberia-api 2>/dev/null | cut -c1-16 | tr T ' ')
+info "$n reportes desde $since UTC (los logs se reinician con cada deploy: ventana corta = poca evidencia)"
 docker logs --since 336h barberia-api 2>&1 | grep csp-violation | grep -oE '(blocked-uri|blockedURL)[^,]*' | sed 's/\\//g' | sort | uniq -c | sort -rn | head -8 | sed 's/^/    /'
 echo; echo "Fin de la revisión. Copia todo este texto y pégalo en el chat."
