@@ -23,6 +23,10 @@ import { makeAuthGuards } from "./auth/middleware.js";
 
 export async function buildServer(env: Env) {
   const app = Fastify({
+    // Ningún endpoint necesita más (el texto más largo son las notas de
+    // cliente, 2000 caracteres). Por defecto Fastify acepta 1 MB, suficiente
+    // para un array gigante que agote la memoria al validarlo con Zod 3.
+    bodyLimit: 64 * 1024,
     logger: {
       level: env.NODE_ENV === "production" ? "info" : "debug",
       transport:
