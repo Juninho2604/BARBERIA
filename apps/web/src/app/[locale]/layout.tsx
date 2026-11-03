@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { BUSINESS } from "@/lib/business-info";
 import { routing } from "@/i18n/routing";
 import { BooksyLoader } from "@/components/booksy/booksy";
+import { MetaPixel } from "@/components/analytics/meta-pixel";
 
 /**
  * Layout localizado. Sólo cubre las rutas públicas (landing + booking).
@@ -74,6 +75,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <BooksyLoader />
+      <MetaPixel />
       {children}
     </NextIntlClientProvider>
   );

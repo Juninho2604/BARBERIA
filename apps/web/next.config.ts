@@ -5,6 +5,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const BOOKSY = "https://booksy.com https://*.booksy.com";
+const META = "https://connect.facebook.net https://www.facebook.com";
 
 // CSP completa en modo report-only: el widget de Booksy no se pudo probar
 // contra el real, así que primero se observan las violaciones (llegan a
@@ -67,7 +68,11 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: CSP_ENFORCED },
           {
             key: "Content-Security-Policy-Report-Only",
-            value: cspReportOnly({ script: BOOKSY, connect: BOOKSY, frame: BOOKSY }),
+            value: cspReportOnly({
+              script: `${BOOKSY} ${META}`,
+              connect: `${BOOKSY} ${META}`,
+              frame: BOOKSY,
+            }),
           },
         ],
       },
