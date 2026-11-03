@@ -4,6 +4,7 @@ import { useEffect, useState, type AnchorHTMLAttributes, type MouseEvent } from 
 import { useLocale } from "next-intl";
 import { BUSINESS } from "@/lib/business-info";
 import { routing } from "@/i18n/routing";
+import { trackMetaCustom } from "@/components/analytics/meta-pixel";
 
 /**
  * Integración con el widget de Booksy (`booksy.com/widget/code.js`).
@@ -123,6 +124,7 @@ export function BookLink({
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     onClick?.(e);
     if (e.defaultPrevented) return;
+    trackMetaCustom("BookingClick", { locale });
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (openBooksy(locale)) e.preventDefault();
   }

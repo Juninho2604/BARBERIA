@@ -82,6 +82,12 @@ export const BUSINESS = {
     profileUrl: null as string | null,
   },
 
+  /** Meta Pixel (campañas de Facebook/Instagram). El ID no es secreto: va
+      en el HTML de cualquier sitio que use el pixel. null = no se carga. */
+  meta: {
+    pixelId: null as string | null,
+  },
+
   priceRange: "$$",
 
   /** Zona horaria IANA del negocio. CRÍTICA: todos los formateos de
