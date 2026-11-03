@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { BUSINESS } from "@/lib/business-info";
 import "./globals.css";
 
@@ -15,19 +15,26 @@ import "./globals.css";
  * Las rutas /admin y /login viven fuera del segmento [locale] y heredan
  * directamente este layout — quedan en español sin traducciones.
  */
-const bodoni = Bodoni_Moda({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+// Fuentes servidas desde el repo (variables, subset latin, licencia OFL).
+// Con next/font/google el build las descargaba de Google en cada deploy y
+// fallaba de forma intermitente cuando Google devolvía una URL sin
+// extensión (TypeError en el loader de next/font).
+const bodoni = localFont({
+  src: [
+    { path: "../fonts/bodoni-moda-latin.woff2", weight: "400 700", style: "normal" },
+    { path: "../fonts/bodoni-moda-italic-latin.woff2", weight: "400 700", style: "italic" },
+  ],
   variable: "--font-serif",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
-const hanken = Hanken_Grotesk({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const hanken = localFont({
+  src: "../fonts/hanken-grotesk-latin.woff2",
+  weight: "300 700",
   variable: "--font-sans-brand",
   display: "swap",
+  adjustFontFallback: "Arial",
 });
 
 export const metadata: Metadata = {
