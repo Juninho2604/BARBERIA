@@ -85,7 +85,7 @@ export const BUSINESS = {
   /** Meta Pixel (campañas de Facebook/Instagram). El ID no es secreto: va
       en el HTML de cualquier sitio que use el pixel. null = no se carga. */
   meta: {
-    pixelId: null as string | null,
+    pixelId: "1448053186900730" as string | null,
   },
 
   priceRange: "$$",
