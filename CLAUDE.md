@@ -34,7 +34,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## 2. Estado actual
 
-- **Fecha última actualización:** 2026-11-03
+- **Fecha última actualización:** 2026-11-04
 - **Rama activa:** `claude/quirky-ride-pD2AK`
 - **Hito actual:** **🎉 Migración Vercel → VPS COMPLETADA.** `https://brothersclubbarbers.com` sirviendo web + API desde el VPS con Nginx + Let's Encrypt (cert válido hasta 2026-09-04, renovación automática vía `certbot.timer`). El VPS es multi-tenant: además de Barbería aloja capsula-erp, tablepongve, omia-n8n, mail-tenari, pokepok-menu, demoapp. Barbería convive sin chocar: web en `127.0.0.1:3100`, API en `127.0.0.1:4000`, vhost propio sin tocar configs ajenos.
 - **Pendiente Fase C:** desactivar/borrar el proyecto Vercel (ya no recibe tráfico).
@@ -45,7 +45,7 @@ Documento maestro de arquitectura: [`docs/PLAN.md`](docs/PLAN.md).
 - **Modelo de desarrollo (importante):** el usuario NO desarrolla en local. Yo escribo código en este entorno remoto y pusheo a GitHub. Frontend autodeploy en Vercel. Backend/DB se despliegan en el VPS vía `docker compose` cuando llegue el momento. La Mac del usuario sólo se usa para chat + SSH al VPS.
 - **Reservas públicas = Booksy (desde 2026-10-10).** Todos los botones de reserva abren el widget de Booksy (negocio `1882195`, `country=us`, `lang` según locale) con el estilo de la marca; `/reservar` ya no tiene flujo propio, solo abre Booksy. El catálogo de la landing se mantiene. Las citas hechas en Booksy **no** llegan al calendario del panel admin. Integración en `apps/web/src/components/booksy/booksy.tsx`, config en `BUSINESS.booksy`. Pendiente del cliente: link público del perfil en Booksy (`BUSINESS.booksy.profileUrl`, salida si el widget no carga).
 - **Seguridad (auditoría 2026-10-10):** el repo es **PÚBLICO** → nunca escribir contraseñas, tokens ni datos de clientes aquí. Sesiones revocables (`User.tokenVersion` + claim `tv`, el middleware valida cuenta/rol/versión contra la DB en cada request), refresh 7 días, sin registro público, `POST /appointments` solo staff, rate limit por `X-Real-IP`, CSP report-only (violaciones en `docker compose logs api | grep csp-violation`), contenedores sin root en Node 22, deploy solo desde `main`. **Pendiente en el VPS (manual):** ver la entrada del log 2026-10-10 (seguridad).
-- **Meta Pixel (desde 2026-11-03, inactivo):** integración lista en `components/analytics/meta-pixel.tsx`, solo en el layout público (nunca en /admin ni /login). Se activa poniendo el ID en `BUSINESS.meta.pixelId` (hoy `null` = no se carga nada). Registra `PageView` también en navegaciones del lado del cliente y el evento personalizado `BookingClick` al pulsar cualquier botón de reserva. Pendiente: que Ronald (marketing del cliente) pase el ID del Pixel; el sitio no tiene página de política de privacidad.
+- **Meta Pixel (activo desde 2026-11-04, ID `1448053186900730`):** integración lista en `components/analytics/meta-pixel.tsx`, solo en el layout público (nunca en /admin ni /login). ID en `BUSINESS.meta.pixelId` (`null` lo desactiva). Registra `PageView` también en navegaciones del lado del cliente y el evento personalizado `BookingClick` al pulsar cualquier botón de reserva. Pendiente: el sitio no tiene página de política de privacidad.
 - **Bloqueadores:** ninguno.
 - **Intro 3D:** `BarberIntro` ahora carga un modelo real `apps/web/public/models/barber-chair.glb` (3.7 MB, export Sketchfab OBJ→glTF, materiales PBR Leather/Metal/Plastic con baseColor+metallic-roughness+normal, sin Draco) en lugar de la silla procedural. El modelo ya viene Y-up (no se reorienta el eje), se recentra y escala a altura objetivo, y el anillo muestra primero la descarga del .glb y luego el giro. **Modelo comprado por el usuario** → sin obligación de atribución (licencia de pago, no CC-BY).
 
@@ -146,6 +146,8 @@ Se rellena durante M0–M1. **No se guardan secretos aquí**, sólo referencias.
 ## 8. Log de cambios
 
 Entradas en orden cronológico inverso. Formato: `YYYY-MM-DD — descripción — commit`.
+
+- **2026-11-04** — **Meta Pixel activado** con el ID `1448053186900730` (público, va en el HTML). Integración ya probada el 2026-11-03.
 
 - **2026-11-03** — **Fuentes servidas desde el repo (fix de deploys intermitentes).** El deploy del Meta Pixel falló en el VPS con `TypeError: Cannot read properties of null (reading '1')` en `next/font/google` (loader.js: el regex de extensión no encuentra `.woff2` en alguna URL que devuelve Google). Ya había fallado así en el sandbox el 24-oct y lo atribuí erróneamente al proxy: **también falla en el VPS**. Producción no se vio afectada (el build falla antes de reemplazar contenedores). Fix: `next/font/local` con los 3 WOFF2 variables subset latin (Bodoni Moda normal + itálica 400–700, Hanken Grotesk 300–700, OFL, ~90 KB) en `apps/web/src/fonts/`, `adjustFontFallback` Times New Roman / Arial. El build ya no depende de Google: 3/3 builds OK (antes ~50% fallaba), 0 peticiones a Google en el navegador, tipografía idéntica (captura del hero).
 
